@@ -1,6 +1,6 @@
 import app from './src/app.js';
 import 'dotenv/config';
-import connectDB from './src/db/db.js';
+import connectDB from './src/config/db.js';
 
 const PORT = process.env.PORT;
 if (!PORT) {

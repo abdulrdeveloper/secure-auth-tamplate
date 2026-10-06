@@ -1,15 +1,19 @@
 import type { Request, Response } from "express";
-import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import "dotenv/config";
 
 import userModel from "../models/user.model.js";
-import redis from "../services/redis.service.js";
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } from "../services/mail.service.js";
+import {
+  checkCooldown,
+  clearOtp,
+  generateAndStoreOtp,
+  verifyOtpWithRateLimit,
+} from "../services/otp.service.js";
 
 
 const COOKIE_OPTIONS = {
@@ -43,19 +47,14 @@ async function registerUser(req: Request, res: Response) {
     });
     await newUser.save();
 
-    const otp = crypto.randomInt(100000, 1000000).toString();
-    const otpKey = `auth:verify_otp:${newUser.email}`;
-    const cooldownKey = `auth:otp_cooldown:${newUser.email}`;
-
-    await redis.set(otpKey, otp, { ex: 300 });
-    await redis.set(cooldownKey, "1", { ex: 60 });
+    const otp = await generateAndStoreOtp(newUser.email, "verify");
 
     try {
       await sendVerificationEmail(newUser.email, otp);
     } catch (emailError) {
       console.error("Email send failed in registerUser:", emailError);
       await userModel.findByIdAndDelete(newUser._id);
-      await redis.del(otpKey, cooldownKey);
+      await clearOtp(newUser.email, "verify");
       return res
         .status(500)
         .json({
@@ -82,27 +81,22 @@ async function registerUser(req: Request, res: Response) {
 async function verifyOtp(req: Request, res: Response) {
   try {
     const { email, otp } = req.body;
-    const otpKey = `auth:verify_otp:${email}`;
-    const attemptsKey = `auth:verify_attempts:${email}`;
-    const storedOtp = await redis.get<string>(otpKey);
-
-    if (!storedOtp) {
+    const verification = await verifyOtpWithRateLimit(email, otp, "verify");
+    if (!verification.success && verification.reason === "expired") {
       return res
         .status(400)
         .json({ message: "Verification code has expired or is invalid" });
     }
 
-    if (String(storedOtp).trim() !== String(otp).trim()) {
-      const attempts = await redis.incr(attemptsKey);
-      if (attempts === 1) await redis.expire(attemptsKey, 300);
-      if (attempts >= 5) {
-        await redis.del(otpKey, attemptsKey);
+    if (!verification.success) {
+      if (verification.reason === "too_many_attempts") {
         return res
           .status(400)
           .json({
             message: "Too many failed attempts. Please request a new code.",
           });
       }
+
       return res.status(400).json({ message: "Invalid verification code" });
     }
 
@@ -110,8 +104,6 @@ async function verifyOtp(req: Request, res: Response) {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    await redis.del(otpKey, attemptsKey);
 
     user.isEmailVerified = true;
     user.emailVerifiedAt = new Date();
@@ -153,23 +145,22 @@ async function resendOtp(req: Request, res: Response) {
         .json({ message: "Email is already verified. Please login." });
     }
 
-    const cooldownKey = `auth:otp_cooldown:${email}`;
-    const isCoolingDown = await redis.get(cooldownKey);
-    if (isCoolingDown) {
+    if (await checkCooldown(email, "verify")) {
       return res.status(429).json({
         message:
           "Please wait 60 seconds before requesting another verification code.",
       });
     }
 
-    const otp = crypto.randomInt(100000, 1000000).toString();
-    const otpKey = `auth:verify_otp:${email}`;
+    const otp = await generateAndStoreOtp(email, "verify");
 
-    await redis.set(otpKey, otp, { ex: 300 });
-    await redis.set(cooldownKey, "1", { ex: 60 });
-    await redis.del(`auth:verify_attempts:${email}`);
-
-    await sendVerificationEmail(email, otp);
+    try {
+      await sendVerificationEmail(email, otp);
+    } catch (emailError) {
+      console.error("Email send failed in resendOtp:", emailError);
+      await clearOtp(email, "verify");
+      throw emailError;
+    }
 
     return res
       .status(200)
@@ -236,23 +227,22 @@ async function forgotPassword(req: Request, res: Response) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const cooldownKey = `auth:reset_cooldown:${email}`;
-    const isCoolingDown = await redis.get(cooldownKey);
-    if (isCoolingDown) {
+    if (await checkCooldown(email, "reset")) {
       return res.status(429).json({
         message:
           "Please wait 60 seconds before requesting another password reset code.",
       });
     }
 
-    const otp = crypto.randomInt(100000, 1000000).toString();
-    const redisKey = `auth:reset_otp:${email}`;
+    const otp = await generateAndStoreOtp(email, "reset");
 
-    await redis.set(redisKey, otp, { ex: 300 });
-    await redis.set(cooldownKey, "1", { ex: 60 });
-    await redis.del(`auth:reset_attempts:${email}`);
-
-    await sendPasswordResetEmail(email, otp);
+    try {
+      await sendPasswordResetEmail(email, otp);
+    } catch (emailError) {
+      console.error("Email send failed in forgotPassword:", emailError);
+      await clearOtp(email, "reset");
+      throw emailError;
+    }
 
     return res.status(200).json({
       message: "Password reset OTP sent to your email",
@@ -268,21 +258,15 @@ async function passwordReset(req: Request, res: Response) {
   try {
     const { email, otp, newPassword } = req.body;
 
-    const redisKey = `auth:reset_otp:${email}`;
-    const attemptsKey = `auth:reset_attempts:${email}`;
-    const storedOtp = await redis.get<string>(redisKey);
-
-    if (!storedOtp) {
+    const verification = await verifyOtpWithRateLimit(email, otp, "reset");
+    if (!verification.success && verification.reason === "expired") {
       return res
         .status(400)
         .json({ message: "Reset OTP has expired or is invalid" });
     }
 
-    if (String(storedOtp).trim() !== String(otp).trim()) {
-      const attempts = await redis.incr(attemptsKey);
-      if (attempts === 1) await redis.expire(attemptsKey, 300);
-      if (attempts >= 5) {
-        await redis.del(redisKey, attemptsKey);
+    if (!verification.success) {
+      if (verification.reason === "too_many_attempts") {
         return res
           .status(400)
           .json({
@@ -290,6 +274,7 @@ async function passwordReset(req: Request, res: Response) {
               "Too many failed attempts. Please request a new reset code.",
           });
       }
+
       return res.status(400).json({ message: "Invalid reset OTP code" });
     }
 
@@ -297,8 +282,6 @@ async function passwordReset(req: Request, res: Response) {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    await redis.del(redisKey, attemptsKey);
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;

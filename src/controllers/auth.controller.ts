@@ -1,60 +1,183 @@
 import type { Request, Response } from "express";
-import userModel from "../models/user.model.js";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import 'dotenv/config';
+import "dotenv/config";
+
+import userModel from "../models/user.model.js";
+import redis from "../services/redis.service.js";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../services/mail.service.js";
+import { registerSchema, loginSchema, verifyOtpSchema, resendOtpSchema, forgotPasswordSchema, resetPasswordSchema } from "../config/validation.js";
 
 
-async function registerUser (req: Request, res: Response) {
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+  path: "/",
+  maxAge: 60 * 60 * 1000,
+};
+
+
+async function registerUser(req: Request, res: Response) {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+    const validation = registerSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: validation.error.issues[0]?.message || "Invalid input",
+        errors: validation.error.flatten().fieldErrors,
+      });
     }
+
+    const { name, email, password } = validation.data;
 
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "User already exists with this email" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new userModel({ name, email, password: hashedPassword });
+    const newUser = new userModel({
+      name,
+      email,
+      password: hashedPassword,
+      isEmailVerified: false,
+    });
     await newUser.save();
 
-    const token = jwt.sign(
-      { userId: newUser._id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1h" },
-    );
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const otpKey = `auth:verify_otp:${newUser.email}`;
+    const cooldownKey = `auth:otp_cooldown:${newUser.email}`;
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      path: "/",
-      maxAge: 60 * 60 * 1000,
-    });
+    await redis.set(otpKey, otp, { ex: 300 });
+    await redis.set(cooldownKey, "1", { ex: 60 });
 
-    const passwordlessUser = newUser.toObject();
-    delete passwordlessUser.password;
+    await sendVerificationEmail(newUser.email, otp);
 
     return res.status(201).json({
-      message: "User registered successfully",
+      message: "Registration successful. Please check your email for the verification OTP.",
+      email: newUser.email,
+    });
+
+  } catch (error) {
+    console.error("Error in registerUser:", error);
+    res.status(500).json({ message: "Server error", error: (error as Error).message });
+  }
+}
+
+
+async function verifyOtp(req: Request, res: Response) {
+  try {
+    const validation = verifyOtpSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: validation.error.issues[0]?.message || "Invalid input",
+        errors: validation.error.flatten().fieldErrors,
+      });
+    }
+
+    const { email, otp } = validation.data;
+    const otpKey = `auth:verify_otp:${email}`;
+    const storedOtp = await redis.get<string>(otpKey);
+
+    if (!storedOtp) {
+      return res.status(400).json({ message: "Verification code has expired or is invalid" });
+    }
+
+    if (String(storedOtp).trim() !== String(otp).trim()) {
+      return res.status(400).json({ message: "Invalid verification code" });
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerifiedAt = new Date();
+    await user.save();
+
+    await redis.del(otpKey);
+
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "1h" }
+    );
+
+    res.cookie("token", token, COOKIE_OPTIONS);
+
+    const passwordlessUser = user.toObject();
+    delete passwordlessUser.password;
+
+    return res.status(200).json({
+      message: "Email verified successfully",
       user: passwordlessUser,
     });
 
   } catch (error) {
-    console.error("Error registering user:", error);
+    console.error("Error in verifyEmail:", error);
     res.status(500).json({ message: "Server error", error: (error as Error).message });
   }
-};
+}
 
-async function loginUser (req: Request, res: Response) {
+
+async function resendOtp(req: Request, res: Response) {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+    const validation = resendOtpSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: validation.error.issues[0]?.message || "Invalid input",
+        errors: validation.error.flatten().fieldErrors,
+      });
     }
+
+    const { email } = validation.data;
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: "Email is already verified. Please login." });
+    }
+
+    const cooldownKey = `auth:otp_cooldown:${email}`;
+    const isCoolingDown = await redis.get(cooldownKey);
+    if (isCoolingDown) {
+      return res.status(429).json({
+        message: "Please wait 60 seconds before requesting another verification code.",
+      });
+    }
+
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const otpKey = `auth:verify_otp:${email}`;
+
+    await redis.set(otpKey, otp, { ex: 300 });
+    await redis.set(cooldownKey, "1", { ex: 60 });
+
+    await sendVerificationEmail(email, otp);
+
+    return res.status(200).json({ message: "Verification OTP resent successfully" });
+
+  } catch (error) {
+    console.error("Error in resendOtp:", error);
+    res.status(500).json({ message: "Server error", error: (error as Error).message });
+  }
+}
+
+
+async function loginUser(req: Request, res: Response) {
+  try {
+    const validation = loginSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: validation.error.issues[0]?.message || "Invalid input",
+        errors: validation.error.flatten().fieldErrors,
+      });
+    }
+
+    const { email, password } = validation.data;
 
     const user = await userModel.findOne({ email }).select("+password");
     if (!user) {
@@ -66,20 +189,21 @@ async function loginUser (req: Request, res: Response) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        message: "Please verify your email address before logging in.",
+        isEmailVerified: false,
+      });
+    }
+
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET as string,
-      { expiresIn: "1h" },
+      { expiresIn: "1h" }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      path: "/",
-      maxAge: 60 * 60 * 1000,
-    });
-    
+    res.cookie("token", token, COOKIE_OPTIONS);
+
     const passwordlessUser = user.toObject();
     delete passwordlessUser.password;
 
@@ -89,18 +213,79 @@ async function loginUser (req: Request, res: Response) {
     });
 
   } catch (error) {
-    console.error("Error logging in user:", error);
+    console.error("Error in loginUser:", error);
     res.status(500).json({ message: "Server error", error: (error as Error).message });
   }
-};
+}
 
-async function passwordReset (req: Request, res: Response) {
+
+async function forgotPassword(req: Request, res: Response) {
   try {
-    const { email, newPassword } = req.body;
-    if (!email || !newPassword) {
-      return res.status(400).json({ message: "Email and new password are required" });
+    const validation = forgotPasswordSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: validation.error.issues[0]?.message || "Invalid input",
+        errors: validation.error.flatten().fieldErrors,
+      });
     }
 
+    const { email } = validation.data;
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const cooldownKey = `auth:reset_cooldown:${email}`;
+    const isCoolingDown = await redis.get(cooldownKey);
+    if (isCoolingDown) {
+      return res.status(429).json({
+        message: "Please wait 60 seconds before requesting another password reset code.",
+      });
+    }
+
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const redisKey = `auth:reset_otp:${email}`;
+
+    await redis.set(redisKey, otp, { ex: 300 });
+    await redis.set(cooldownKey, "1", { ex: 60 });
+
+    await sendPasswordResetEmail(email, otp);
+
+    return res.status(200).json({
+      message: "Password reset OTP sent to your email",
+    });
+
+  } catch (error) {
+    console.error("Error in forgotPassword:", error);
+    res.status(500).json({ message: "Server error", error: (error as Error).message });
+  }
+}
+
+
+async function passwordReset(req: Request, res: Response) {
+  try {
+    const validation = resetPasswordSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: validation.error.issues[0]?.message || "Invalid input",
+        errors: validation.error.flatten().fieldErrors,
+      });
+    }
+
+    const { email, otp, newPassword } = validation.data;
+
+    const redisKey = `auth:reset_otp:${email}`;
+    const storedOtp = await redis.get<string>(redisKey);
+
+    if (!storedOtp) {
+      return res.status(400).json({ message: "Reset OTP has expired or is invalid" });
+    }
+
+    if (String(storedOtp).trim() !== String(otp).trim()) {
+      return res.status(400).json({ message: "Invalid reset OTP code" });
+    }
+    
     const user = await userModel.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -110,20 +295,23 @@ async function passwordReset (req: Request, res: Response) {
     user.password = hashedPassword;
     await user.save();
 
-    return res.status(200).json({ message: "Password reset successful" });
+    await redis.del(redisKey);
+
+    return res.status(200).json({ message: "Password reset successful. Please login with your new password." });
 
   } catch (error) {
-    console.error("Error resetting password:", error);
+    console.error("Error in passwordReset:", error);
     res.status(500).json({ message: "Server error", error: (error as Error).message });
   }
-};
+}
 
-async function logoutUser (req: Request, res: Response) {
+
+async function logoutUser(req: Request, res: Response) {
   try {
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
       path: "/",
       maxAge: 0,
     });
@@ -131,9 +319,10 @@ async function logoutUser (req: Request, res: Response) {
     return res.status(200).json({ message: "Logout successful" });
 
   } catch (error) {
-    console.error("Error logging out user:", error);
+    console.error("Error in logoutUser:", error);
     res.status(500).json({ message: "Server error", error: (error as Error).message });
   }
-};
+}
 
-export {registerUser, loginUser, logoutUser, passwordReset};
+
+export { registerUser, verifyOtp, resendOtp, loginUser, forgotPassword, passwordReset, logoutUser };

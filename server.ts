@@ -1,23 +1,11 @@
-import app from './src/app.js';
-import 'dotenv/config';
-import connectDB from './src/config/db.js';
+import "dotenv/config";
+import app from "./src/app.js";
+import connectDB from "./src/config/db.js";
 
-const PORT = process.env.PORT;
-if (!PORT) {
-  throw new Error('PORT is not defined in the environment variables');
-}
+const PORT = process.env.PORT || 3000;
 
-const startServer = async () => {
-  await connectDB();
+await connectDB();
 
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-};
-
-startServer().catch((error: unknown) => {
-  console.error(
-    `Server startup failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-  );
-  process.exitCode = 1;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

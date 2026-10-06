@@ -1,4 +1,5 @@
 {
+	"name": "backend",
 	"type": "module",
 	"scripts": {
 		"dev": "tsc-watch --onSuccess \"node dist/server.js\"",

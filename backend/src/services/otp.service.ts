@@ -51,7 +51,7 @@ export const verifyOtpWithRateLimit = async (
     return { success: false, reason: "expired" };
   }
 
-  if (storedOtp.trim() === otp.trim()) {
+  if (String(storedOtp).trim() === String(otp).trim()) {
     await redis.del(keys.otp, keys.attempts);
     return { success: true };
   }

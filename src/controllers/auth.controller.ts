@@ -32,7 +32,7 @@ async function registerUser(req: Request, res: Response) {
     const { name, email, password } = validation.data;
 
     const existingUser = await userModel.findOne({ email });
-    if (existingUser) {
+    if (existingUser?.isEmailVerified) {
       return res.status(400).json({ message: "User already exists with this email" });
     }
 
@@ -52,7 +52,18 @@ async function registerUser(req: Request, res: Response) {
     await redis.set(otpKey, otp, { ex: 300 });
     await redis.set(cooldownKey, "1", { ex: 60 });
 
-    await sendVerificationEmail(newUser.email, otp);
+    try {
+      await sendVerificationEmail(newUser.email, otp);
+    } catch (emailError) {
+      console.error("Email send failed in registerUser:", emailError);
+      await userModel.findByIdAndDelete(newUser._id);
+      await redis.del(otpKey, cooldownKey);
+      return res.status(500).json({ message: "Failed to send verification email. Please try again." });
+    }
+
+    if (existingUser) {
+      await userModel.findByIdAndDelete(existingUser._id);
+    }
 
     return res.status(201).json({
       message: "Registration successful. Please check your email for the verification OTP.",
@@ -61,7 +72,7 @@ async function registerUser(req: Request, res: Response) {
 
   } catch (error) {
     console.error("Error in registerUser:", error);
-    res.status(500).json({ message: "Server error", error: (error as Error).message });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -78,6 +89,7 @@ async function verifyOtp(req: Request, res: Response) {
 
     const { email, otp } = validation.data;
     const otpKey = `auth:verify_otp:${email}`;
+    const attemptsKey = `auth:verify_attempts:${email}`;
     const storedOtp = await redis.get<string>(otpKey);
 
     if (!storedOtp) {
@@ -85,6 +97,12 @@ async function verifyOtp(req: Request, res: Response) {
     }
 
     if (String(storedOtp).trim() !== String(otp).trim()) {
+      const attempts = await redis.incr(attemptsKey);
+      if (attempts === 1) await redis.expire(attemptsKey, 300);
+      if (attempts >= 5) {
+        await redis.del(otpKey, attemptsKey);
+        return res.status(400).json({ message: "Too many failed attempts. Please request a new code." });
+      }
       return res.status(400).json({ message: "Invalid verification code" });
     }
 
@@ -93,11 +111,11 @@ async function verifyOtp(req: Request, res: Response) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    await redis.del(otpKey, attemptsKey);
+
     user.isEmailVerified = true;
     user.emailVerifiedAt = new Date();
     await user.save();
-
-    await redis.del(otpKey);
 
     const token = jwt.sign(
       { userId: user._id },
@@ -116,8 +134,8 @@ async function verifyOtp(req: Request, res: Response) {
     });
 
   } catch (error) {
-    console.error("Error in verifyEmail:", error);
-    res.status(500).json({ message: "Server error", error: (error as Error).message });
+    console.error("Error in verifyOtp:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -155,6 +173,7 @@ async function resendOtp(req: Request, res: Response) {
 
     await redis.set(otpKey, otp, { ex: 300 });
     await redis.set(cooldownKey, "1", { ex: 60 });
+    await redis.del(`auth:verify_attempts:${email}`);
 
     await sendVerificationEmail(email, otp);
 
@@ -162,7 +181,7 @@ async function resendOtp(req: Request, res: Response) {
 
   } catch (error) {
     console.error("Error in resendOtp:", error);
-    res.status(500).json({ message: "Server error", error: (error as Error).message });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -214,7 +233,7 @@ async function loginUser(req: Request, res: Response) {
 
   } catch (error) {
     console.error("Error in loginUser:", error);
-    res.status(500).json({ message: "Server error", error: (error as Error).message });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -249,6 +268,7 @@ async function forgotPassword(req: Request, res: Response) {
 
     await redis.set(redisKey, otp, { ex: 300 });
     await redis.set(cooldownKey, "1", { ex: 60 });
+    await redis.del(`auth:reset_attempts:${email}`);
 
     await sendPasswordResetEmail(email, otp);
 
@@ -258,7 +278,7 @@ async function forgotPassword(req: Request, res: Response) {
 
   } catch (error) {
     console.error("Error in forgotPassword:", error);
-    res.status(500).json({ message: "Server error", error: (error as Error).message });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -276,6 +296,7 @@ async function passwordReset(req: Request, res: Response) {
     const { email, otp, newPassword } = validation.data;
 
     const redisKey = `auth:reset_otp:${email}`;
+    const attemptsKey = `auth:reset_attempts:${email}`;
     const storedOtp = await redis.get<string>(redisKey);
 
     if (!storedOtp) {
@@ -283,25 +304,31 @@ async function passwordReset(req: Request, res: Response) {
     }
 
     if (String(storedOtp).trim() !== String(otp).trim()) {
+      const attempts = await redis.incr(attemptsKey);
+      if (attempts === 1) await redis.expire(attemptsKey, 300);
+      if (attempts >= 5) {
+        await redis.del(redisKey, attemptsKey);
+        return res.status(400).json({ message: "Too many failed attempts. Please request a new reset code." });
+      }
       return res.status(400).json({ message: "Invalid reset OTP code" });
     }
-    
+
     const user = await userModel.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    await redis.del(redisKey, attemptsKey);
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
-
-    await redis.del(redisKey);
 
     return res.status(200).json({ message: "Password reset successful. Please login with your new password." });
 
   } catch (error) {
     console.error("Error in passwordReset:", error);
-    res.status(500).json({ message: "Server error", error: (error as Error).message });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -320,7 +347,7 @@ async function logoutUser(req: Request, res: Response) {
 
   } catch (error) {
     console.error("Error in logoutUser:", error);
-    res.status(500).json({ message: "Server error", error: (error as Error).message });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 

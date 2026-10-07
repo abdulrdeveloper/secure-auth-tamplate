@@ -12,9 +12,9 @@ import {
   checkCooldown,
   clearOtp,
   generateAndStoreOtp,
+  validateOtpWithRateLimit,
   verifyOtpWithRateLimit,
 } from "../services/otp.service.js";
-
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -35,41 +35,43 @@ async function registerUser(req: Request, res: Response) {
     if (existingUser?.isEmailVerified) {
       return res
         .status(400)
-        .json({ message: "User already exists with this email" });
+        .json({ message: "Unable to create an account with these details." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new userModel({
-      name,
-      email,
-      password: hashedPassword,
-      isEmailVerified: false,
-    });
-    await newUser.save();
-
-    const otp = await generateAndStoreOtp(newUser.email, "verify");
-
-    try {
-      await sendVerificationEmail(newUser.email, otp);
-    } catch (emailError) {
-      console.error("Email send failed in registerUser:", emailError);
-      await userModel.findByIdAndDelete(newUser._id);
-      await clearOtp(newUser.email, "verify");
-      return res
-        .status(500)
-        .json({
-          message: "Failed to send verification email. Please try again.",
-        });
-    }
+    const user =
+      existingUser ??
+      new userModel({
+        name,
+        email,
+        password: hashedPassword,
+        isEmailVerified: false,
+      });
 
     if (existingUser) {
-      await userModel.findByIdAndDelete(existingUser._id);
+      user.name = name;
+      user.password = hashedPassword;
+      user.isEmailVerified = false;
+      user.emailVerifiedAt = null;
+    }
+    await user.save();
+
+    const otp = await generateAndStoreOtp(user.email, "verify");
+
+    try {
+      await sendVerificationEmail(user.email, otp);
+    } catch (emailError) {
+      console.error("Email send failed in registerUser:", emailError);
+      await clearOtp(user.email, "verify");
+      return res.status(500).json({
+        message: "Failed to send verification email. Please try again.",
+      });
     }
 
     return res.status(201).json({
       message:
         "Registration successful. Please check your email for the verification OTP.",
-      email: newUser.email,
+      email: user.email,
     });
   } catch (error) {
     console.error("Error in registerUser:", error);
@@ -90,11 +92,9 @@ async function verifyOtp(req: Request, res: Response) {
 
     if (!verification.success) {
       if (verification.reason === "too_many_attempts") {
-        return res
-          .status(400)
-          .json({
-            message: "Too many failed attempts. Please request a new code.",
-          });
+        return res.status(400).json({
+          message: "Too many failed attempts. Please request a new code.",
+        });
       }
 
       return res.status(400).json({ message: "Invalid verification code" });
@@ -102,7 +102,9 @@ async function verifyOtp(req: Request, res: Response) {
 
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(400)
+        .json({ message: "The verification code is invalid or expired." });
     }
 
     user.isEmailVerified = true;
@@ -136,19 +138,23 @@ async function resendOtp(req: Request, res: Response) {
     const { email } = req.body;
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(200).json({
+        message:
+          "If an account matches this email, a verification code will be sent.",
+      });
     }
 
     if (user.isEmailVerified) {
-      return res
-        .status(400)
-        .json({ message: "Email is already verified. Please login." });
+      return res.status(200).json({
+        message:
+          "If an account matches this email, a verification code will be sent.",
+      });
     }
 
     if (await checkCooldown(email, "verify")) {
-      return res.status(429).json({
+      return res.status(200).json({
         message:
-          "Please wait 60 seconds before requesting another verification code.",
+          "If an account matches this email, a verification code will be sent.",
       });
     }
 
@@ -190,10 +196,7 @@ async function loginUser(req: Request, res: Response) {
     }
 
     if (!user.isEmailVerified) {
-      return res.status(403).json({
-        message: "Please verify your email address before logging in.",
-        isEmailVerified: false,
-      });
+      return res.status(401).json({ message: "Invalid email or password." });
     }
 
     const token = jwt.sign(
@@ -224,13 +227,16 @@ async function forgotPassword(req: Request, res: Response) {
 
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(200).json({
+        message:
+          "If an account matches this email, reset instructions will be sent.",
+      });
     }
 
     if (await checkCooldown(email, "reset")) {
-      return res.status(429).json({
+      return res.status(200).json({
         message:
-          "Please wait 60 seconds before requesting another password reset code.",
+          "If an account matches this email, reset instructions will be sent.",
       });
     }
 
@@ -267,12 +273,9 @@ async function passwordReset(req: Request, res: Response) {
 
     if (!verification.success) {
       if (verification.reason === "too_many_attempts") {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Too many failed attempts. Please request a new reset code.",
-          });
+        return res.status(400).json({
+          message: "Too many failed attempts. Please request a new reset code.",
+        });
       }
 
       return res.status(400).json({ message: "Invalid reset OTP code" });
@@ -280,21 +283,46 @@ async function passwordReset(req: Request, res: Response) {
 
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(400)
+        .json({ message: "The reset code is invalid or expired." });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
 
-    return res
-      .status(200)
-      .json({
-        message:
-          "Password reset successful. Please login with your new password.",
-      });
+    return res.status(200).json({
+      message:
+        "Password reset successful. Please login with your new password.",
+    });
   } catch (error) {
     console.error("Error in passwordReset:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+
+async function verifyResetOtp(req: Request, res: Response) {
+  try {
+    const { email, otp } = req.body;
+    const verification = await validateOtpWithRateLimit(email, otp, "reset");
+
+    if (!verification.success) {
+      if (verification.reason === "too_many_attempts") {
+        return res.status(400).json({
+          message: "Too many failed attempts. Please request a new reset code.",
+        });
+      }
+
+      return res.status(400).json({
+        message: "Invalid reset OTP code",
+      });
+    }
+
+    return res.status(200).json({ message: "Reset OTP verified" });
+  } catch (error) {
+    console.error("Error in verifyResetOtp:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -346,6 +374,7 @@ export {
   resendOtp,
   loginUser,
   forgotPassword,
+  verifyResetOtp,
   passwordReset,
   logoutUser,
   getMe,

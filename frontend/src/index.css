@@ -106,7 +106,7 @@
   }
 
   .input-wrap {
-    @apply mt-2 flex h-[47px] items-center gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3.5 text-zinc-500 transition-colors focus-within:border-lime-300;
+    @apply mt-2 flex h-[47px] cursor-text items-center gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3.5 text-zinc-500 transition-colors focus-within:border-lime-300;
   }
 
   .input {
@@ -116,6 +116,10 @@
 
   .input::placeholder {
     @apply text-zinc-600;
+  }
+
+  .password-toggle {
+    @apply shrink-0 border-0 bg-transparent p-0 text-zinc-500 hover:text-zinc-200;
   }
 
   .input:-webkit-autofill,
@@ -132,7 +136,7 @@
   }
 
   .inline-link {
-    @apply text-[13px] font-semibold text-lime-300;
+    @apply inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300;
   }
 
   .forgot-link {
@@ -140,7 +144,7 @@
   }
 
   .primary-button {
-    @apply mt-[27px] flex h-12 w-full items-center justify-center gap-2 rounded-lg border-0 bg-lime-300 font-bold text-zinc-950 transition-[filter,transform] hover:-translate-y-px hover:brightness-110;
+    @apply mt-[27px] flex h-12 w-full items-center justify-center gap-2 rounded-lg border-0 bg-lime-300 font-bold text-zinc-950 transition-[filter,transform] hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:transform-none;
   }
 
   .form-footer {
@@ -173,6 +177,14 @@
 
   .dashboard-grid {
     @apply mt-[42px] grid grid-cols-[1.2fr_.8fr] gap-4;
+  }
+
+  .dashboard-resource {
+    @apply mt-6 text-center text-xs leading-relaxed text-zinc-500;
+  }
+
+  .dashboard-resource a {
+    @apply text-lime-300 underline decoration-lime-300/40 underline-offset-2 hover:decoration-lime-300;
   }
 
   .card {
@@ -212,11 +224,19 @@
   }
 
   .resend-button {
-    @apply border-0 bg-transparent p-0;
+    @apply flex items-center gap-1 border-0 bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .helper-text {
     @apply my-[-5px_0_18px] text-xs text-zinc-500;
+  }
+
+  .error-message {
+    @apply my-[-5px_0_18px] flex items-start gap-2 rounded-lg border border-red-900/70 bg-red-950/40 px-3 py-2.5 text-xs leading-relaxed text-red-300;
+  }
+
+  .error-message svg {
+    @apply mt-0.5 shrink-0;
   }
 
   .success-panel {

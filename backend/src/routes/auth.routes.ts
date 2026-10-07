@@ -3,6 +3,7 @@ import {
   registerUser,
   loginUser,
   forgotPassword,
+  verifyResetOtp,
   logoutUser,
   verifyOtp,
   resendOtp,
@@ -28,6 +29,7 @@ authRoutes.post("/verify-email", validate(verifyOtpSchema), verifyOtp);
 authRoutes.post("/resend-otp", validate(resendOtpSchema), resendOtp);
 authRoutes.post("/login", validate(loginSchema), loginUser);
 authRoutes.post("/forgot-password", validate(forgotPasswordSchema), forgotPassword);
+authRoutes.post("/verify-reset-otp", validate(verifyOtpSchema), verifyResetOtp);
 authRoutes.post("/reset-password", validate(resetPasswordSchema), passwordReset);
 authRoutes.get("/me", authenticate, getMe);
 authRoutes.post("/logout", logoutUser);

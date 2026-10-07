@@ -43,6 +43,7 @@ export const verifyOtpWithRateLimit = async (
   email: string,
   otp: string,
   type: OtpType,
+  consumeOnSuccess = true,
 ): Promise<VerificationResult> => {
   const keys = getKeys(email, type);
   const storedOtp = await redis.get<string>(keys.otp);
@@ -52,7 +53,9 @@ export const verifyOtpWithRateLimit = async (
   }
 
   if (String(storedOtp).trim() === String(otp).trim()) {
-    await redis.del(keys.otp, keys.attempts);
+    if (consumeOnSuccess) {
+      await redis.del(keys.otp, keys.attempts);
+    }
     return { success: true };
   }
 
@@ -68,6 +71,12 @@ export const verifyOtpWithRateLimit = async (
 
   return { success: false, reason: "invalid" };
 };
+
+export const validateOtpWithRateLimit = async (
+  email: string,
+  otp: string,
+  type: OtpType,
+) => verifyOtpWithRateLimit(email, otp, type, false);
 
 
 export const clearOtp = async (email: string, type: OtpType) => {

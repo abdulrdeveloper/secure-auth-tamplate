@@ -7,7 +7,8 @@ import {
   Field,
   SubmitButton,
 } from "../../components/auth-fields";
-import { getSafeAuthMessage } from "../../lib/auth-messages";
+import { apiRequest } from "../../lib/api";
+import { startResetOtpCooldown } from "../../lib/reset-otp-cooldown";
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -27,24 +28,18 @@ export function ForgotPasswordPage() {
           setError("");
           setLoading(true);
           try {
-            const response = await fetch(
-              `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/forgot-password`,
-              {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
-              },
-            );
-            if (!response.ok) {
-              throw new Error(getSafeAuthMessage("forgot-password", response.status));
-            }
+            await apiRequest("/forgot-password", {
+              method: "POST",
+              data: { email },
+              action: "forgot-password",
+            });
+            startResetOtpCooldown(email);
             navigate("/reset-password", { state: { email } });
           } catch (requestError) {
             setError(
               requestError instanceof Error
                 ? requestError.message
-                : getSafeAuthMessage("forgot-password"),
+                : "We couldn't process your request right now. Please try again in a moment.",
             );
           } finally {
             setLoading(false);

@@ -7,7 +7,7 @@ import {
   OtpField,
   SubmitButton,
 } from "../../components/auth-fields";
-import { getSafeAuthMessage } from "../../lib/auth-messages";
+import { apiRequest } from "../../lib/api";
 import { VerificationSuccess } from "./verification-success";
 
 export function VerifyEmailPage() {
@@ -84,26 +84,19 @@ export function VerifyEmailPage() {
           event.preventDefault();
           setError("");
           setLoading(true);
-          fetch(
-            `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/verify-email`,
-            {
-              method: "POST",
-              credentials: "include",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, otp }),
-            },
-          )
-            .then(async (response) => {
-              if (!response.ok) {
-                throw new Error(getSafeAuthMessage("verify-email", response.status));
-              }
+          apiRequest("/verify-email", {
+            method: "POST",
+            data: { email, otp },
+            action: "verify-email",
+          })
+            .then(() => {
               setCompleted(true);
             })
             .catch((requestError) =>
               setError(
                 requestError instanceof Error
                   ? requestError.message
-                  : getSafeAuthMessage("verify-email"),
+                  : "We couldn't verify your email right now. Please try again in a moment.",
               ),
             )
             .finally(() => setLoading(false));
@@ -123,36 +116,21 @@ export function VerifyEmailPage() {
             onClick={() => {
               setResending(true);
               setError("");
-              fetch(
-                `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/resend-otp`,
-                {
-                  method: "POST",
-                  credentials: "include",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email }),
-                },
-              )
-                .then(async (response) => {
-                  if (!response.ok) {
-                    throw new Error(getSafeAuthMessage("resend-code", response.status));
-                  }
+              apiRequest("/resend-otp", {
+                method: "POST",
+                data: { email },
+                action: "resend-code",
+              })
+                .then(() => {
                   startCooldown(cooldownKey);
                   setResendIn(60);
                 })
                 .catch((requestError) => {
-                  const message =
+                  setError(
                     requestError instanceof Error
                       ? requestError.message
-                      : getSafeAuthMessage("resend-code");
-                  const cooldown = message.match(/(\d+)\s*seconds?/i);
-                  if (cooldown) {
-                    startCooldown(cooldownKey, Number(cooldown[1]));
-                    setResendIn(Number(cooldown[1]));
-                    setError("");
-                    return;
-                  }
-
-                  setError(message);
+                      : "We couldn't send a new code right now. Please try again in a moment.",
+                  );
                 })
                 .finally(() => setResending(false));
             }}

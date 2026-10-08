@@ -1,5 +1,10 @@
-import { useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  LoaderCircle,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { AuthHeader } from "../../components/auth-layout";
@@ -9,17 +14,61 @@ import {
   PasswordField,
   SubmitButton,
 } from "../../components/auth-fields";
-import { getSafeAuthMessage } from "../../lib/auth-messages";
+import { apiRequest } from "../../lib/api";
+import {
+  getResetOtpCooldownSeconds,
+  resetOtpCooldownKey,
+  startResetOtpCooldown,
+} from "../../lib/reset-otp-cooldown";
 
 export function ResetPasswordPage() {
   const [step, setStep] = useState<"otp" | "password">("otp");
   const [completed, setCompleted] = useState(false);
   const email = (useLocation().state as { email?: string } | null)?.email ?? "";
+  const cooldownKey = resetOtpCooldownKey(email);
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendIn, setResendIn] = useState(() =>
+    getResetOtpCooldownSeconds(cooldownKey),
+  );
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const remaining = getResetOtpCooldownSeconds(cooldownKey);
+      setResendIn(remaining);
+      if (remaining === 0) localStorage.removeItem(cooldownKey);
+    };
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldownKey]);
+
+  async function resendCode() {
+    setError("");
+    setResending(true);
+    try {
+      await apiRequest("/forgot-password", {
+        method: "POST",
+        data: { email },
+        action: "forgot-password",
+      });
+      startResetOtpCooldown(email);
+      setResendIn(getResetOtpCooldownSeconds(cooldownKey));
+      setOtp("");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "We couldn't process your request right now. Please try again in a moment.",
+      );
+    } finally {
+      setResending(false);
+    }
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -31,24 +80,17 @@ export function ResetPasswordPage() {
       }
       setLoading(true);
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/verify-reset-otp`,
-          {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, otp }),
-          },
-        );
-        if (!response.ok) {
-          throw new Error(getSafeAuthMessage("reset-password", response.status));
-        }
+        await apiRequest("/verify-reset-otp", {
+          method: "POST",
+          data: { email, otp },
+          action: "reset-password",
+        });
         setStep("password");
       } catch (requestError) {
         setError(
           requestError instanceof Error
             ? requestError.message
-            : getSafeAuthMessage("reset-password"),
+            : "We couldn't reset your password right now. Please try again in a moment.",
         );
       } finally {
         setLoading(false);
@@ -61,25 +103,17 @@ export function ResetPasswordPage() {
     }
     setLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/reset-password`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp, newPassword }),
-        },
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(getSafeAuthMessage("reset-password", response.status));
-      }
+      await apiRequest("/reset-password", {
+        method: "POST",
+        data: { email, otp, newPassword },
+        action: "reset-password",
+      });
       setCompleted(true);
     } catch (requestError) {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : getSafeAuthMessage("reset-password"),
+          : "We couldn't reset your password right now. Please try again in a moment.",
       );
     } finally {
       setLoading(false);
@@ -115,6 +149,22 @@ export function ResetPasswordPage() {
             <p className="helper-text">
               Use the reset code sent to your email.
             </p>
+            <div className="resend-row">
+              <span>Didn't receive the code?</span>
+              <button
+                type="button"
+                className="inline-link resend-button"
+                disabled={resending || resendIn > 0}
+                onClick={resendCode}
+              >
+                {resending && <LoaderCircle className="animate-spin" size={13} />}
+                {resending
+                  ? "Sending..."
+                  : resendIn > 0
+                    ? `Resend in ${resendIn}s`
+                    : "Resend code"}
+              </button>
+            </div>
           </>
         ) : (
           <>

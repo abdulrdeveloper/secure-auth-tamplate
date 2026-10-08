@@ -3,6 +3,7 @@ import { CheckCircle2, LoaderCircle, LogOut, UserRound, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card } from "../../components/ui";
 import { Logo } from "../../components/auth-layout";
+import { apiRequest } from "../../lib/api";
 
 export function DashboardPage() {
   const navigate = useNavigate();
@@ -16,16 +17,9 @@ export function DashboardPage() {
   } | null>(null);
 
   useEffect(() => {
-    fetch(
-      `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/me`,
-      { credentials: "include" },
+    apiRequest<{ user: { name: string; email: string; isEmailVerified: boolean } }>(
+      "/me",
     )
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok)
-          throw new Error(data.message ?? "Unable to load profile");
-        return data;
-      })
       .then((response) => setUser(response.user))
       .catch(() =>
         navigate("/login", {
@@ -37,10 +31,7 @@ export function DashboardPage() {
 
   function logout() {
     setLoggingOut(true);
-    fetch(
-      `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/logout`,
-      { method: "POST", credentials: "include" },
-    )
+    apiRequest("/logout", { method: "POST" })
       .catch(() => undefined)
       .finally(() => {
         setLoggingOut(false);

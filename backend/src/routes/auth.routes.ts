@@ -1,15 +1,13 @@
 import express, { Router } from "express";
-import {
-  registerUser,
-  loginUser,
-  forgotPassword,
-  verifyResetOtp,
-  logoutUser,
-  verifyOtp,
-  resendOtp,
-  passwordReset,
-  getMe,
-} from "../controllers/auth.controller.js";
+import { registerUser } from "../controllers/register.controller.js";
+import { verifyOtp } from "../controllers/verify-email.controller.js";
+import { resendOtp } from "../controllers/resend-otp.controller.js";
+import { loginUser } from "../controllers/login.controller.js";
+import { forgotPassword } from "../controllers/forgot-password.controller.js";
+import { verifyResetOtp } from "../controllers/verify-reset-otp.controller.js";
+import { passwordReset } from "../controllers/reset-password.controller.js";
+import { getMe } from "../controllers/me.controller.js";
+import { logoutUser } from "../controllers/logout.controller.js";
 import {
   registerSchema,
   loginSchema,

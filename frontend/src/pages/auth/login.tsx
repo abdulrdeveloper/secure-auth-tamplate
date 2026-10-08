@@ -8,7 +8,7 @@ import {
   PasswordField,
   SubmitButton,
 } from "../../components/auth-fields";
-import { getSafeAuthMessage } from "../../lib/auth-messages";
+import { apiRequest } from "../../lib/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -21,24 +21,17 @@ export function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/login`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        },
-      );
-      if (!response.ok) {
-        throw new Error(getSafeAuthMessage("login", response.status));
-      }
+      await apiRequest("/login", {
+        method: "POST",
+        data: form,
+        action: "login",
+      });
       navigate("/dashboard", { replace: true });
     } catch (requestError) {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : getSafeAuthMessage("login"),
+          : "We couldn't sign you in right now. Please try again in a moment.",
       );
     } finally {
       setLoading(false);

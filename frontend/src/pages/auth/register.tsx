@@ -9,7 +9,7 @@ import {
   PasswordField,
   SubmitButton,
 } from "../../components/auth-fields";
-import { getSafeAuthMessage } from "../../lib/auth-messages";
+import { apiRequest } from "../../lib/api";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -21,18 +21,11 @@ export function RegisterPage() {
     setError("");
     setLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/register`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        },
-      );
-      if (!response.ok) {
-        throw new Error(getSafeAuthMessage("register", response.status));
-      }
+      await apiRequest("/register", {
+        method: "POST",
+        data: form,
+        action: "register",
+      });
       const cooldownKey = `verify-cooldown:${form.email.trim().toLowerCase()}`;
       localStorage.setItem(cooldownKey, String(Date.now() + 60_000));
       navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
@@ -40,7 +33,7 @@ export function RegisterPage() {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : getSafeAuthMessage("register"),
+          : "We couldn't create your account right now. Please try again in a moment.",
       );
     } finally {
       setLoading(false);

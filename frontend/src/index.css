@@ -1,0 +1,327 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", sans-serif;
+  --font-display: "Playfair Display", serif;
+}
+
+@layer base {
+  :root {
+    @apply bg-zinc-950 font-sans text-zinc-50 antialiased;
+    font-synthesis: none;
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  body {
+    @apply m-0 min-w-80;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+}
+
+@layer components {
+  .auth-layout {
+    @apply grid min-h-screen grid-cols-[.9fr_1.1fr];
+  }
+
+  .brand-panel {
+    @apply flex flex-col border-r border-zinc-800 bg-zinc-900/70 px-[8%] py-10;
+  }
+
+  .logo {
+    @apply flex items-center gap-3 text-lg font-bold tracking-[-.04em];
+  }
+
+  .logo-mark {
+    @apply grid size-9 place-items-center rounded-[10px] bg-lime-300 text-zinc-950;
+  }
+
+  .logo-muted {
+    @apply text-zinc-500;
+  }
+
+  .brand-message {
+    @apply my-auto;
+  }
+
+  .eyebrow,
+  .card-label {
+    @apply text-[11px] font-bold tracking-[.14em] text-zinc-400;
+  }
+
+  .brand-message h1 {
+    @apply my-[18px] text-[clamp(42px,5vw,68px)] leading-[.98] tracking-[-.06em];
+  }
+
+  .brand-message em {
+    @apply font-display text-lime-300;
+  }
+
+  .description,
+  .subtitle {
+    @apply leading-relaxed text-zinc-400;
+  }
+
+  .description {
+    @apply max-w-[270px] text-[15px];
+  }
+
+  .trust-row {
+    @apply flex items-center gap-2 text-xs text-zinc-500;
+  }
+
+  .form-panel {
+    @apply grid place-items-center bg-zinc-950 px-[8%] py-10;
+  }
+
+  .form-container {
+    @apply w-full max-w-[390px];
+  }
+
+  .form-container h2 {
+    @apply my-[14px_0_7px] text-[31px] tracking-[-.05em];
+  }
+
+  .subtitle {
+    @apply mb-[31px] text-sm;
+  }
+
+  .field {
+    @apply mb-[19px] block text-[13px] font-semibold text-zinc-300;
+  }
+
+  .input-wrap {
+    @apply mt-2 flex h-[47px] cursor-text items-center gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3.5 text-zinc-500 transition-colors focus-within:border-lime-300;
+  }
+
+  .input {
+    @apply w-full border-0 bg-transparent text-zinc-50 outline-0 selection:bg-lime-300 selection:text-zinc-950;
+    color-scheme: dark;
+  }
+
+  .input::placeholder {
+    @apply text-zinc-600;
+  }
+
+  .password-toggle {
+    @apply shrink-0 border-0 bg-transparent p-0 text-zinc-500 hover:text-zinc-200;
+  }
+
+  .input:-webkit-autofill,
+  .input:-webkit-autofill:hover,
+  .input:-webkit-autofill:focus,
+  .input:-webkit-autofill:active {
+    -webkit-text-fill-color: #fafafa;
+    -webkit-box-shadow: 0 0 0 1000px #18181b inset;
+    box-shadow: 0 0 0 1000px #18181b inset;
+  }
+
+  .label {
+    @apply block;
+  }
+
+  .inline-link {
+    @apply inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300;
+  }
+
+  .forgot-link {
+    @apply -mt-1.5 mb-[22px] block text-right;
+  }
+
+  .primary-button {
+    @apply mt-[27px] flex h-12 w-full items-center justify-center gap-2 rounded-lg border-0 bg-lime-300 font-bold text-zinc-950 transition-[filter,transform] hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:transform-none;
+  }
+
+  .form-footer {
+    @apply mt-7 text-center text-[13px] text-zinc-500;
+  }
+
+  .mobile-logo {
+    @apply mb-[50px] hidden;
+  }
+
+  .dashboard {
+    @apply min-h-screen bg-zinc-950;
+  }
+
+  .topbar {
+    @apply flex h-[78px] items-center justify-between border-b border-zinc-800 px-[6%];
+  }
+
+  .logout-button {
+    @apply flex items-center gap-2 border-0 bg-transparent text-[13px] text-zinc-400 hover:text-zinc-50;
+  }
+
+  .dashboard-content {
+    @apply mx-auto my-[90px] w-[88%] max-w-[900px];
+  }
+
+  .dashboard-content h1 {
+    @apply my-[15px_0_7px] text-[clamp(32px,5vw,48px)] tracking-[-.06em];
+  }
+
+  .dashboard-grid {
+    @apply mt-[42px] grid grid-cols-[1.2fr_.8fr] gap-4;
+  }
+
+  .dashboard-resource {
+    @apply mt-6 text-center text-xs leading-relaxed text-zinc-500;
+  }
+
+  .dashboard-resource a {
+    @apply text-lime-300 underline decoration-lime-300/40 underline-offset-2 hover:decoration-lime-300;
+  }
+
+  .card {
+    @apply rounded-xl border border-zinc-800 bg-zinc-900/70 p-[25px];
+  }
+
+  .profile-card {
+    @apply relative flex items-center gap-[15px];
+  }
+
+  .avatar {
+    @apply grid size-[52px] place-items-center rounded-full bg-zinc-800 text-lime-300;
+  }
+
+  .card h3 {
+    @apply my-[7px_0_3px] text-lg;
+  }
+
+  .card p {
+    @apply m-0 text-[13px] text-zinc-500;
+  }
+
+  .verified {
+    @apply ml-auto text-lime-300;
+  }
+
+  .status {
+    @apply my-[17px_0_9px] flex items-center gap-2 text-base font-semibold;
+  }
+
+  .status-dot {
+    @apply size-2 rounded-full bg-lime-300;
+  }
+
+  .resend-row {
+    @apply my-[-3px_0_20px] flex items-center justify-between text-xs text-zinc-500;
+  }
+
+  .resend-button {
+    @apply flex items-center gap-1 border-0 bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .helper-text {
+    @apply my-[-5px_0_18px] text-xs text-zinc-500;
+  }
+
+  .error-message {
+    @apply my-[-5px_0_18px] flex items-start gap-2 rounded-lg border border-red-900/70 bg-red-950/40 px-3 py-2.5 text-xs leading-relaxed text-red-300;
+  }
+
+  .error-message svg {
+    @apply mt-0.5 shrink-0;
+  }
+
+  .success-panel {
+    @apply text-center;
+  }
+
+  .success-panel h2 {
+    @apply mt-5;
+  }
+
+  .success-icon {
+    @apply mx-auto mb-[22px] text-lime-300;
+  }
+
+  .success-link {
+    @apply mt-7 no-underline;
+  }
+
+  .dialog-backdrop {
+    @apply fixed inset-0 z-10 grid place-items-center bg-black/70 p-6 backdrop-blur;
+  }
+
+  .logout-dialog {
+    @apply relative w-full max-w-[380px] rounded-[14px] border border-zinc-700 bg-zinc-900 p-[30px] text-center shadow-[0_24px_80px_rgba(0,0,0,.45)];
+  }
+
+  .dialog-close {
+    @apply absolute right-3.5 top-3.5 grid size-[30px] place-items-center rounded-md border-0 bg-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-50;
+  }
+
+  .dialog-icon {
+    @apply mx-auto mb-[18px] grid size-12 place-items-center rounded-full bg-zinc-800 text-lime-300;
+  }
+
+  .logout-dialog h2 {
+    @apply mb-2 text-[22px] tracking-[-.04em];
+  }
+
+  .logout-dialog p {
+    @apply m-0 text-sm leading-relaxed text-zinc-400;
+  }
+
+  .dialog-actions {
+    @apply mt-[26px] flex gap-2.5;
+  }
+
+  .dialog-actions button {
+    @apply h-[42px] flex-1 rounded-[7px] font-semibold;
+  }
+
+  .dialog-cancel {
+    @apply border border-zinc-700 bg-zinc-800 text-zinc-300;
+  }
+
+  .dialog-confirm {
+    @apply border-0 bg-lime-300 text-zinc-950 hover:brightness-110;
+  }
+}
+
+@media (max-width: 720px) {
+  .auth-layout {
+    @apply block;
+  }
+
+  .brand-panel {
+    @apply hidden;
+  }
+
+  .form-panel {
+    @apply min-h-screen px-6 py-7;
+  }
+
+  .mobile-logo {
+    @apply block;
+  }
+
+  .dashboard-content {
+    @apply my-[55px] w-[calc(100%_-_48px)];
+  }
+
+  .dashboard-grid {
+    @apply grid-cols-1;
+  }
+
+  .topbar {
+    @apply px-6;
+  }
+}

@@ -6,6 +6,7 @@ export interface User {
   password?: string | undefined;
   isEmailVerified: boolean;
   emailVerifiedAt: Date | null;
+  verificationExpiresAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,10 +41,19 @@ const userSchema = new mongoose.Schema<User>({
     type: Date,
     default: null,
   },
-},{
-    timestamps: true,
-    versionKey: false,
+  verificationExpiresAt: {
+    type: Date,
+    default: null,
+  },
+}, {
+  timestamps: true,
+  versionKey: false,
 });
+
+userSchema.index(
+  { verificationExpiresAt: 1 },
+  { expireAfterSeconds: 0 },
+);
 
 const UserModel = mongoose.model<User>('User', userSchema);
 

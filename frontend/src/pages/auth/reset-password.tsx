@@ -142,9 +142,6 @@ export function ResetPasswordPage() {
               inputMode="numeric"
               maxLength={6}
             />
-            <p className="helper-text">
-              Use the reset code sent to your email.
-            </p>
             <div className="resend-row">
               <span>Didn't receive the code?</span>
               <button

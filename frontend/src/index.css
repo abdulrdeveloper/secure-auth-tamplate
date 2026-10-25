@@ -227,10 +227,6 @@
     @apply flex items-center gap-1 border-0 bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
-  .helper-text {
-    @apply my-[-5px_0_18px] text-xs text-zinc-500;
-  }
-
   .error-message {
     @apply my-[-5px_0_18px] flex items-start gap-2 rounded-lg border border-red-900/70 bg-red-950/40 px-3 py-2.5 text-xs leading-relaxed text-red-300;
   }

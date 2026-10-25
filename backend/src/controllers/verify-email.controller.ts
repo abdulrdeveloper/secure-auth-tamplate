@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 
 import userModel from "../models/user.model.js";
-import { COOKIE_OPTIONS } from "../config/cookie.config.js";
 import { verifyOtpWithRateLimit } from "../services/otp.service.js";
+import { setAuthCookie } from "../utils/token.util.js";
+import { toPublicUser } from "../utils/user.util.js";
 
 async function verifyOtp(req: Request, res: Response) {
   try {
@@ -37,21 +37,11 @@ async function verifyOtp(req: Request, res: Response) {
     user.verificationExpiresAt = null;
     await user.save();
 
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1h" },
-    );
-
-    res.cookie("token", token, COOKIE_OPTIONS);
-
-    const passwordlessUser = user.toObject();
-    delete passwordlessUser.password;
-    delete passwordlessUser.verificationExpiresAt;
+    setAuthCookie(res, user._id);
 
     return res.status(200).json({
       message: "Email verified successfully",
-      user: passwordlessUser,
+      user: toPublicUser(user),
     });
   } catch (error) {
     console.error("Error in verifyOtp:", error);

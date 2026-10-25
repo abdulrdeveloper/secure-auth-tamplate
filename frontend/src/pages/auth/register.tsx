@@ -10,6 +10,7 @@ import {
   SubmitButton,
 } from "../../components/auth-fields";
 import { apiRequest } from "../../lib/api";
+import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -26,8 +27,7 @@ export function RegisterPage() {
         data: form,
         action: "register",
       });
-      const cooldownKey = `verify-cooldown:${form.email.trim().toLowerCase()}`;
-      localStorage.setItem(cooldownKey, String(Date.now() + 60_000));
+      startOtpCooldown(getOtpCooldownKey(form.email, "verify"));
       navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
     } catch (requestError) {
       setError(

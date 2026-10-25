@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 import userModel from "../models/user.model.js";
-import { COOKIE_OPTIONS } from "../config/cookie.config.js";
+import { setAuthCookie } from "../utils/token.util.js";
+import { toPublicUser } from "../utils/user.util.js";
 
 async function loginUser(req: Request, res: Response) {
   try {
@@ -26,21 +26,11 @@ async function loginUser(req: Request, res: Response) {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1h" },
-    );
-
-    res.cookie("token", token, COOKIE_OPTIONS);
-
-    const passwordlessUser = user.toObject();
-    delete passwordlessUser.password;
-    delete passwordlessUser.verificationExpiresAt;
+    setAuthCookie(res, user._id);
 
     return res.status(200).json({
       message: "Login successful",
-      user: passwordlessUser,
+      user: toPublicUser(user),
     });
   } catch (error) {
     console.error("Error in loginUser:", error);

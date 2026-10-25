@@ -8,7 +8,7 @@ import {
   SubmitButton,
 } from "../../components/auth-fields";
 import { apiRequest } from "../../lib/api";
-import { startResetOtpCooldown } from "../../lib/reset-otp-cooldown";
+import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ export function ForgotPasswordPage() {
               data: { email },
               action: "forgot-password",
             });
-            startResetOtpCooldown(email);
+            startOtpCooldown(getOtpCooldownKey(email, "reset"));
             navigate("/reset-password", { state: { email } });
           } catch (requestError) {
             setError(

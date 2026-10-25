@@ -5,7 +5,7 @@ import authRoutes from "./routes/auth.routes.js";
 
 const app: express.Application = express();
 
-const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5174")
+const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);

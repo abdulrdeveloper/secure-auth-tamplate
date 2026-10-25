@@ -8,6 +8,8 @@ import {
   SubmitButton,
 } from "../../components/auth-fields";
 import { apiRequest } from "../../lib/api";
+import { getOtpCooldownKey } from "../../lib/otp-cooldown";
+import { useCooldown } from "../../hooks/use-cooldown";
 import { VerificationSuccess } from "./verification-success";
 
 export function VerifyEmailPage() {
@@ -17,29 +19,13 @@ export function VerifyEmailPage() {
     new URLSearchParams(location.search).get("email") ??
     (location.state as { email?: string } | null)?.email ??
     "";
-  const cooldownKey = `verify-cooldown:${email.trim().toLowerCase()}`;
+  const cooldownKey = getOtpCooldownKey(email, "verify");
+  const { secondsLeft: resendIn, start: triggerCooldown } = useCooldown(cooldownKey);
   const [completed, setCompleted] = useState(false);
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [resendIn, setResendIn] = useState(() =>
-    getCooldownSeconds(cooldownKey),
-  );
-
-  useEffect(() => {
-    const updateCountdown = () => {
-      const remaining = getCooldownSeconds(cooldownKey);
-      setResendIn(remaining);
-      if (remaining === 0) {
-        localStorage.removeItem(cooldownKey);
-      }
-    };
-    updateCountdown();
-    const timer = window.setInterval(updateCountdown, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [cooldownKey]);
 
   useEffect(() => {
     if (completed) {
@@ -122,8 +108,7 @@ export function VerifyEmailPage() {
                 action: "resend-code",
               })
                 .then(() => {
-                  startCooldown(cooldownKey);
-                  setResendIn(60);
+                  triggerCooldown(60);
                 })
                 .catch((requestError) => {
                   setError(
@@ -155,14 +140,4 @@ export function VerifyEmailPage() {
       </p>
     </>
   );
-}
-
-function getCooldownSeconds(key: string) {
-  const expiresAt = Number(localStorage.getItem(key));
-  if (!Number.isFinite(expiresAt)) return 0;
-  return Math.max(Math.ceil((expiresAt - Date.now()) / 1000), 0);
-}
-
-function startCooldown(key: string, seconds = 60) {
-  localStorage.setItem(key, String(Date.now() + seconds * 1000));
 }

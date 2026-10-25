@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  CheckCircle2,
   LoaderCircle,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { AuthHeader } from "../../components/auth-layout";
 import {
   OtpField,
@@ -15,37 +13,22 @@ import {
   SubmitButton,
 } from "../../components/auth-fields";
 import { apiRequest } from "../../lib/api";
-import {
-  getResetOtpCooldownSeconds,
-  resetOtpCooldownKey,
-  startResetOtpCooldown,
-} from "../../lib/reset-otp-cooldown";
+import { getOtpCooldownKey } from "../../lib/otp-cooldown";
+import { useCooldown } from "../../hooks/use-cooldown";
+import { AuthStatus } from "../../components/auth-status";
 
 export function ResetPasswordPage() {
   const [step, setStep] = useState<"otp" | "password">("otp");
   const [completed, setCompleted] = useState(false);
   const email = (useLocation().state as { email?: string } | null)?.email ?? "";
-  const cooldownKey = resetOtpCooldownKey(email);
+  const cooldownKey = getOtpCooldownKey(email, "reset");
+  const { secondsLeft: resendIn, start: triggerCooldown } = useCooldown(cooldownKey);
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [resendIn, setResendIn] = useState(() =>
-    getResetOtpCooldownSeconds(cooldownKey),
-  );
-
-  useEffect(() => {
-    const updateCountdown = () => {
-      const remaining = getResetOtpCooldownSeconds(cooldownKey);
-      setResendIn(remaining);
-      if (remaining === 0) localStorage.removeItem(cooldownKey);
-    };
-    updateCountdown();
-    const timer = window.setInterval(updateCountdown, 1000);
-    return () => window.clearInterval(timer);
-  }, [cooldownKey]);
 
   async function resendCode() {
     setError("");
@@ -56,8 +39,7 @@ export function ResetPasswordPage() {
         data: { email },
         action: "forgot-password",
       });
-      startResetOtpCooldown(email);
-      setResendIn(getResetOtpCooldownSeconds(cooldownKey));
+      triggerCooldown(60);
       setOtp("");
     } catch (requestError) {
       setError(
@@ -120,7 +102,21 @@ export function ResetPasswordPage() {
     }
   }
 
-  if (completed) return <ResetSuccess />;
+  if (completed) {
+    return (
+      <AuthStatus
+        eyebrow="PASSWORD UPDATED"
+        title="Password reset complete"
+        description="Your password has been updated successfully. You can now sign in with your new password."
+        action={
+          <Link className="primary-button success-link" to="/login" replace>
+            Go back to sign in <ArrowRight size={17} />
+          </Link>
+        }
+      />
+    );
+  }
+
   return (
     <>
       <AuthHeader
@@ -199,22 +195,5 @@ export function ResetPasswordPage() {
         </Link>
       </p>
     </>
-  );
-}
-
-function ResetSuccess() {
-  return (
-    <div className="success-panel">
-      <CheckCircle2 className="success-icon" size={64} />
-      <p className="eyebrow">PASSWORD UPDATED</p>
-      <h2>Password reset complete</h2>
-      <p className="subtitle">
-        Your password has been updated successfully. You can now sign in with
-        your new password.
-      </p>
-      <Link className="primary-button success-link" to="/login" replace>
-        Go back to sign in <ArrowRight size={17} />
-      </Link>
-    </div>
   );
 }

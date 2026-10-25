@@ -3,31 +3,32 @@ import redis from "./redis.service.js";
 
 export type OtpType = "verify" | "reset";
 
-type VerificationResult = { success: true } | {
-      success: false;
-      reason: "expired" | "invalid" | "too_many_attempts";
-    };
+export type VerificationResult =
+  | { success: true }
+  | { success: false; reason: "expired" | "invalid" | "too_many_attempts" };
 
 const OTP_EXPIRY = 300;
 const COOLDOWN = 60;
 const MAX_ATTEMPTS = 5;
 
-
-const getKeys = (email: string, type: OtpType) => {
+function getKeys(email: string, type: OtpType) {
   const prefix = type === "verify" ? "verify" : "reset";
+  const cooldownPrefix = type === "verify" ? "otp" : "reset";
 
   return {
     otp: `auth:${prefix}_otp:${email}`,
-    cooldown: `auth:${prefix === "verify" ? "otp" : "reset"}_cooldown:${email}`,
+    cooldown: `auth:${cooldownPrefix}_cooldown:${email}`,
     attempts: `auth:${prefix}_attempts:${email}`,
   };
-};
+}
 
-export const checkCooldown = async (email: string, type: OtpType) =>
-  Boolean(await redis.get(getKeys(email, type).cooldown));
+export async function checkCooldown(email: string, type: OtpType): Promise<boolean> {
+  const keys = getKeys(email, type);
+  const exists = await redis.get(keys.cooldown);
+  return Boolean(exists);
+}
 
-
-export const generateAndStoreOtp = async (email: string, type: OtpType) => {
+export async function generateAndStoreOtp(email: string, type: OtpType): Promise<string> {
   const otp = crypto.randomInt(100000, 1000000).toString();
   const keys = getKeys(email, type);
 
@@ -36,15 +37,14 @@ export const generateAndStoreOtp = async (email: string, type: OtpType) => {
   await redis.del(keys.attempts);
 
   return otp;
-};
+}
 
-
-export const verifyOtpWithRateLimit = async (
+export async function verifyOtpWithRateLimit(
   email: string,
   otp: string,
   type: OtpType,
   consumeOnSuccess = true,
-): Promise<VerificationResult> => {
+): Promise<VerificationResult> {
   const keys = getKeys(email, type);
   const storedOtp = await redis.get<string>(keys.otp);
 
@@ -70,16 +70,17 @@ export const verifyOtpWithRateLimit = async (
   }
 
   return { success: false, reason: "invalid" };
-};
+}
 
-export const validateOtpWithRateLimit = async (
+export async function validateOtpWithRateLimit(
   email: string,
   otp: string,
   type: OtpType,
-) => verifyOtpWithRateLimit(email, otp, type, false);
+): Promise<VerificationResult> {
+  return verifyOtpWithRateLimit(email, otp, type, false);
+}
 
-
-export const clearOtp = async (email: string, type: OtpType) => {
+export async function clearOtp(email: string, type: OtpType): Promise<void> {
   const keys = getKeys(email, type);
   await redis.del(keys.otp, keys.cooldown, keys.attempts);
-};
+}

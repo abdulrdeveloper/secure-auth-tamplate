@@ -32,6 +32,7 @@ export function AuthLayout({ children }: { children?: ReactNode }) {
   );
 }
 
+
 export function Logo() {
   return (
     <Link to="/login" className="logo">
@@ -44,6 +45,7 @@ export function Logo() {
     </Link>
   );
 }
+
 
 export function AuthHeader({
   eyebrow,

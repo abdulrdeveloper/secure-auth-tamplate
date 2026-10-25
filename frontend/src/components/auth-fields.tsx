@@ -72,7 +72,7 @@ export function NameField(
     <Field
       label="Full name"
       icon={UserRound}
-      placeholder="Alex Morgan"
+      placeholder="Sam Rivera"
       {...props}
     />
   );
@@ -137,6 +137,7 @@ function PasswordInput({
     </div>
   );
 }
+
 export function OtpField(
   props: Omit<FieldProps, "label" | "icon" | "placeholder">,
 ) {
@@ -149,6 +150,8 @@ export function OtpField(
     />
   );
 }
+
+
 export function SubmitButton({
   children,
   icon,

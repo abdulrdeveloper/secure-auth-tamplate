@@ -11,7 +11,6 @@ import {
 } from "../../components/auth-fields";
 import { apiRequest } from "../../lib/api";
 import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
-
 export function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });

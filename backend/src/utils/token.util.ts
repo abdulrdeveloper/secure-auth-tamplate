@@ -12,3 +12,4 @@ export function setAuthCookie(res: Response, userId: unknown): string {
   res.cookie("token", token, COOKIE_OPTIONS);
   return token;
 }
+

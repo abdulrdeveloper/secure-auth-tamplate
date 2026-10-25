@@ -15,3 +15,4 @@ export function getCooldownRemaining(key: string): number {
 export function startOtpCooldown(key: string, seconds = OTP_COOLDOWN_SECONDS): void {
   localStorage.setItem(key, String(Date.now() + seconds * 1000));
 }
+

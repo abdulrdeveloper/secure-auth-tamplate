@@ -12,3 +12,4 @@ export function toPublicUser<T extends UserWithSensitiveFields>(user: {
 
   return publicUser as Omit<T, "password" | "verificationExpiresAt">;
 }
+

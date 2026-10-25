@@ -25,3 +25,4 @@ export function useCooldown(key: string, defaultSeconds = 60) {
 
   return { secondsLeft, start };
 }
+

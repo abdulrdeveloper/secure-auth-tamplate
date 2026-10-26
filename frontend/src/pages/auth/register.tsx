@@ -11,11 +11,13 @@ import {
 } from "../../components/auth-fields";
 import { apiRequest } from "../../lib/api";
 import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
+
 export function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
@@ -38,6 +40,7 @@ export function RegisterPage() {
       setLoading(false);
     }
   }
+
   return (
     <>
       <AuthHeader
@@ -72,9 +75,12 @@ export function RegisterPage() {
           {loading ? "Creating account" : "Create account"}
         </SubmitButton>
       </form>
-      <p className="form-footer">
+      <p className="mt-7 text-center text-[13px] text-zinc-500">
         Already have an account?{" "}
-        <Link className="inline-link" to="/login">
+        <Link
+          className="inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300 hover:underline"
+          to="/login"
+        >
           Sign in
         </Link>
       </p>

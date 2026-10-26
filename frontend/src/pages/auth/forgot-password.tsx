@@ -15,6 +15,7 @@ export function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   return (
     <>
       <AuthHeader
@@ -60,8 +61,11 @@ export function ForgotPasswordPage() {
           {loading ? "Sending code" : "Send reset code"}
         </SubmitButton>
       </form>
-      <p className="form-footer">
-        <Link className="inline-link" to="/login">
+      <p className="mt-7 text-center text-[13px] text-zinc-500">
+        <Link
+          className="inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300 hover:underline"
+          to="/login"
+        >
           <ArrowLeft size={15} /> Back to sign in
         </Link>
       </p>

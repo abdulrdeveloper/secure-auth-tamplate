@@ -109,7 +109,11 @@ export function ResetPasswordPage() {
         title="Password reset complete"
         description="Your password has been updated successfully. You can now sign in with your new password."
         action={
-          <Link className="primary-button success-link" to="/login" replace>
+          <Link
+            className="mt-7 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-0 bg-lime-300 font-bold text-zinc-950 no-underline transition-[filter,transform] hover:-translate-y-px hover:brightness-110"
+            to="/login"
+            replace
+          >
             Go back to sign in <ArrowRight size={17} />
           </Link>
         }
@@ -142,11 +146,11 @@ export function ResetPasswordPage() {
               inputMode="numeric"
               maxLength={6}
             />
-            <div className="resend-row">
+            <div className="mt-[-3px] mb-5 flex items-center justify-between text-xs text-zinc-500">
               <span>Didn't receive the code?</span>
               <button
                 type="button"
-                className="inline-link resend-button"
+                className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-[13px] font-semibold text-lime-300 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={resending || resendIn > 0}
                 onClick={resendCode}
               >
@@ -186,8 +190,11 @@ export function ResetPasswordPage() {
               : "Reset password"}
         </SubmitButton>
       </form>
-      <p className="form-footer">
-        <Link className="inline-link" to="/login">
+      <p className="mt-7 text-center text-[13px] text-zinc-500">
+        <Link
+          className="inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300 hover:underline"
+          to="/login"
+        >
           <ArrowLeft size={15} /> Back to sign in
         </Link>
       </p>

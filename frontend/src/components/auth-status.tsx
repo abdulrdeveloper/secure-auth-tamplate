@@ -15,13 +15,18 @@ export function AuthStatus({
   action,
 }: AuthStatusProps) {
   return (
-    <div className="success-panel">
-      <CheckCircle2 className="success-icon" size={64} />
-      <p className="eyebrow">{eyebrow}</p>
-      <h2>{title}</h2>
-      <p className="subtitle">{description}</p>
+    <div className="text-center">
+      <CheckCircle2 className="mx-auto mb-[22px] text-lime-300" size={64} />
+      <p className="text-[11px] font-bold tracking-[.14em] text-zinc-400">
+        {eyebrow}
+      </p>
+      <h2 className="mt-5 text-[31px] font-bold tracking-[-0.05em] text-zinc-50">
+        {title}
+      </h2>
+      <p className="mb-[31px] text-sm leading-relaxed text-zinc-400">
+        {description}
+      </p>
       {action}
     </div>
   );
 }
-

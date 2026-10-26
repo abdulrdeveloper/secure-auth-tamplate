@@ -9,9 +9,14 @@ const COOKIE_BASE_OPTIONS = {
   path: "/",
 };
 
-export const COOKIE_OPTIONS = {
+export const ACCESS_COOKIE_OPTIONS = {
   ...COOKIE_BASE_OPTIONS,
-  maxAge: 60 * 60 * 1000,
+  maxAge: 15 * 60 * 1000,
+};
+
+export const REFRESH_COOKIE_OPTIONS = {
+  ...COOKIE_BASE_OPTIONS,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 export const COOKIE_CLEAR_OPTIONS = COOKIE_BASE_OPTIONS;

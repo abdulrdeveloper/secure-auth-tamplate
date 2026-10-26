@@ -8,6 +8,7 @@ import { verifyResetOtp } from "../controllers/verify-reset-otp.controller.js";
 import { passwordReset } from "../controllers/reset-password.controller.js";
 import { getMe } from "../controllers/me.controller.js";
 import { logoutUser } from "../controllers/logout.controller.js";
+import { refreshToken } from "../controllers/refresh.controller.js";
 import {
   registerSchema,
   loginSchema,
@@ -19,7 +20,6 @@ import {
 import { validate } from "../middlewares/validate.middleware.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 
-
 const authRoutes: Router = express.Router();
 
 authRoutes.post("/register", validate(registerSchema), registerUser);
@@ -29,6 +29,7 @@ authRoutes.post("/login", validate(loginSchema), loginUser);
 authRoutes.post("/forgot-password", validate(forgotPasswordSchema), forgotPassword);
 authRoutes.post("/verify-reset-otp", validate(verifyOtpSchema), verifyResetOtp);
 authRoutes.post("/reset-password", validate(resetPasswordSchema), passwordReset);
+authRoutes.post("/refresh", refreshToken);
 authRoutes.get("/me", authenticate, getMe);
 authRoutes.post("/logout", logoutUser);
 

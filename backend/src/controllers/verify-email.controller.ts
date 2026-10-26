@@ -1,8 +1,7 @@
 import type { Request, Response } from "express";
-
 import userModel from "../models/user.model.js";
 import { verifyOtpWithRateLimit } from "../services/otp.service.js";
-import { setAuthCookie } from "../utils/token.util.js";
+import { setAuthCookies } from "../utils/token.util.js";
 import { toPublicUser } from "../utils/user.util.js";
 
 async function verifyOtp(req: Request, res: Response) {
@@ -37,7 +36,7 @@ async function verifyOtp(req: Request, res: Response) {
     user.verificationExpiresAt = null;
     await user.save();
 
-    setAuthCookie(res, user._id);
+    await setAuthCookies(res, user._id);
 
     return res.status(200).json({
       message: "Email verified successfully",

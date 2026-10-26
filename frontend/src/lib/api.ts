@@ -10,11 +10,17 @@ type ApiRequestOptions = {
   method?: "GET" | "POST";
   data?: unknown;
   action?: AuthAction;
+  retryOnAuthFailure?: boolean;
 };
 
 export async function apiRequest<T>(
   path: string,
-  { method = "GET", data, action }: ApiRequestOptions = {},
+  {
+    method = "GET",
+    data,
+    action,
+    retryOnAuthFailure = true,
+  }: ApiRequestOptions = {},
 ): Promise<T> {
   const cleanPath = path.replace(/^\/+/, "");
   const endpoint = cleanPath.includes("/") ? cleanPath : `auth/${cleanPath}`;
@@ -38,6 +44,31 @@ export async function apiRequest<T>(
         ? getSafeAuthMessage(action)
         : "Unable to connect to the service. Check your connection and try again.",
     );
+  }
+
+  if (
+    response.status === 401 &&
+    retryOnAuthFailure &&
+    !endpoint.includes("login") &&
+    !endpoint.includes("refresh") &&
+    !endpoint.includes("register")
+  ) {
+    try {
+      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (refreshResponse.ok) {
+        return apiRequest<T>(path, {
+          method,
+          data,
+          action,
+          retryOnAuthFailure: false,
+        });
+      }
+    } catch {
+    }
   }
 
   if (!response.ok) {

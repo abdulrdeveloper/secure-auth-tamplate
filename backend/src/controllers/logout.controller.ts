@@ -1,9 +1,24 @@
 import type { Request, Response } from "express";
-import { COOKIE_CLEAR_OPTIONS } from "../config/cookie.config.js";
+import jwt from "jsonwebtoken";
+import { clearAuthCookies } from "../utils/token.util.js";
 
-async function logoutUser(_req: Request, res: Response) {
+async function logoutUser(req: Request, res: Response) {
   try {
-    res.clearCookie("token", COOKIE_CLEAR_OPTIONS);
+    const refreshToken = req.cookies?.refreshToken;
+    let userId: string | undefined;
+
+    if (refreshToken) {
+      try {
+        const secret =
+          process.env.REFRESH_TOKEN_SECRET || (process.env.JWT_SECRET as string);
+        const decoded = jwt.decode(refreshToken) as { userId?: string } | null;
+        userId = decoded?.userId;
+      } catch {
+        userId = undefined;
+      }
+    }
+
+    await clearAuthCookies(res, userId);
 
     return res.status(200).json({ message: "Logout successful" });
   } catch (error) {

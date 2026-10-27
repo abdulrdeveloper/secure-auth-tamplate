@@ -29,7 +29,6 @@ type FieldProps = {
   value?: string;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
-  maxLength?: number;
 };
 
 export function Field({
@@ -41,7 +40,6 @@ export function Field({
   value,
   onChange,
   inputMode,
-  maxLength,
 }: FieldProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +61,6 @@ export function Field({
           value={value}
           onChange={onChange}
           inputMode={inputMode}
-          maxLength={maxLength}
           required
         />
       </div>
@@ -166,7 +163,6 @@ export function OtpField({
         onValueChange(event.target.value.replace(/\D/g, "").slice(0, 6))
       }
       inputMode="numeric"
-      maxLength={6}
     />
   );
 }
@@ -177,7 +173,7 @@ export function ResendCode({
   onError,
 }: {
   cooldownKey: string;
-  onResend: () => Promise<unknown>;
+  onResend: () => Promise<{ resendAfter: number }>;
   onError: (message: string) => void;
 }) {
   const { secondsLeft, start } = useCooldown(cooldownKey);
@@ -187,8 +183,8 @@ export function ResendCode({
     onError("");
     setSending(true);
     try {
-      await onResend();
-      start();
+      const { resendAfter } = await onResend();
+      start(resendAfter);
     } catch (error) {
       onError(getErrorMessage(error));
     } finally {

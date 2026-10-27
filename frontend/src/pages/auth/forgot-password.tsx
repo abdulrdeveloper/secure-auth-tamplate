@@ -29,11 +29,11 @@ export function ForgotPasswordPage() {
           setError("");
           setLoading(true);
           try {
-            await apiRequest("/auth/forgot-password", {
-              method: "POST",
-              data: { email },
-            });
-            startOtpCooldown(getOtpCooldownKey(email, "reset"));
+            const { resendAfter } = await apiRequest<{ resendAfter: number }>(
+              "/auth/forgot-password",
+              { method: "POST", data: { email } },
+            );
+            startOtpCooldown(getOtpCooldownKey(email, "reset"), resendAfter);
             navigate("/reset-password", { state: { email } });
           } catch (requestError) {
             setError(getErrorMessage(requestError));

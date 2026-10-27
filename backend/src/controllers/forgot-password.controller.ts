@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 
+import { OTP_COOLDOWN_SECONDS } from "../config/auth.config.js";
 import userModel from "../models/user.model.js";
 import {
   checkCooldown,
@@ -8,39 +9,29 @@ import {
 } from "../services/otp.service.js";
 import { sendPasswordResetEmail } from "../services/mail.service.js";
 
+const GENERIC_RESPONSE = {
+  message: "If an account matches this email, reset instructions will be sent.",
+  resendAfter: OTP_COOLDOWN_SECONDS,
+};
+
 async function forgotPassword(req: Request, res: Response) {
-  try {
-    const { email } = req.body;
+  const { email } = req.body;
+  const user = await userModel.findOne({ email });
 
-    const user = await userModel.findOne({ email });
-    const genericResponse = {
-      message:
-        "If an account matches this email, reset instructions will be sent.",
-    };
-
-    if (!user || !user.isEmailVerified) {
-      return res.status(200).json(genericResponse);
-    }
-
-    if (await checkCooldown(email, "reset")) {
-      return res.status(200).json(genericResponse);
-    }
-
-    const otp = await generateAndStoreOtp(email, "reset");
-
-    try {
-      await sendPasswordResetEmail(email, otp);
-    } catch (emailError) {
-      console.error("Email send failed in forgotPassword:", emailError);
-      await clearOtp(email, "reset");
-      throw emailError;
-    }
-
-    return res.status(200).json(genericResponse);
-  } catch (error) {
-    console.error("Error in forgotPassword:", error);
-    res.status(500).json({ message: "Internal server error" });
+  if (!user?.isEmailVerified || (await checkCooldown(email, "reset"))) {
+    return res.status(200).json(GENERIC_RESPONSE);
   }
+
+  const otp = await generateAndStoreOtp(email, "reset");
+
+  try {
+    await sendPasswordResetEmail(email, otp);
+  } catch (emailError) {
+    await clearOtp(email, "reset");
+    throw emailError;
+  }
+
+  return res.status(200).json(GENERIC_RESPONSE);
 }
 
 export { forgotPassword };

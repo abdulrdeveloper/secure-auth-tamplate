@@ -10,40 +10,42 @@ import {
 } from "../../components/auth-fields";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 import { getOtpCooldownKey } from "../../lib/otp-cooldown";
+import { useAuth, type AuthUser } from "../../context/auth-context";
 import { VerificationSuccess } from "./verification-success";
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setUser } = useAuth();
   const email =
     new URLSearchParams(location.search).get("email") ??
     (location.state as { email?: string } | null)?.email ??
     "";
-  const [completed, setCompleted] = useState(false);
+  const [verifiedUser, setVerifiedUser] = useState<AuthUser | null>(null);
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (completed) {
-      const timer = window.setTimeout(
-        () => navigate("/dashboard", { replace: true }),
-        1200,
-      );
+    if (verifiedUser) {
+      const timer = window.setTimeout(() => {
+        setUser(verifiedUser);
+        navigate("/dashboard", { replace: true });
+      }, 1200);
       return () => window.clearTimeout(timer);
     }
-  }, [completed, navigate]);
+  }, [verifiedUser, setUser, navigate]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await apiRequest("/auth/verify-email", {
+      const response = await apiRequest<{ user: AuthUser }>("/auth/verify-email", {
         method: "POST",
         data: { email, otp },
       });
-      setCompleted(true);
+      setVerifiedUser(response.user);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -76,7 +78,7 @@ export function VerifyEmailPage() {
     );
   }
 
-  if (completed) return <VerificationSuccess />;
+  if (verifiedUser) return <VerificationSuccess />;
 
   return (
     <>
@@ -90,7 +92,10 @@ export function VerifyEmailPage() {
         <ResendCode
           cooldownKey={getOtpCooldownKey(email, "verify")}
           onResend={() =>
-            apiRequest("/auth/resend-otp", { method: "POST", data: { email } })
+            apiRequest<{ resendAfter: number }>("/auth/resend-otp", {
+              method: "POST",
+              data: { email },
+            })
           }
           onError={setError}
         />

@@ -1,38 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckCircle2, LoaderCircle, LogOut, UserRound, X } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { Card } from "../../components/ui";
 import { Logo } from "../../components/auth-layout";
-import { apiRequest } from "../../lib/api";
+import { useAuth } from "../../context/auth-context";
+import { SITE } from "../../config/site";
 
 export function DashboardPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { user, logout } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(
-    null,
-  );
 
-  useEffect(() => {
-    apiRequest<{ user: { name: string; email: string } }>("/auth/me")
-      .then((response) => setUser(response.user))
-      .catch(() =>
-        navigate("/login", {
-          replace: true,
-          state: { from: location.pathname },
-        }),
-      );
-  }, [location.pathname, navigate]);
-
-  function logout() {
+  async function handleLogout() {
     setLoggingOut(true);
-    apiRequest("/auth/logout", { method: "POST" })
-      .catch(() => undefined)
-      .finally(() => {
-        setLoggingOut(false);
-        navigate("/login", { replace: true });
-      });
+    await logout();
   }
 
   return (
@@ -51,7 +31,7 @@ export function DashboardPage() {
           OVERVIEW
         </p>
         <h1 className="mt-[15px] mb-[7px] text-[clamp(32px,5vw,48px)] font-bold tracking-[-.06em] text-zinc-50">
-          Welcome back, {user?.name ?? "there"}.
+          Welcome back, {user?.name}.
         </h1>
         <p className="mb-[31px] text-sm leading-relaxed text-zinc-400">
           Here is a quick overview of your account.
@@ -66,10 +46,10 @@ export function DashboardPage() {
                 USER PROFILE
               </span>
               <h3 className="mt-[7px] mb-[3px] text-lg font-semibold text-zinc-50">
-                {user?.name ?? "Loading..."}
+                {user?.name}
               </h3>
               <p className="m-0 text-[13px] text-zinc-500">
-                {user?.email ?? "Loading..."}
+                {user?.email}
               </p>
             </div>
             <CheckCircle2 className="ml-auto shrink-0 text-lime-300" size={20} />
@@ -91,7 +71,7 @@ export function DashboardPage() {
           Use this auth template in your own website or{" "}
           <a
             className="text-lime-300 underline decoration-lime-300/40 underline-offset-2 hover:decoration-lime-300"
-            href="https://github.com/abdulrdeveloper/secure-auth-tamplate/issues"
+            href={SITE.issuesUrl}
             target="_blank"
             rel="noreferrer"
           >
@@ -100,7 +80,7 @@ export function DashboardPage() {
           if you find a problem.{" "}
           <a
             className="text-lime-300 underline decoration-lime-300/40 underline-offset-2 hover:decoration-lime-300"
-            href="https://github.com/abdulrdeveloper/secure-auth-tamplate"
+            href={SITE.repoUrl}
             target="_blank"
             rel="noreferrer"
           >
@@ -148,7 +128,7 @@ export function DashboardPage() {
               </button>
               <button
                 className="flex h-[42px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-[7px] border-0 bg-lime-300 font-semibold text-zinc-950 hover:brightness-110 disabled:opacity-70"
-                onClick={logout}
+                onClick={handleLogout}
                 disabled={loggingOut}
               >
                 {loggingOut && (

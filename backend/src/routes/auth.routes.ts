@@ -19,12 +19,16 @@ import {
 import { validate } from "../middlewares/validate.middleware.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { rateLimit } from "../middlewares/rate-limit.middleware.js";
+import {
+  RATE_LIMIT_MAX,
+  RATE_LIMIT_WINDOW_SECONDS,
+} from "../config/auth.config.js";
 
 const authRoutes: Router = express.Router();
 
-const loginLimit = rateLimit("login", 10, 15 * 60);
-const emailLimit = rateLimit("email", 10, 15 * 60);
-const otpLimit = rateLimit("otp", 20, 15 * 60);
+const loginLimit = rateLimit("login", RATE_LIMIT_MAX.login, RATE_LIMIT_WINDOW_SECONDS);
+const emailLimit = rateLimit("email", RATE_LIMIT_MAX.email, RATE_LIMIT_WINDOW_SECONDS);
+const otpLimit = rateLimit("otp", RATE_LIMIT_MAX.otp, RATE_LIMIT_WINDOW_SECONDS);
 
 authRoutes.post("/register", emailLimit, validate(registerSchema), registerUser);
 authRoutes.post("/verify-email", otpLimit, validate(verifyOtpSchema), verifyOtp);

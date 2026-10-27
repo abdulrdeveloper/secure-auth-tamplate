@@ -12,38 +12,31 @@ const OTP_ERROR_MESSAGES = {
 };
 
 async function verifyOtp(req: Request, res: Response) {
-  try {
-    const { email, otp } = req.body;
-    const verification = await verifyOtpWithRateLimit(email, otp, "verify");
+  const { email, otp } = req.body;
+  const verification = await verifyOtpWithRateLimit(email, otp, "verify");
 
-    if (!verification.success) {
-      return res
-        .status(400)
-        .json({ message: OTP_ERROR_MESSAGES[verification.reason] });
-    }
-
-    const user = await userModel.findOne({ email });
-    if (!user) {
-      return res
-        .status(400)
-        .json({ message: OTP_ERROR_MESSAGES.expired });
-    }
-
-    user.isEmailVerified = true;
-    user.emailVerifiedAt = new Date();
-    user.verificationExpiresAt = null;
-    await user.save();
-
-    await setAuthCookies(res, user._id);
-
-    return res.status(200).json({
-      message: "Email verified successfully",
-      user: toPublicUser(user),
-    });
-  } catch (error) {
-    console.error("Error in verifyOtp:", error);
-    res.status(500).json({ message: "Internal server error" });
+  if (!verification.success) {
+    return res
+      .status(400)
+      .json({ message: OTP_ERROR_MESSAGES[verification.reason] });
   }
+
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.status(400).json({ message: OTP_ERROR_MESSAGES.expired });
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerifiedAt = new Date();
+  user.verificationExpiresAt = null;
+  await user.save();
+
+  await setAuthCookies(res, user._id);
+
+  return res.status(200).json({
+    message: "Email verified successfully",
+    user: toPublicUser(user),
+  });
 }
 
 export { verifyOtp };

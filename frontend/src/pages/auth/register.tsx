@@ -23,11 +23,11 @@ export function RegisterPage() {
     setError("");
     setLoading(true);
     try {
-      await apiRequest("/auth/register", {
-        method: "POST",
-        data: form,
-      });
-      startOtpCooldown(getOtpCooldownKey(form.email, "verify"));
+      const { resendAfter } = await apiRequest<{ resendAfter: number }>(
+        "/auth/register",
+        { method: "POST", data: form },
+      );
+      startOtpCooldown(getOtpCooldownKey(form.email, "verify"), resendAfter);
       navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
     } catch (requestError) {
       setError(getErrorMessage(requestError));

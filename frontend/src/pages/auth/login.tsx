@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowRight, Mail } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth, type AuthUser } from "../../context/auth-context";
 import { AuthHeader } from "../../components/auth-layout";
 import {
   Field,
@@ -12,6 +13,8 @@ import { apiRequest, getErrorMessage } from "../../lib/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { setUser } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,11 +24,13 @@ export function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await apiRequest("/auth/login", {
+      const response = await apiRequest<{ user: AuthUser }>("/auth/login", {
         method: "POST",
         data: form,
       });
-      navigate("/dashboard", { replace: true });
+      const from = (location.state as { from?: string } | null)?.from;
+      setUser(response.user);
+      navigate(from ?? "/dashboard", { replace: true });
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {

@@ -1,4 +1,9 @@
 import crypto from "crypto";
+import {
+  OTP_COOLDOWN_SECONDS,
+  OTP_MAX_ATTEMPTS,
+  OTP_TTL_SECONDS,
+} from "../config/auth.config.js";
 import redis from "./redis.service.js";
 
 export type OtpType = "verify" | "reset";
@@ -6,10 +11,6 @@ export type OtpType = "verify" | "reset";
 export type VerificationResult =
   | { success: true }
   | { success: false; reason: "expired" | "invalid" | "too_many_attempts" };
-
-const OTP_EXPIRY = 300;
-const COOLDOWN = 60;
-const MAX_ATTEMPTS = 5;
 
 function getKeys(email: string, type: OtpType) {
   return {
@@ -29,8 +30,8 @@ export async function generateAndStoreOtp(email: string, type: OtpType): Promise
   const otp = crypto.randomInt(100000, 1000000).toString();
   const keys = getKeys(email, type);
 
-  await redis.set(keys.otp, otp, { ex: OTP_EXPIRY });
-  await redis.set(keys.cooldown, "1", { ex: COOLDOWN });
+  await redis.set(keys.otp, otp, { ex: OTP_TTL_SECONDS });
+  await redis.set(keys.cooldown, "1", { ex: OTP_COOLDOWN_SECONDS });
   await redis.del(keys.attempts);
 
   return otp;
@@ -46,10 +47,10 @@ export async function verifyOtpWithRateLimit(
 
   const attempts = await redis.incr(keys.attempts);
   if (attempts === 1) {
-    await redis.expire(keys.attempts, OTP_EXPIRY);
+    await redis.expire(keys.attempts, OTP_TTL_SECONDS);
   }
 
-  if (attempts > MAX_ATTEMPTS) {
+  if (attempts > OTP_MAX_ATTEMPTS) {
     await redis.del(keys.otp);
     return { success: false, reason: "too_many_attempts" };
   }
@@ -71,7 +72,7 @@ export async function verifyOtpWithRateLimit(
     return { success: true };
   }
 
-  if (attempts === MAX_ATTEMPTS) {
+  if (attempts === OTP_MAX_ATTEMPTS) {
     await redis.del(keys.otp, keys.attempts);
     return { success: false, reason: "too_many_attempts" };
   }

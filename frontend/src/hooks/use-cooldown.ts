@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  OTP_COOLDOWN_SECONDS,
-  getCooldownRemaining,
-  startOtpCooldown,
-} from "../lib/otp-cooldown";
+import { getCooldownRemaining, startOtpCooldown } from "../lib/otp-cooldown";
 
 export function useCooldown(key: string) {
   const [secondsLeft, setSecondsLeft] = useState(() => getCooldownRemaining(key));
@@ -22,9 +18,9 @@ export function useCooldown(key: string) {
     return () => window.clearInterval(interval);
   }, [key]);
 
-  const start = () => {
-    startOtpCooldown(key);
-    setSecondsLeft(OTP_COOLDOWN_SECONDS);
+  const start = (seconds: number) => {
+    startOtpCooldown(key, seconds);
+    setSecondsLeft(seconds);
   };
 
   return { secondsLeft, start };

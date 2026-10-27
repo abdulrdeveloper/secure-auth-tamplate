@@ -1,11 +1,9 @@
-import express, {
-  type NextFunction,
-  type Request,
-  type Response,
-} from "express";
+import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
+import { BODY_LIMIT } from "./config/auth.config.js";
+import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 
 const app: express.Application = express();
 
@@ -21,7 +19,7 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: BODY_LIMIT }));
 app.use(cookieParser());
 
 app.get("/health", (_req, res) => {
@@ -29,28 +27,7 @@ app.get("/health", (_req, res) => {
 });
 app.use("/api/auth", authRoutes);
 
-app.use((_req: Request, res: Response) => {
-  res.status(404).json({ message: "Route not found" });
-});
-
-app.use(
-  (
-    error: Error & { status?: number; type?: string },
-    _req: Request,
-    res: Response,
-    _next: NextFunction,
-  ) => {
-    if (error.type === "entity.parse.failed") {
-      return res.status(400).json({ message: "Invalid JSON body" });
-    }
-
-    if (error.type === "entity.too.large") {
-      return res.status(413).json({ message: "Request body is too large" });
-    }
-
-    console.error("Unhandled error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  },
-);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;

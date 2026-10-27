@@ -24,11 +24,12 @@ export function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
 
   async function resendCode() {
-    await apiRequest("/auth/forgot-password", {
-      method: "POST",
-      data: { email },
-    });
+    const response = await apiRequest<{ resendAfter: number }>(
+      "/auth/forgot-password",
+      { method: "POST", data: { email } },
+    );
     setOtp("");
+    return response;
   }
 
   async function submit(event: React.FormEvent) {

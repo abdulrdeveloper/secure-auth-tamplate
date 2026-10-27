@@ -2,6 +2,8 @@ const API_BASE_URL = `${(import.meta.env.VITE_API_URL ?? "http://localhost:3000"
 
 const NO_REFRESH_PATHS = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];
 
+export const SESSION_EXPIRED_EVENT = "auth:session-expired";
+
 type ApiRequestOptions = {
   method?: "GET" | "POST";
   data?: unknown;
@@ -46,12 +48,12 @@ export async function apiRequest<T>(
 ): Promise<T> {
   let response = await send(path, options);
 
-  if (
-    response.status === 401 &&
-    !NO_REFRESH_PATHS.includes(path) &&
-    (await refreshSession())
-  ) {
-    response = await send(path, options);
+  if (response.status === 401 && !NO_REFRESH_PATHS.includes(path)) {
+    if (await refreshSession()) {
+      response = await send(path, options);
+    } else {
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    }
   }
 
   const body = (await response.json().catch(() => null)) as

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PASSWORD_MIN_LENGTH } from "./auth.config.js";
 
 const email = z
   .string({ message: "Email is required" })
@@ -8,7 +9,10 @@ const email = z
 
 const password = z
   .string({ message: "Password is required" })
-  .min(6, "Password must be at least 6 characters");
+  .min(
+    PASSWORD_MIN_LENGTH,
+    `Password must be at least ${PASSWORD_MIN_LENGTH} characters`,
+  );
 
 const otp = z
   .string({ message: "OTP code is required" })

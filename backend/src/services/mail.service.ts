@@ -1,6 +1,9 @@
 import { Resend } from "resend";
+import { OTP_TTL_SECONDS } from "../config/auth.config.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const OTP_MINUTES = Math.round(OTP_TTL_SECONDS / 60);
 
 type OtpEmailOptions = {
   subject: string;
@@ -13,7 +16,7 @@ type OtpEmailOptions = {
 };
 
 async function sendOtpEmail(to: string, options: OtpEmailOptions) {
-  const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  const fromEmail = process.env.EMAIL_FROM as string;
   const appName = process.env.APP_NAME || "Auth App";
 
   const { data, error } = await resend.emails.send({
@@ -53,7 +56,7 @@ export async function sendVerificationEmail(to: string, code: string) {
     code,
     accentColor: "#4F46E5",
     backgroundColor: "#EEF2FF",
-    notice: "This code will expire in 5 minutes.",
+    notice: `This code will expire in ${OTP_MINUTES} minutes.`,
   });
 }
 
@@ -65,7 +68,6 @@ export async function sendPasswordResetEmail(to: string, code: string) {
     code,
     accentColor: "#DC2626",
     backgroundColor: "#FEF2F2",
-    notice:
-      "This code will expire in 5 minutes. If you did not request this, you can ignore this email.",
+    notice: `This code will expire in ${OTP_MINUTES} minutes. If you did not request this, you can ignore this email.`,
   });
 }

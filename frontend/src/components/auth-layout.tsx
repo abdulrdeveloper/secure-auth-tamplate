@@ -1,6 +1,7 @@
 import { Fingerprint, ShieldCheck } from "lucide-react";
 import { type ReactNode } from "react";
 import { Link, Outlet } from "react-router-dom";
+import { SITE } from "../config/site";
 
 export function AuthLayout({ children }: { children?: ReactNode }) {
   return (
@@ -17,7 +18,7 @@ export function AuthLayout({ children }: { children?: ReactNode }) {
             <em className="font-display text-lime-300">protected.</em>
           </h1>
           <p className="max-w-[270px] text-[15px] leading-relaxed text-zinc-400">
-            Simple, secure authentication for everything that matters.
+            {SITE.tagline}
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-zinc-500">
@@ -44,7 +45,8 @@ export function Logo() {
         <ShieldCheck size={20} />
       </span>
       <span>
-        secure<span className="text-zinc-500">auth</span>
+        {SITE.nameFirst}
+        <span className="text-zinc-500">{SITE.nameSecond}</span>
       </span>
     </Link>
   );

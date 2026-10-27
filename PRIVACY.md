@@ -7,8 +7,7 @@ policy explains what information the Secure Auth demo handles, why it is used,
 and the choices available to users.
 
 This document is written for the current implementation and may be updated as
-the project grows. It is not a substitute for advice from a qualified legal
-professional.
+the project grows.
 
 ## Who this policy covers
 

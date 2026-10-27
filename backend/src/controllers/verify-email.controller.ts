@@ -1,34 +1,32 @@
 import type { Request, Response } from "express";
+
 import userModel from "../models/user.model.js";
 import { verifyOtpWithRateLimit } from "../services/otp.service.js";
 import { setAuthCookies } from "../utils/token.util.js";
 import { toPublicUser } from "../utils/user.util.js";
 
+const OTP_ERROR_MESSAGES = {
+  expired: "Verification code has expired. Please request a new one.",
+  invalid: "Invalid verification code",
+  too_many_attempts: "Too many failed attempts. Please request a new code.",
+};
+
 async function verifyOtp(req: Request, res: Response) {
   try {
     const { email, otp } = req.body;
     const verification = await verifyOtpWithRateLimit(email, otp, "verify");
-    if (!verification.success && verification.reason === "expired") {
-      return res
-        .status(400)
-        .json({ message: "Verification code has expired or is invalid" });
-    }
 
     if (!verification.success) {
-      if (verification.reason === "too_many_attempts") {
-        return res.status(400).json({
-          message: "Too many failed attempts. Please request a new code.",
-        });
-      }
-
-      return res.status(400).json({ message: "Invalid verification code" });
+      return res
+        .status(400)
+        .json({ message: OTP_ERROR_MESSAGES[verification.reason] });
     }
 
     const user = await userModel.findOne({ email });
     if (!user) {
       return res
         .status(400)
-        .json({ message: "The verification code is invalid or expired." });
+        .json({ message: OTP_ERROR_MESSAGES.expired });
     }
 
     user.isEmailVerified = true;

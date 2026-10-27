@@ -6,6 +6,7 @@ import {
   clearOtp,
   validateOtpWithRateLimit,
 } from "../services/otp.service.js";
+import { revokeRefreshToken } from "../utils/token.util.js";
 
 async function passwordReset(req: Request, res: Response) {
   try {
@@ -31,6 +32,7 @@ async function passwordReset(req: Request, res: Response) {
     user.password = hashedPassword;
     await user.save();
     await clearOtp(email, "reset");
+    await revokeRefreshToken(user._id);
 
     return res.status(200).json({
       message:

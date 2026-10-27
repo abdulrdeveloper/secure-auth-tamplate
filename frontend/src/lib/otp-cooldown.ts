@@ -12,6 +12,6 @@ export function getCooldownRemaining(key: string): number {
   return Math.max(Math.ceil((expiresAt - Date.now()) / 1000), 0);
 }
 
-export function startOtpCooldown(key: string, seconds = OTP_COOLDOWN_SECONDS): void {
-  localStorage.setItem(key, String(Date.now() + seconds * 1000));
+export function startOtpCooldown(key: string): void {
+  localStorage.setItem(key, String(Date.now() + OTP_COOLDOWN_SECONDS * 1000));
 }

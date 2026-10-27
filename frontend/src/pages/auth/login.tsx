@@ -8,7 +8,7 @@ import {
   PasswordField,
   SubmitButton,
 } from "../../components/auth-fields";
-import { apiRequest } from "../../lib/api";
+import { apiRequest, getErrorMessage } from "../../lib/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -21,18 +21,13 @@ export function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await apiRequest("/login", {
+      await apiRequest("/auth/login", {
         method: "POST",
         data: form,
-        action: "login",
       });
       navigate("/dashboard", { replace: true });
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "We couldn't sign you in right now. Please try again in a moment.",
-      );
+      setError(getErrorMessage(requestError));
     } finally {
       setLoading(false);
     }

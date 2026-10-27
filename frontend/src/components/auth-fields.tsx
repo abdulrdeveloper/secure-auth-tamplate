@@ -17,6 +17,8 @@ import {
   UserRound,
 } from "lucide-react";
 import { Input, Label } from "./ui";
+import { useCooldown } from "../hooks/use-cooldown";
+import { getErrorMessage } from "../lib/api";
 
 type FieldProps = {
   label: string;
@@ -146,16 +148,71 @@ function PasswordInput({
   );
 }
 
-export function OtpField(
-  props: Omit<FieldProps, "label" | "icon" | "placeholder">,
-) {
+export function OtpField({
+  value,
+  onValueChange,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+}) {
   return (
     <Field
       label="Verification code"
       icon={KeyRound}
       placeholder="000000"
-      {...props}
+      name="otp"
+      value={value}
+      onChange={(event) =>
+        onValueChange(event.target.value.replace(/\D/g, "").slice(0, 6))
+      }
+      inputMode="numeric"
+      maxLength={6}
     />
+  );
+}
+
+export function ResendCode({
+  cooldownKey,
+  onResend,
+  onError,
+}: {
+  cooldownKey: string;
+  onResend: () => Promise<unknown>;
+  onError: (message: string) => void;
+}) {
+  const { secondsLeft, start } = useCooldown(cooldownKey);
+  const [sending, setSending] = useState(false);
+
+  async function handleClick() {
+    onError("");
+    setSending(true);
+    try {
+      await onResend();
+      start();
+    } catch (error) {
+      onError(getErrorMessage(error));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="mt-[-3px] mb-5 flex items-center justify-between text-xs text-zinc-500">
+      <span>Didn't receive the code?</span>
+      <button
+        type="button"
+        className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-[13px] font-semibold text-lime-300 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={sending || secondsLeft > 0}
+        onClick={handleClick}
+      >
+        {sending && <LoaderCircle className="animate-spin" size={13} />}
+        {sending
+          ? "Sending..."
+          : secondsLeft > 0
+            ? `Resend in ${secondsLeft}s`
+            : "Resend code"}
+      </button>
+    </div>
   );
 }
 

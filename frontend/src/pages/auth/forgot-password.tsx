@@ -7,7 +7,7 @@ import {
   Field,
   SubmitButton,
 } from "../../components/auth-fields";
-import { apiRequest } from "../../lib/api";
+import { apiRequest, getErrorMessage } from "../../lib/api";
 import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
 
 export function ForgotPasswordPage() {
@@ -29,19 +29,14 @@ export function ForgotPasswordPage() {
           setError("");
           setLoading(true);
           try {
-            await apiRequest("/forgot-password", {
+            await apiRequest("/auth/forgot-password", {
               method: "POST",
               data: { email },
-              action: "forgot-password",
             });
             startOtpCooldown(getOtpCooldownKey(email, "reset"));
             navigate("/reset-password", { state: { email } });
           } catch (requestError) {
-            setError(
-              requestError instanceof Error
-                ? requestError.message
-                : "We couldn't process your request right now. Please try again in a moment.",
-            );
+            setError(getErrorMessage(requestError));
           } finally {
             setLoading(false);
           }

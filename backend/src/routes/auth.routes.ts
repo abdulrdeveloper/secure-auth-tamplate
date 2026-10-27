@@ -12,23 +12,27 @@ import { refreshToken } from "../controllers/refresh.controller.js";
 import {
   registerSchema,
   loginSchema,
-  forgotPasswordSchema,
+  emailSchema,
   resetPasswordSchema,
   verifyOtpSchema,
-  resendOtpSchema,
 } from "../config/validation.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
+import { rateLimit } from "../middlewares/rate-limit.middleware.js";
 
 const authRoutes: Router = express.Router();
 
-authRoutes.post("/register", validate(registerSchema), registerUser);
-authRoutes.post("/verify-email", validate(verifyOtpSchema), verifyOtp);
-authRoutes.post("/resend-otp", validate(resendOtpSchema), resendOtp);
-authRoutes.post("/login", validate(loginSchema), loginUser);
-authRoutes.post("/forgot-password", validate(forgotPasswordSchema), forgotPassword);
-authRoutes.post("/verify-reset-otp", validate(verifyOtpSchema), verifyResetOtp);
-authRoutes.post("/reset-password", validate(resetPasswordSchema), passwordReset);
+const loginLimit = rateLimit("login", 10, 15 * 60);
+const emailLimit = rateLimit("email", 10, 15 * 60);
+const otpLimit = rateLimit("otp", 20, 15 * 60);
+
+authRoutes.post("/register", emailLimit, validate(registerSchema), registerUser);
+authRoutes.post("/verify-email", otpLimit, validate(verifyOtpSchema), verifyOtp);
+authRoutes.post("/resend-otp", emailLimit, validate(emailSchema), resendOtp);
+authRoutes.post("/login", loginLimit, validate(loginSchema), loginUser);
+authRoutes.post("/forgot-password", emailLimit, validate(emailSchema), forgotPassword);
+authRoutes.post("/verify-reset-otp", otpLimit, validate(verifyOtpSchema), verifyResetOtp);
+authRoutes.post("/reset-password", otpLimit, validate(resetPasswordSchema), passwordReset);
 authRoutes.post("/refresh", refreshToken);
 authRoutes.get("/me", authenticate, getMe);
 authRoutes.post("/logout", logoutUser);

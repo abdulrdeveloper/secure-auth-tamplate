@@ -21,37 +21,33 @@ async function registerUser(req: Request, res: Response) {
         .json({ message: "Unable to create an account with these details." });
     }
 
-    if (!existingUser) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await new userModel({
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const verificationExpiresAt = new Date(
+      Date.now() + UNVERIFIED_ACCOUNT_TTL_MS,
+    );
+
+    if (existingUser) {
+      existingUser.name = name;
+      existingUser.password = hashedPassword;
+      existingUser.verificationExpiresAt = verificationExpiresAt;
+      await existingUser.save();
+    } else {
+      await userModel.create({
         name,
         email,
         password: hashedPassword,
-        isEmailVerified: false,
-        verificationExpiresAt: new Date(Date.now() + UNVERIFIED_ACCOUNT_TTL_MS),
-      }).save();
-    }
-
-    if (existingUser && !existingUser.verificationExpiresAt) {
-      existingUser.verificationExpiresAt = new Date(
-        existingUser.createdAt.getTime() + UNVERIFIED_ACCOUNT_TTL_MS,
-      );
-      await existingUser.save();
-    }
-
-    if (existingUser && (await checkCooldown(email, "verify"))) {
-      return res.status(201).json({
-        message:
-          "Registration successful. Please check your email for the verification OTP.",
-        email,
+        verificationExpiresAt,
       });
     }
 
-    if (existingUser) {
-      existingUser.verificationExpiresAt = new Date(
-        Date.now() + UNVERIFIED_ACCOUNT_TTL_MS,
-      );
-      await existingUser.save();
+    const successResponse = {
+      message:
+        "Registration successful. Please check your email for the verification OTP.",
+      email,
+    };
+
+    if (await checkCooldown(email, "verify")) {
+      return res.status(201).json(successResponse);
     }
 
     const otp = await generateAndStoreOtp(email, "verify");
@@ -66,11 +62,7 @@ async function registerUser(req: Request, res: Response) {
       });
     }
 
-    return res.status(201).json({
-      message:
-        "Registration successful. Please check your email for the verification OTP.",
-      email,
-    });
+    return res.status(201).json(successResponse);
   } catch (error) {
     console.error("Error in registerUser:", error);
     res.status(500).json({ message: "Internal server error" });

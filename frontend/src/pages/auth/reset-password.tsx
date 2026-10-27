@@ -1,105 +1,74 @@
 import { useState } from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  LoaderCircle,
-} from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { AuthHeader } from "../../components/auth-layout";
 import {
-  OtpField,
   ErrorMessage,
+  OtpField,
   PasswordField,
+  ResendCode,
   SubmitButton,
 } from "../../components/auth-fields";
-import { apiRequest } from "../../lib/api";
-import { getOtpCooldownKey } from "../../lib/otp-cooldown";
-import { useCooldown } from "../../hooks/use-cooldown";
 import { AuthStatus } from "../../components/auth-status";
+import { apiRequest, getErrorMessage } from "../../lib/api";
+import { getOtpCooldownKey } from "../../lib/otp-cooldown";
 
 export function ResetPasswordPage() {
+  const email = (useLocation().state as { email?: string } | null)?.email ?? "";
   const [step, setStep] = useState<"otp" | "password">("otp");
   const [completed, setCompleted] = useState(false);
-  const email = (useLocation().state as { email?: string } | null)?.email ?? "";
-  const cooldownKey = getOtpCooldownKey(email, "reset");
-  const { secondsLeft: resendIn, start: triggerCooldown } = useCooldown(cooldownKey);
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
 
   async function resendCode() {
-    setError("");
-    setResending(true);
-    try {
-      await apiRequest("/forgot-password", {
-        method: "POST",
-        data: { email },
-        action: "forgot-password",
-      });
-      triggerCooldown(60);
-      setOtp("");
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "We couldn't process your request right now. Please try again in a moment.",
-      );
-    } finally {
-      setResending(false);
-    }
+    await apiRequest("/auth/forgot-password", {
+      method: "POST",
+      data: { email },
+    });
+    setOtp("");
   }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
-    if (step === "otp") {
-      if (!/^\d{6}$/.test(otp)) {
-        setError("Enter the 6-digit reset code sent to your email.");
-        return;
-      }
-      setLoading(true);
-      try {
-        await apiRequest("/verify-reset-otp", {
-          method: "POST",
-          data: { email, otp },
-          action: "reset-password",
-        });
-        setStep("password");
-      } catch (requestError) {
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "We couldn't reset your password right now. Please try again in a moment.",
-        );
-      } finally {
-        setLoading(false);
-      }
+
+    if (step === "otp" && otp.length !== 6) {
+      setError("Enter the 6-digit reset code sent to your email.");
       return;
     }
-    if (newPassword !== confirmPassword) {
+
+    if (step === "password" && newPassword !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
+
     setLoading(true);
     try {
-      await apiRequest("/reset-password", {
-        method: "POST",
-        data: { email, otp, newPassword },
-        action: "reset-password",
-      });
-      setCompleted(true);
+      if (step === "otp") {
+        await apiRequest("/auth/verify-reset-otp", {
+          method: "POST",
+          data: { email, otp },
+        });
+        setStep("password");
+      } else {
+        await apiRequest("/auth/reset-password", {
+          method: "POST",
+          data: { email, otp, newPassword },
+        });
+        setCompleted(true);
+      }
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "We couldn't reset your password right now. Please try again in a moment.",
-      );
+      setError(getErrorMessage(requestError));
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!email) {
+    return <Navigate to="/forgot-password" replace />;
   }
 
   if (completed) {
@@ -121,47 +90,28 @@ export function ResetPasswordPage() {
     );
   }
 
+  const isOtpStep = step === "otp";
+
   return (
     <>
       <AuthHeader
         eyebrow="ACCOUNT RECOVERY"
-        title={
-          step === "otp" ? "Enter your reset code" : "Choose a new password"
-        }
+        title={isOtpStep ? "Enter your reset code" : "Choose a new password"}
         description={
-          step === "otp"
+          isOtpStep
             ? "Use the code sent to your email to continue."
             : "Create a new password for your secure account."
         }
       />
       <form onSubmit={submit}>
-        {step === "otp" ? (
+        {isOtpStep ? (
           <>
-            <OtpField
-              name="otp"
-              value={otp}
-              onChange={(event) =>
-                setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-              inputMode="numeric"
-              maxLength={6}
+            <OtpField value={otp} onValueChange={setOtp} />
+            <ResendCode
+              cooldownKey={getOtpCooldownKey(email, "reset")}
+              onResend={resendCode}
+              onError={setError}
             />
-            <div className="mt-[-3px] mb-5 flex items-center justify-between text-xs text-zinc-500">
-              <span>Didn't receive the code?</span>
-              <button
-                type="button"
-                className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-[13px] font-semibold text-lime-300 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={resending || resendIn > 0}
-                onClick={resendCode}
-              >
-                {resending && <LoaderCircle className="animate-spin" size={13} />}
-                {resending
-                  ? "Sending..."
-                  : resendIn > 0
-                    ? `Resend in ${resendIn}s`
-                    : "Resend code"}
-              </button>
-            </div>
           </>
         ) : (
           <>
@@ -181,13 +131,9 @@ export function ResetPasswordPage() {
         )}
         {error && <ErrorMessage message={error} />}
         <SubmitButton loading={loading} icon={<ArrowRight size={17} />}>
-          {loading
-            ? step === "otp"
-              ? "Continuing"
-              : "Resetting password"
-            : step === "otp"
-              ? "Continue"
-              : "Reset password"}
+          {isOtpStep
+            ? loading ? "Continuing" : "Continue"
+            : loading ? "Resetting password" : "Reset password"}
         </SubmitButton>
       </form>
       <p className="mt-7 text-center text-[13px] text-zinc-500">

@@ -9,36 +9,17 @@ import {
 } from "../services/otp.service.js";
 import { sendVerificationEmail } from "../services/mail.service.js";
 
+const GENERIC_RESPONSE = {
+  message: "If an account matches this email, a verification code will be sent.",
+};
+
 async function resendOtp(req: Request, res: Response) {
   try {
     const { email } = req.body;
     const user = await userModel.findOne({ email });
-    if (!user) {
-      return res.status(200).json({
-        message:
-          "If an account matches this email, a verification code will be sent.",
-      });
-    }
 
-    if (user.isEmailVerified) {
-      return res.status(200).json({
-        message:
-          "If an account matches this email, a verification code will be sent.",
-      });
-    }
-
-    if (!user.verificationExpiresAt) {
-      user.verificationExpiresAt = new Date(
-        user.createdAt.getTime() + UNVERIFIED_ACCOUNT_TTL_MS,
-      );
-      await user.save();
-    }
-
-    if (await checkCooldown(email, "verify")) {
-      return res.status(200).json({
-        message:
-          "If an account matches this email, a verification code will be sent.",
-      });
+    if (!user || user.isEmailVerified || (await checkCooldown(email, "verify"))) {
+      return res.status(200).json(GENERIC_RESPONSE);
     }
 
     user.verificationExpiresAt = new Date(
@@ -56,9 +37,7 @@ async function resendOtp(req: Request, res: Response) {
       throw emailError;
     }
 
-    return res
-      .status(200)
-      .json({ message: "Verification OTP resent successfully" });
+    return res.status(200).json(GENERIC_RESPONSE);
   } catch (error) {
     console.error("Error in resendOtp:", error);
     res.status(500).json({ message: "Internal server error" });

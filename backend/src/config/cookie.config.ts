@@ -1,11 +1,9 @@
-import "dotenv/config";
+const isProduction = process.env.NODE_ENV === "production";
 
 const COOKIE_BASE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as
-    | "none"
-    | "lax",
+  secure: isProduction,
+  sameSite: isProduction ? ("none" as const) : ("lax" as const),
   path: "/",
 };
 

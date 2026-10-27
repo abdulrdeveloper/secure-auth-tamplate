@@ -10,16 +10,12 @@ export function DashboardPage() {
   const location = useLocation();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [user, setUser] = useState<{
-    name: string;
-    email: string;
-    isEmailVerified: boolean;
-  } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(
+    null,
+  );
 
   useEffect(() => {
-    apiRequest<{ user: { name: string; email: string; isEmailVerified: boolean } }>(
-      "/me",
-    )
+    apiRequest<{ user: { name: string; email: string } }>("/auth/me")
       .then((response) => setUser(response.user))
       .catch(() =>
         navigate("/login", {
@@ -31,7 +27,7 @@ export function DashboardPage() {
 
   function logout() {
     setLoggingOut(true);
-    apiRequest("/logout", { method: "POST" })
+    apiRequest("/auth/logout", { method: "POST" })
       .catch(() => undefined)
       .finally(() => {
         setLoggingOut(false);
@@ -55,7 +51,7 @@ export function DashboardPage() {
           OVERVIEW
         </p>
         <h1 className="mt-[15px] mb-[7px] text-[clamp(32px,5vw,48px)] font-bold tracking-[-.06em] text-zinc-50">
-          Good morning, {user?.name ?? "there"}.
+          Welcome back, {user?.name ?? "there"}.
         </h1>
         <p className="mb-[31px] text-sm leading-relaxed text-zinc-400">
           Here is a quick overview of your account.
@@ -83,10 +79,8 @@ export function DashboardPage() {
               ACCOUNT STATUS
             </span>
             <div className="mt-[17px] mb-[9px] flex items-center gap-2 text-base font-semibold text-zinc-50">
-              <span className="size-2 rounded-full bg-lime-300" />{" "}
-              {user?.isEmailVerified
-                ? "Email verified"
-                : "Email verification pending"}
+              <span className="size-2 rounded-full bg-lime-300" /> Email
+              verified
             </div>
             <p className="m-0 text-[13px] text-zinc-500">
               Your account is ready to use.

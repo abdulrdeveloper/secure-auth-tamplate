@@ -9,7 +9,7 @@ import {
   PasswordField,
   SubmitButton,
 } from "../../components/auth-fields";
-import { apiRequest } from "../../lib/api";
+import { apiRequest, getErrorMessage } from "../../lib/api";
 import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
 
 export function RegisterPage() {
@@ -23,19 +23,14 @@ export function RegisterPage() {
     setError("");
     setLoading(true);
     try {
-      await apiRequest("/register", {
+      await apiRequest("/auth/register", {
         method: "POST",
         data: form,
-        action: "register",
       });
       startOtpCooldown(getOtpCooldownKey(form.email, "verify"));
       navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "We couldn't create your account right now. Please try again in a moment.",
-      );
+      setError(getErrorMessage(requestError));
     } finally {
       setLoading(false);
     }

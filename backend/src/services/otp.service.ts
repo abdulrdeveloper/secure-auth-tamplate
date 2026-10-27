@@ -12,13 +12,10 @@ const COOLDOWN = 60;
 const MAX_ATTEMPTS = 5;
 
 function getKeys(email: string, type: OtpType) {
-  const prefix = type === "verify" ? "verify" : "reset";
-  const cooldownPrefix = type === "verify" ? "otp" : "reset";
-
   return {
-    otp: `auth:${prefix}_otp:${email}`,
-    cooldown: `auth:${cooldownPrefix}_cooldown:${email}`,
-    attempts: `auth:${prefix}_attempts:${email}`,
+    otp: `auth:${type}_otp:${email}`,
+    cooldown: `auth:${type}_cooldown:${email}`,
+    attempts: `auth:${type}_attempts:${email}`,
   };
 }
 
@@ -46,25 +43,35 @@ export async function verifyOtpWithRateLimit(
   consumeOnSuccess = true,
 ): Promise<VerificationResult> {
   const keys = getKeys(email, type);
-  const storedOtp = await redis.get<string>(keys.otp);
-
-  if (!storedOtp) {
-    return { success: false, reason: "expired" };
-  }
-
-  if (String(storedOtp).trim() === String(otp).trim()) {
-    if (consumeOnSuccess) {
-      await redis.del(keys.otp, keys.attempts);
-    }
-    return { success: true };
-  }
 
   const attempts = await redis.incr(keys.attempts);
   if (attempts === 1) {
     await redis.expire(keys.attempts, OTP_EXPIRY);
   }
 
-  if (attempts >= MAX_ATTEMPTS) {
+  if (attempts > MAX_ATTEMPTS) {
+    await redis.del(keys.otp);
+    return { success: false, reason: "too_many_attempts" };
+  }
+
+  const storedOtp = await redis.get<string>(keys.otp);
+
+  if (!storedOtp) {
+    return { success: false, reason: "expired" };
+  }
+
+  const isMatch = String(storedOtp).trim() === String(otp).trim();
+
+  if (isMatch) {
+    if (consumeOnSuccess) {
+      await redis.del(keys.otp, keys.attempts);
+    } else {
+      await redis.del(keys.attempts);
+    }
+    return { success: true };
+  }
+
+  if (attempts === MAX_ATTEMPTS) {
     await redis.del(keys.otp, keys.attempts);
     return { success: false, reason: "too_many_attempts" };
   }

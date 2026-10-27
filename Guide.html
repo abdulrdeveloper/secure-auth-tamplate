@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeNaqsha - Secure Auth Architecture & Execution Flow Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090b;
+      --card-bg: rgba(24, 24, 27, 0.75);
+      --card-border: #27272a;
+      --accent: #bef264;
+      --accent-dim: rgba(190, 242, 100, 0.15);
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --code-bg: #121215;
+      --indigo: #6366f1;
+      --indigo-bg: rgba(99, 102, 241, 0.12);
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --sky: #38bdf8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'DM Sans', sans-serif;
+      line-height: 1.6;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* Header & Navigation */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 16px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      color: #09090b;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      background: #18181b;
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid #27272a;
+    }
+
+    .nav-btn {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn.active, .nav-btn:hover {
+      color: var(--text-main);
+      background: #27272a;
+    }
+    .nav-btn.active {
+      color: var(--accent);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* Hero Banner */
+    .hero {
+      text-align: center;
+      margin-bottom: 60px;
+      padding: 40px 20px;
+      background: radial-gradient(circle at 50% 20%, rgba(190, 242, 100, 0.08) 0%, transparent 60%);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(190, 242, 100, 0.25);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.05em;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 em {
+      font-family: 'Playfair Display', serif;
+      font-weight: 600;
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero p {
+      max-width: 650px;
+      margin: 0 auto;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    /* Section Headings */
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-sub {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 30px;
+    }
+
+    /* Flow Step Visualizer */
+    .flow-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .flow-card:hover {
+      border-color: rgba(190, 242, 100, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .flow-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .flow-step-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .flow-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .flow-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .sub-box {
+      background: #141418;
+      border: 1px solid #27272a;
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .sub-box-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .file-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      background: rgba(255, 255, 255, 0.06);
+      color: #38bdf8;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin: 2px 0;
+      word-break: break-all;
+    }
+
+    .endpoint-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Naqsha Interactive File Catalog */
+    .search-bar-wrap {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 260px;
+      background: #18181b;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .filter-btn {
+      background: #18181b;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: #09090b;
+      border-color: var(--accent);
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+    }
+
+    .file-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .file-card:hover {
+      border-color: #3f3f46;
+    }
+
+    .file-card-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 10px;
+      word-break: break-all;
+    }
+
+    .file-card-role {
+      font-size: 0.85rem;
+      color: #e4e4e7;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .connection-tag {
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    .tag-strong {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Diagram Styles */
+    .diagram-wrap {
+      background: #121215;
+      border: 1px solid #27272a;
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 40px;
+      overflow-x: auto;
+    }
+
+    .diagram-layers {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-width: 700px;
+    }
+
+    .diagram-layer {
+      background: #18181b;
+      border: 1px dashed #3f3f46;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .layer-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+    }
+
+    .layer-nodes {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .diagram-node {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .arrow-down {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 1.2rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      margin-top: 80px;
+    }
+
+    /* Tabs switching */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-mark">CN</div>
+      <span>CodeNaqsha <span style="color: var(--text-dim); font-size: 0.85rem; font-weight: 400;">· System Map</span></span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-btn active" onclick="switchTab('journey')">User Journey Flow</button>
+      <button class="nav-btn" onclick="switchTab('architecture')">Architecture Map</button>
+      <button class="nav-btn" onclick="switchTab('files')">File-by-File Catalog</button>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- Hero Banner -->
+    <section class="hero">
+      <span class="eyebrow">A-Z System Blueprint</span>
+      <h1>Understand the code <em>you built.</em></h1>
+      <p>
+        Full execution breakdown of the <strong>Express + React + Tailwind + TypeScript</strong> Authentication Boilerplate. Step-by-step from landing page to database verification.
+      </p>
+    </section>
+
+    <!-- TAB 1: User Journey Flow (Execution Sequence) -->
+    <div id="tab-journey" class="tab-content active">
+      <h2 class="section-title">🚦 End-to-End User Journey Walkthrough</h2>
+      <p class="section-sub">Jab koi user website par ata hai, files kis sequence mein load hoti hain aur backend ke kon se controllers trigger hotay hain:</p>
+
+      <!-- Step 0: Landing & App Bootstrap -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-step-num">STAGE 01</span>
+          <span class="endpoint-badge">GET /</span>
+        </div>
+        <div class="flow-title">1. App Bootstrapping & Route Routing</div>
+        <div class="flow-desc">
+          User browser mein <code>http://localhost:5173</code> open karta hai. Browser server se index.html leta hai aur React app mount hoti hai.
+        </div>
+        <div class="flow-grid">
+          <div class="sub-box">
+            <div class="sub-box-title">Frontend Entry Points</div>
+            <p>1. <span class="file-badge">frontend/index.html</span> (Root DOM container <code>&lt;div id="root"&gt;</code>)</p>
+            <p>2. <span class="file-badge">frontend/src/main.tsx</span> (Creates React root & loads <code>index.css</code>)</p>
+            <p>3. <span class="file-badge">frontend/src/App.tsx</span> (Browser Router starts here)</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Routing Decision</div>
+            <p><code>App.tsx</code> ke andar <code>&lt;Route path="/" element=&lt;Navigate to="/login" replace /&gt;&gt;</code> laga hua hai.</p>
+            <p>Browser foran redirect ho kar <code>/login</code> par chala jata hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Layout Applied</div>
+            <p><span class="file-badge">frontend/src/components/auth-layout.tsx</span></p>
+            <p>Left side: <strong>Brand Panel</strong> (Logo + "Private by design")</p>
+            <p>Right side: <strong>Form Container</strong> jahan <code>&lt;LoginPage /&gt;</code> render hota hai.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: User Registration -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-step-num">STAGE 02</span>
+          <span class="endpoint-badge">POST /api/auth/register</span>
+        </div>
+        <div class="flow-title">2. New User Registration & OTP Issuance</div>
+        <div class="flow-desc">
+          User Register form fill karta hai (Full Name, Email, Password). Backend data validate karta hai, password hash karta hai, aur Resend ke through email bhejta hai.
+        </div>
+        <div class="flow-grid">
+          <div class="sub-box">
+            <div class="sub-box-title">Frontend Execution</div>
+            <p><span class="file-badge">frontend/src/pages/auth/register.tsx</span></p>
+            <p>Calls: <code>apiRequest("/register", { data: form })</code> via <span class="file-badge">frontend/src/lib/api.ts</span>.</p>
+            <p>Starts 60s cooldown via <span class="file-badge">frontend/src/lib/otp-cooldown.ts</span> aur user ko <code>/verify-email?email=...</code> par redirect karta hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Backend Validation & Controller</div>
+            <p><span class="file-badge">backend/src/middlewares/validate.middleware.ts</span> checks input with <code>registerSchema</code> in <span class="file-badge">backend/src/config/validation.ts</span>.</p>
+            <p><span class="file-badge">backend/src/controllers/register.controller.ts</span> hashes password via <code>bcrypt</code> and saves user to MongoDB.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Services Triggered</div>
+            <p><span class="file-badge">backend/src/services/otp.service.ts</span>: Generates 6-digit OTP, saves in Upstash Redis with 300s expiry.</p>
+            <p><span class="file-badge">backend/src/services/mail.service.ts</span>: Resend API se verification email send karta hai.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Email Verification -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-step-num">STAGE 03</span>
+          <span class="endpoint-badge">POST /api/auth/verify-email</span>
+        </div>
+        <div class="flow-title">3. OTP Verification & Automatic Sign-In</div>
+        <div class="flow-desc">
+          User inbox se 6-digit OTP code dekh kar enter karta hai. Backend Redis mein rate-limit ke sath check karta hai, user ko verify mark karta hai aur JWT cookie issue karta hai.
+        </div>
+        <div class="flow-grid">
+          <div class="sub-box">
+            <div class="sub-box-title">Frontend Page & Timer</div>
+            <p><span class="file-badge">frontend/src/pages/auth/verify-email.tsx</span></p>
+            <p>Timer Hook: <span class="file-badge">frontend/src/hooks/use-cooldown.ts</span> 60 seconds ka live countdown handle karta hai.</p>
+            <p>Verification hone par <span class="file-badge">frontend/src/components/auth-status.tsx</span> success screen dikha kar 1.2s baad <code>/dashboard</code> bhej deta hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Backend Rate-Limiting & Verify</div>
+            <p><span class="file-badge">backend/src/controllers/verify-email.controller.ts</span></p>
+            <p><code>verifyOtpWithRateLimit()</code>: Redis mein 5 wrong attempts check karta hai. Agar galat ho to block karta hai.</p>
+            <p>User Model update: <code>isEmailVerified = true</code>, <code>verificationExpiresAt = null</code>.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Token & Cookie Helpers</div>
+            <p><span class="file-badge">backend/src/utils/token.util.ts</span>: <code>setAuthCookie(res, user._id)</code> JWT create karta hai aur secure <code>httpOnly</code> cookie set karta hai.</p>
+            <p><span class="file-badge">backend/src/utils/user.util.ts</span>: <code>toPublicUser(user)</code> password strip karke clean response deta hai.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Login Flow -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-step-num">STAGE 04</span>
+          <span class="endpoint-badge">POST /api/auth/login</span>
+        </div>
+        <div class="flow-title">4. Returning User Login</div>
+        <div class="flow-desc">
+          User Email aur Password enter karta hai. Backend credentials match karta hai aur check karta hai ke kya email verified hai ya nahi.
+        </div>
+        <div class="flow-grid">
+          <div class="sub-box">
+            <div class="sub-box-title">Frontend Form</div>
+            <p><span class="file-badge">frontend/src/pages/auth/login.tsx</span></p>
+            <p>Components: <code>Field</code> (Email), <code>PasswordField</code> (with eye icon toggle).</p>
+            <p>Success hone par seedha <code>/dashboard</code> redirect karta hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Backend Controller</div>
+            <p><span class="file-badge">backend/src/controllers/login.controller.ts</span></p>
+            <p>1. <code>userModel.findOne({ email }).select('+password')</code></p>
+            <p>2. <code>bcrypt.compare(password, user.password)</code></p>
+            <p>3. <code>if (!user.isEmailVerified) return 401</code></p>
+            <p>4. <code>setAuthCookie(res, user._id)</code></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Protected Dashboard & Profile -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-step-num">STAGE 05</span>
+          <span class="endpoint-badge">GET /api/auth/me</span>
+        </div>
+        <div class="flow-title">5. Protected Dashboard & Auth Middleware</div>
+        <div class="flow-desc">
+          User dashboard par aata hai. Browser automatically HTTP cookie ke sath <code>/me</code> request bhejta hai. Agar cookie valid ho tabhi profile show hoti hai, warna foran <code>/login</code> par kick out kar diya jata hai.
+        </div>
+        <div class="flow-grid">
+          <div class="sub-box">
+            <div class="sub-box-title">Frontend Dashboard</div>
+            <p><span class="file-badge">frontend/src/pages/dashboard/index.tsx</span></p>
+            <p><code>useEffect</code> mein <code>apiRequest("/me")</code> call karta hai. User ka name, email aur verified status cards mein render hota hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Auth Middleware Guard</div>
+            <p><span class="file-badge">backend/src/middlewares/auth.middleware.ts</span></p>
+            <p>Cookie ya <code>Bearer</code> token se JWT nikal kar <code>jwt.verify()</code> karta hai. Valid hone par <code>req.userId</code> attach kar ke controller ko pass karta hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Me Controller</div>
+            <p><span class="file-badge">backend/src/controllers/me.controller.ts</span></p>
+            <p>MongoDB se <code>userModel.findById(req.userId)</code> fetch karke <code>toPublicUser()</code> ke through return karta hai.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Password Recovery -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-step-num">STAGE 06</span>
+          <span class="endpoint-badge">POST /forgot-password & /reset-password</span>
+        </div>
+        <div class="flow-title">6. Two-Step Password Recovery</div>
+        <div class="flow-desc">
+          Forgot password flow do steps mein mukammal hota hai: Pehle email par OTP mangwaya jata hai, phir OTP verify hone ke baad naya password save hota hai.
+        </div>
+        <div class="flow-grid">
+          <div class="sub-box">
+            <div class="sub-box-title">Step 1: Request Reset OTP</div>
+            <p><span class="file-badge">frontend/src/pages/auth/forgot-password.tsx</span></p>
+            <p>Backend: <span class="file-badge">backend/src/controllers/forgot-password.controller.ts</span> Anti-enumeration protection ke sath Redis OTP aur Resend Email send karta hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Step 2: Verify & Change Password</div>
+            <p><span class="file-badge">frontend/src/pages/auth/reset-password.tsx</span></p>
+            <p>1. <code>/verify-reset-otp</code>: OTP valid hai ya nahi (consume kiye baghair) check hota hai.</p>
+            <p>2. <code>/reset-password</code>: Naya password hash ho kar DB mein update hota hai aur Redis se OTP delete ho jata hai.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Logout -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-step-num">STAGE 07</span>
+          <span class="endpoint-badge">POST /api/auth/logout</span>
+        </div>
+        <div class="flow-title">7. Logout & Session Termination</div>
+        <div class="flow-desc">
+          User Dashboard par "Sign out" button press karta hai. Modal confirmation ke baad cookie clear hoti hai aur user login screen par wapas chala jata hai.
+        </div>
+        <div class="flow-grid">
+          <div class="sub-box">
+            <div class="sub-box-title">Frontend Dialog</div>
+            <p>Dashboard page par accessible modal dialog khulta hai. Confirm karne par <code>apiRequest("/logout", { method: "POST" })</code> trigger hoti hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Backend Cookie Clear</div>
+            <p><span class="file-badge">backend/src/controllers/logout.controller.ts</span></p>
+            <p><code>res.clearCookie("token", COOKIE_CLEAR_OPTIONS)</code></p>
+            <p>Cookie browser se destroy ho jati hai.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- TAB 2: Architecture Map (Naqsha) -->
+    <div id="tab-architecture" class="tab-content">
+      <h2 class="section-title">🗺️ Complete System Architecture (Naqsha)</h2>
+      <p class="section-sub">Browser se Database tak tamam layers ka aapsi rabta aur data transfer:</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-layers">
+          
+          <!-- Layer 1: Client Browser -->
+          <div class="diagram-layer">
+            <div class="layer-label">1. Client Tier (React 18 + Vite 6 + Tailwind v4)</div>
+            <div class="layer-nodes">
+              <div class="diagram-node">💻 User Browser</div>
+              <div class="diagram-node">📦 App.tsx (Router)</div>
+              <div class="diagram-node">🎨 AuthLayout & UI Primitives</div>
+              <div class="diagram-node">⚡ useCooldown & API Client</div>
+            </div>
+          </div>
+
+          <div class="arrow-down">⬇️ [HTTP Requests / JSON / httpOnly Cookies] ⬇️</div>
+
+          <!-- Layer 2: API Gateway & Middlewares -->
+          <div class="diagram-layer">
+            <div class="layer-label">2. Express Server Tier (Port 3000)</div>
+            <div class="layer-nodes">
+              <div class="diagram-node">🚀 server.ts</div>
+              <div class="diagram-node">🛡️ CORS (Origin 5173)</div>
+              <div class="diagram-node">🍪 cookie-parser</div>
+              <div class="diagram-node">🔒 auth.middleware.ts (JWT Guard)</div>
+              <div class="diagram-node">📋 validate.middleware.ts (Zod)</div>
+            </div>
+          </div>
+
+          <div class="arrow-down">⬇️ [Routes Dispatcher] ⬇️</div>
+
+          <!-- Layer 3: Controllers & Utilities -->
+          <div class="diagram-layer">
+            <div class="layer-label">3. Controllers & Utility Helpers</div>
+            <div class="layer-nodes">
+              <div class="diagram-node">👤 register.controller</div>
+              <div class="diagram-node">🔑 login.controller</div>
+              <div class="diagram-node">✉️ verify-email.controller</div>
+              <div class="diagram-node">🔄 reset-password.controller</div>
+              <div class="diagram-node">🧰 token.util.ts (setAuthCookie)</div>
+              <div class="diagram-node">🧹 user.util.ts (toPublicUser)</div>
+            </div>
+          </div>
+
+          <div class="arrow-down">⬇️ [Data & Storage Operations] ⬇️</div>
+
+          <!-- Layer 4: Infrastructure & External Services -->
+          <div class="diagram-layer">
+            <div class="layer-label">4. Infrastructure & Database Tier</div>
+            <div class="layer-nodes">
+              <div class="diagram-node" style="border-color: #22c55e;">🍃 MongoDB (Mongoose User Schema & TTL Index)</div>
+              <div class="diagram-node" style="border-color: #ef4444;">⚡ Upstash Redis (OTP Store, Expiry, Rate Limits)</div>
+              <div class="diagram-node" style="border-color: #6366f1;">📧 Resend API (Transactional Auth Emails)</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <!-- TAB 3: File-by-File Catalog -->
+    <div id="tab-files" class="tab-content">
+      <h2 class="section-title">📂 Complete File-by-File Catalog</h2>
+      <p class="section-sub">Codebase ki har ek file ka purpose, wo kaha se call hoti hai aur kisko call karti hai:</p>
+
+      <div class="search-bar-wrap">
+        <input type="text" id="fileSearch" class="search-input" placeholder="Search any file name, component or role..." oninput="filterFiles()">
+        <button class="filter-btn active" onclick="setFilter('all', this)">All Files</button>
+        <button class="filter-btn" onclick="setFilter('frontend', this)">Frontend</button>
+        <button class="filter-btn" onclick="setFilter('backend', this)">Backend</button>
+        <button class="filter-btn" onclick="setFilter('service', this)">Services & Utils</button>
+      </div>
+
+      <div class="catalog-grid" id="catalogGrid">
+
+        <!-- FRONTEND FILES -->
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/main.tsx</div>
+            <div class="file-card-role">React client application ka main mounting entry-point. HTML ke <code>#root</code> div ko pakad kar React application mount karta hai aur global CSS load karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Loads:</span> index.html</div>
+            <div class="connection-tag"><span class="tag-strong">Imports:</span> App.tsx, index.css</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/App.tsx</div>
+            <div class="file-card-role">Client-side central routing table (React Router v7). Tamam auth pages ko <code>AuthLayout</code> wrapper ke andar group karta hai aur <code>/dashboard</code> protected route define karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Loaded by:</span> main.tsx</div>
+            <div class="connection-tag"><span class="tag-strong">Imports:</span> AuthLayout, All Pages</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/components/auth-layout.tsx</div>
+            <div class="file-card-role">Auth pages ka consistent split-screen layout. Left side par brand branding/logo aur right side par form injection card provide karta hai. Isme <code>Logo</code> aur <code>AuthHeader</code> components bhi shamil hain.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Loaded by:</span> App.tsx</div>
+            <div class="connection-tag"><span class="tag-strong">Renders:</span> Outlet / Children</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/components/auth-fields.tsx</div>
+            <div class="file-card-role">Form input fields ka reusable bundle. <code>Field</code>, <code>NameField</code>, <code>PasswordField</code> (password toggle button ke sath), <code>OtpField</code>, <code>SubmitButton</code> (loading spinner ke sath) aur <code>ErrorMessage</code> alert box.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> login.tsx, register.tsx, reset-password.tsx, forgot-password.tsx</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/components/auth-status.tsx</div>
+            <div class="file-card-role">Universal success state card. Email verify hone par aur password reset complete hone par green checkmark icon ke sath informative screen render karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> verification-success.tsx, reset-password.tsx</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/hooks/use-cooldown.ts</div>
+            <div class="file-card-role">Custom React hook jo OTP resend ke liye 60-second ka countdown timer manage karta hai. Window interval aur localStorage sync ko handle karta hai taake refresh par bhi timer barkarar rahe.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> verify-email.tsx, reset-password.tsx</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/lib/api.ts</div>
+            <div class="file-card-role">Centralized HTTP fetch client. Backend base URL resolve karta hai, <code>credentials: 'include'</code> bhejta hai taake cookies transfer hon, aur backend ke JSON error messages extract karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> Tamam pages aur dashboard</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/lib/otp-cooldown.ts</div>
+            <div class="file-card-role">Pure helper utilities for OTP timers: <code>getOtpCooldownKey</code>, <code>getCooldownRemaining</code>, aur <code>startOtpCooldown</code>. LocalStorage mein timestamp store karti hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> use-cooldown.ts, register.tsx, forgot-password.tsx</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/pages/auth/login.tsx</div>
+            <div class="file-card-role">User login screen. Email aur password collect karta hai aur backend ke <code>/login</code> endpoint ko call kar ke user ko dashboard bhejta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /api/auth/login</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/pages/auth/register.tsx</div>
+            <div class="file-card-role">New user registration page. Name, email aur password collect karke <code>/register</code> par submit karta hai aur verify-email page par navigate karwata hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /api/auth/register</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/pages/auth/verify-email.tsx</div>
+            <div class="file-card-role">OTP verification page. 6-digit code input karta hai, resend button with countdown dikhata hai, aur verify hone par dashboard bhejta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /api/auth/verify-email & /resend-otp</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/pages/auth/forgot-password.tsx</div>
+            <div class="file-card-role">Password recovery initiation page. User ka email mangta hai aur <code>/forgot-password</code> par OTP send karwa kar <code>/reset-password</code> par bhejta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /api/auth/forgot-password</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/pages/auth/reset-password.tsx</div>
+            <div class="file-card-role">2-Step recovery flow: Step 1 mein OTP verify karta hai aur Step 2 mein naya password aur confirm password set karwata hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /verify-reset-otp & /reset-password</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/pages/dashboard/index.tsx</div>
+            <div class="file-card-role">Protected user dashboard. <code>/me</code> call karke user ka data load karta hai, profile aur account status display karta hai, aur logout confirmation modal handle karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Calls:</span> GET /api/auth/me & POST /logout</div>
+          </div>
+        </div>
+
+        <!-- BACKEND FILES -->
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/server.ts</div>
+            <div class="file-card-role">Backend entry-point. Environment variables load karta hai, MongoDB database connect karta hai aur port 3000 par HTTP listener start karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Imports:</span> app.ts, db.ts</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/app.ts</div>
+            <div class="file-card-role">Express app setup: CORS configuration (Origin 5173 with credentials), JSON body parser, cookie-parser aur <code>/api/auth</code> router mounting.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Mounts:</span> /api/auth -> auth.routes.ts</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/routes/auth.routes.ts</div>
+            <div class="file-card-role">Master authentication router. Tamam HTTP routes (login, register, OTPs, password reset, me, logout) ko Zod validation middlewares aur controllers ke sath map karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Uses:</span> validate.middleware, auth.middleware, controllers</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/models/user.model.ts</div>
+            <div class="file-card-role">Mongoose User Schema. Email, name, hashed password (select: false), emailVerified status, aur TTL auto-delete index for unverified accounts define karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> Tamam auth controllers</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/middlewares/auth.middleware.ts</div>
+            <div class="file-card-role">Route protection guard. Incoming request ki cookie (ya Authorization Bearer header) se JWT token check karta hai, verify karta hai aur <code>req.userId</code> attach karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Protects:</span> GET /api/auth/me</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/middlewares/validate.middleware.ts</div>
+            <div class="file-card-role">Generic Zod validation middleware. Request body ko Zod schema ke khilaf check karta hai. Agar error ho to 400 aur exact field errors return karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used on:</span> register, login, OTP, reset routes</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/config/cookie.config.ts</div>
+            <div class="file-card-role">Single source of truth for cookies: <code>COOKIE_OPTIONS</code> (httpOnly, secure in prod, sameSite lax/none, 1 hour) aur <code>COOKIE_CLEAR_OPTIONS</code> (for logout).</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> token.util.ts, logout.controller.ts</div>
+          </div>
+        </div>
+
+        <!-- SERVICES & UTILS -->
+        <div class="file-card" data-category="service">
+          <div>
+            <div class="file-card-path">backend/src/utils/token.util.ts</div>
+            <div class="file-card-role">Centralized JWT helper: <code>setAuthCookie(res, userId)</code>. JWT create karta hai aur response cookie mein set kar ke token return karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> login.controller.ts, verify-email.controller.ts</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="service">
+          <div>
+            <div class="file-card-path">backend/src/utils/user.util.ts</div>
+            <div class="file-card-role">Data sanitizer: <code>toPublicUser(user)</code>. Mongoose user object se password aur internal verification fields strip karke safe public data return karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> login, verify-email, me controllers</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="service">
+          <div>
+            <div class="file-card-path">backend/src/services/otp.service.ts</div>
+            <div class="file-card-role">Redis OTP engine. Cryptographic 6-digit random code generation, 5-minute expiry, 60s cooldown enforcement, aur 5-attempt rate-limiting logic handle karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> register, verify-email, reset controllers</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="service">
+          <div>
+            <div class="file-card-path">backend/src/services/mail.service.ts</div>
+            <div class="file-card-role">Resend email delivery service. Unified HTML email layout renderer jo verification aur password reset emails ke liye stylish branded HTML emails dispatch karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Uses:</span> Resend API SDK</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="service">
+          <div>
+            <div class="file-card-path">backend/src/services/redis.service.ts</div>
+            <div class="file-card-role">Upstash Redis REST client instantiation using <code>@upstash/redis</code>. Serverless-ready HTTP Redis connection.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> otp.service.ts</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>CodeNaqsha Architecture Guide · Generated for <strong>express-typescript-server</strong></p>
+    <p style="margin-top: 6px; font-size: 0.8rem;">Clean Architecture · Production Ready · Lifetime Reusable Template</p>
+  </footer>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if (tabId === 'journey') {
+        document.querySelectorAll('.nav-btn')[0].classList.add('active');
+        document.getElementById('tab-journey').classList.add('active');
+      } else if (tabId === 'architecture') {
+        document.querySelectorAll('.nav-btn')[1].classList.add('active');
+        document.getElementById('tab-architecture').classList.add('active');
+      } else if (tabId === 'files') {
+        document.querySelectorAll('.nav-btn')[2].classList.add('active');
+        document.getElementById('tab-files').classList.add('active');
+      }
+    }
+
+    function filterFiles() {
+      const q = document.getElementById('fileSearch').value.toLowerCase();
+      const cards = document.querySelectorAll('.file-card');
+
+      cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        if (text.includes(q)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    function setFilter(cat, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const cards = document.querySelectorAll('.file-card');
+      cards.forEach(card => {
+        if (cat === 'all' || card.getAttribute('data-category') === cat) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
+

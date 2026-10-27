@@ -7,14 +7,15 @@ import {
   Field,
   SubmitButton,
 } from "../../components/auth-fields";
-import { apiRequest } from "../../lib/api";
-import { startResetOtpCooldown } from "../../lib/reset-otp-cooldown";
+import { apiRequest, getErrorMessage } from "../../lib/api";
+import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   return (
     <>
       <AuthHeader
@@ -28,19 +29,14 @@ export function ForgotPasswordPage() {
           setError("");
           setLoading(true);
           try {
-            await apiRequest("/forgot-password", {
-              method: "POST",
-              data: { email },
-              action: "forgot-password",
-            });
-            startResetOtpCooldown(email);
+            const { resendAfter } = await apiRequest<{ resendAfter: number }>(
+              "/auth/forgot-password",
+              { method: "POST", data: { email } },
+            );
+            startOtpCooldown(getOtpCooldownKey(email, "reset"), resendAfter);
             navigate("/reset-password", { state: { email } });
           } catch (requestError) {
-            setError(
-              requestError instanceof Error
-                ? requestError.message
-                : "We couldn't process your request right now. Please try again in a moment.",
-            );
+            setError(getErrorMessage(requestError));
           } finally {
             setLoading(false);
           }
@@ -60,8 +56,11 @@ export function ForgotPasswordPage() {
           {loading ? "Sending code" : "Send reset code"}
         </SubmitButton>
       </form>
-      <p className="form-footer">
-        <Link className="inline-link" to="/login">
+      <p className="mt-7 text-center text-[13px] text-zinc-500">
+        <Link
+          className="inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300 hover:underline"
+          to="/login"
+        >
           <ArrowLeft size={15} /> Back to sign in
         </Link>
       </p>

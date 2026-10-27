@@ -1,22 +1,22 @@
 import type { Request, Response } from "express";
+import {
+  clearAuthCookies,
+  isRefreshTokenActive,
+  revokeRefreshToken,
+  verifyRefreshToken,
+} from "../utils/token.util.js";
 
-async function logoutUser(_req: Request, res: Response) {
-  try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as
-        | "none"
-        | "lax",
-      path: "/",
-      maxAge: 0,
-    });
+async function logoutUser(req: Request, res: Response) {
+  const token = req.cookies?.refreshToken;
+  const payload = token ? verifyRefreshToken(token) : null;
 
-    return res.status(200).json({ message: "Logout successful" });
-  } catch (error) {
-    console.error("Error in logoutUser:", error);
-    res.status(500).json({ message: "Internal server error" });
+  if (payload && (await isRefreshTokenActive(payload))) {
+    await revokeRefreshToken(payload.userId);
   }
+
+  clearAuthCookies(res);
+
+  return res.status(200).json({ message: "Logout successful" });
 }
 
 export { logoutUser };

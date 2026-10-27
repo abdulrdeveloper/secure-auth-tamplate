@@ -1,56 +1,76 @@
-import {
-  getSafeApiMessage,
-  getSafeAuthMessage,
-  type AuthAction,
-} from "./auth-messages";
+const API_BASE_URL = `${(import.meta.env.VITE_API_URL ?? "http://localhost:3000").replace(/\/+$/, "")}/api`;
 
-const API_BASE_URL = `${(import.meta.env.VITE_API_URL ?? "http://localhost:3000").replace(/\/+$/, "")}/api/auth`;
+const NO_REFRESH_PATHS = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];
+
+export const SESSION_EXPIRED_EVENT = "auth:session-expired";
 
 type ApiRequestOptions = {
   method?: "GET" | "POST";
   data?: unknown;
-  action?: AuthAction;
 };
 
-export async function apiRequest<T>(
-  path: string,
-  { method = "GET", data, action }: ApiRequestOptions = {},
-): Promise<T> {
-  let response: Response;
+let refreshPromise: Promise<boolean> | null = null;
 
+function refreshSession(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then((response) => response.ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+async function send(path: string, { method = "GET", data }: ApiRequestOptions) {
   try {
-    response = await fetch(`${API_BASE_URL}/${path.replace(/^\/+/, "")}`, {
+    return await fetch(`${API_BASE_URL}${path}`, {
       method,
       credentials: "include",
       headers:
         data === undefined ? undefined : { "Content-Type": "application/json" },
       body: data === undefined ? undefined : JSON.stringify(data),
     });
-  } catch (error) {
-    if (!(error instanceof TypeError)) throw error;
-
+  } catch {
     throw new Error(
-      action
-        ? getSafeAuthMessage(action)
-        : "Unable to connect to the service. Check your connection and try again.",
+      "Unable to connect to the service. Check your connection and try again.",
     );
   }
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<T> {
+  let response = await send(path, options);
+
+  if (response.status === 401 && !NO_REFRESH_PATHS.includes(path)) {
+    if (await refreshSession()) {
+      response = await send(path, options);
+    } else {
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    }
+  }
+
+  const body = (await response.json().catch(() => null)) as
+    | ({ message?: string } & T)
+    | null;
 
   if (!response.ok) {
     throw new Error(
-      action
-        ? getSafeAuthMessage(action, response.status)
-        : getSafeApiMessage(response.status),
+      body?.message ?? "Something went wrong. Please try again in a moment.",
     );
   }
 
-  try {
-    return (await response.json()) as T;
-  } catch (error) {
-    if (!(error instanceof SyntaxError)) throw error;
+  return body as T;
+}
 
-    throw new Error(
-      "The service returned an unexpected response. Please try again.",
-    );
-  }
+export function getErrorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "Something went wrong. Please try again in a moment.";
 }

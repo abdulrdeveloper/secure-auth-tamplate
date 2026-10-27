@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowRight, Mail } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth, type AuthUser } from "../../context/auth-context";
 import { AuthHeader } from "../../components/auth-layout";
 import {
   Field,
@@ -8,10 +9,12 @@ import {
   PasswordField,
   SubmitButton,
 } from "../../components/auth-fields";
-import { apiRequest } from "../../lib/api";
+import { apiRequest, getErrorMessage } from "../../lib/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { setUser } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,22 +24,20 @@ export function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await apiRequest("/login", {
+      const response = await apiRequest<{ user: AuthUser }>("/auth/login", {
         method: "POST",
         data: form,
-        action: "login",
       });
-      navigate("/dashboard", { replace: true });
+      const from = (location.state as { from?: string } | null)?.from;
+      setUser(response.user);
+      navigate(from ?? "/dashboard", { replace: true });
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "We couldn't sign you in right now. Please try again in a moment.",
-      );
+      setError(getErrorMessage(requestError));
     } finally {
       setLoading(false);
     }
   }
+
   return (
     <>
       <AuthHeader
@@ -61,7 +62,10 @@ export function LoginPage() {
             setForm({ ...form, password: event.target.value })
           }
         />
-        <Link className="inline-link forgot-link" to="/forgot-password">
+        <Link
+          className="-mt-1.5 mb-[22px] block text-right text-[13px] font-semibold text-lime-300 hover:underline"
+          to="/forgot-password"
+        >
           Forgot password?
         </Link>
         {error && <ErrorMessage message={error} />}
@@ -69,9 +73,12 @@ export function LoginPage() {
           {loading ? "Signing in" : "Sign in"}
         </SubmitButton>
       </form>
-      <p className="form-footer">
+      <p className="mt-7 text-center text-[13px] text-zinc-500">
         Don’t have an account?{" "}
-        <Link className="inline-link" to="/register">
+        <Link
+          className="inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300 hover:underline"
+          to="/register"
+        >
           Create one
         </Link>
       </p>

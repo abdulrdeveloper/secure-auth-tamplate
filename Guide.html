@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeNaqsha - Secure Auth Architecture & Execution Flow Guide</title>
+  <title>Secure Auth Architecture & Execution Flow Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
@@ -216,7 +216,7 @@
 
     .flow-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
       gap: 16px;
       margin-top: 16px;
     }
@@ -306,7 +306,7 @@
 
     .catalog-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
       gap: 20px;
     }
 
@@ -424,6 +424,12 @@
     /* Tabs switching */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+
+    @media (max-width: 720px) {
+      header { flex-direction: column; align-items: stretch; gap: 12px; }
+      .nav-tabs { overflow-x: auto; }
+      .nav-btn { flex: 1 0 auto; white-space: nowrap; }
+    }
   </style>
 </head>
 <body>
@@ -442,53 +448,85 @@
   </header>
 
   <div class="container">
-    
+
     <!-- Hero Banner -->
     <section class="hero">
       <span class="eyebrow">A-Z System Blueprint</span>
       <h1>Understand the code <em>you built.</em></h1>
       <p>
-        Full execution breakdown of the <strong>Express + React + Tailwind + TypeScript</strong> Authentication Boilerplate. Step-by-step from landing page to database verification.
+        Full execution breakdown of the <strong>Express 5 + React 18 + Tailwind v4 + TypeScript</strong> authentication template with dual tokens (15 minute access + 7 day refresh). Step-by-step from the first page load to logout.
       </p>
     </section>
 
-    <!-- TAB 1: User Journey Flow (Execution Sequence) -->
+    <!-- TAB 1: User Journey Flow -->
     <div id="tab-journey" class="tab-content active">
       <h2 class="section-title">🚦 End-to-End User Journey Walkthrough</h2>
-      <p class="section-sub">Jab koi user website par ata hai, files kis sequence mein load hoti hain aur backend ke kon se controllers trigger hotay hain:</p>
+      <p class="section-sub">Jab koi user website par ata hai, files kis sequence mein load hoti hain aur backend ke kon se middlewares aur controllers chalte hain:</p>
 
-      <!-- Step 0: Landing & App Bootstrap -->
+      <!-- Stage 0: Server startup -->
       <div class="flow-card">
         <div class="flow-header">
-          <span class="flow-step-num">STAGE 01</span>
-          <span class="endpoint-badge">GET /</span>
+          <span class="flow-step-num">STAGE 00</span>
+          <span class="endpoint-badge">node dist/server.js</span>
         </div>
-        <div class="flow-title">1. App Bootstrapping & Route Routing</div>
+        <div class="flow-title">0. Server Startup & Safety Checks</div>
         <div class="flow-desc">
-          User browser mein <code>http://localhost:5173</code> open karta hai. Browser server se index.html leta hai aur React app mount hoti hai.
+          Koi request aane se pehle backend start hota hai aur check karta hai ke configuration sahi hai. Kuch bhi galat ho to server start hi nahi hota, taake galti chupi na rahe.
         </div>
         <div class="flow-grid">
           <div class="sub-box">
-            <div class="sub-box-title">Frontend Entry Points</div>
-            <p>1. <span class="file-badge">frontend/index.html</span> (Root DOM container <code>&lt;div id="root"&gt;</code>)</p>
-            <p>2. <span class="file-badge">frontend/src/main.tsx</span> (Creates React root & loads <code>index.css</code>)</p>
-            <p>3. <span class="file-badge">frontend/src/App.tsx</span> (Browser Router starts here)</p>
+            <div class="sub-box-title">Env Checks</div>
+            <p><span class="file-badge">backend/server.ts</span></p>
+            <p>Required env missing ho to process exit: <code>MONGO_URI</code>, <code>ACCESS_TOKEN_SECRET</code>, <code>REFRESH_TOKEN_SECRET</code>, <code>RESEND_API_KEY</code>, Upstash keys, <code>FRONTEND_URL</code>, <code>EMAIL_FROM</code>, <code>COOKIE_SAMESITE</code>.</p>
+            <p><code>COOKIE_SAMESITE</code> sirf <code>lax</code> ya <code>none</code> ho sakta hai, aur dono token secrets alag hone chahiye.</p>
           </div>
           <div class="sub-box">
-            <div class="sub-box-title">Routing Decision</div>
-            <p><code>App.tsx</code> ke andar <code>&lt;Route path="/" element=&lt;Navigate to="/login" replace /&gt;&gt;</code> laga hua hai.</p>
-            <p>Browser foran redirect ho kar <code>/login</code> par chala jata hai.</p>
+            <div class="sub-box-title">Database & App</div>
+            <p><span class="file-badge">backend/src/config/db.ts</span> MongoDB connect karta hai, fail ho to exit.</p>
+            <p><span class="file-badge">backend/src/app.ts</span>: <code>trust proxy</code>, CORS (<code>FRONTEND_URL</code> + credentials), <code>express.json</code> (10kb limit), cookie-parser, <code>GET /health</code>, aur <code>/api/auth</code> router.</p>
           </div>
           <div class="sub-box">
-            <div class="sub-box-title">Layout Applied</div>
-            <p><span class="file-badge">frontend/src/components/auth-layout.tsx</span></p>
-            <p>Left side: <strong>Brand Panel</strong> (Logo + "Private by design")</p>
-            <p>Right side: <strong>Form Container</strong> jahan <code>&lt;LoginPage /&gt;</code> render hota hai.</p>
+            <div class="sub-box-title">Error Safety Net</div>
+            <p><span class="file-badge">backend/src/middlewares/error.middleware.ts</span> sab routes ke baad lagta hai.</p>
+            <p>Unknown route: JSON 404. Galat JSON: 400. Bada body: 413. Koi bhi aur error: server log mein detail, user ko sirf <code>Internal server error</code>. Stack trace kabhi leak nahi hota.</p>
           </div>
         </div>
       </div>
 
-      <!-- Step 1: User Registration -->
+      <!-- Stage 1: App bootstrap -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-step-num">STAGE 01</span>
+          <span class="endpoint-badge">GET /api/auth/me</span>
+        </div>
+        <div class="flow-title">1. App Bootstrapping & Session Check</div>
+        <div class="flow-desc">
+          User browser mein app kholta hai. React mount hote hi <code>AuthProvider</code> ek dafa <code>/me</code> call karke pata karta hai ke user pehle se logged in hai ya nahi. Jab tak jawab nahi aata, route guards loader dikhate hain.
+        </div>
+        <div class="flow-grid">
+          <div class="sub-box">
+            <div class="sub-box-title">Frontend Entry Points</div>
+            <p>1. <span class="file-badge">frontend/index.html</span> (<code>&lt;div id="root"&gt;</code> aur favicon)</p>
+            <p>2. <span class="file-badge">frontend/src/main.tsx</span> (React root aur <code>index.css</code>)</p>
+            <p>3. <span class="file-badge">frontend/src/App.tsx</span> (<code>BrowserRouter</code> &gt; <code>AuthProvider</code> &gt; Routes)</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Global Auth State</div>
+            <p><span class="file-badge">frontend/src/context/auth-context.tsx</span></p>
+            <p>State: <code>user</code>, <code>loading</code>. Functions: <code>setUser</code>, <code>logout</code>. Pages <code>useAuth()</code> se user lete hain, dobara <code>/me</code> call nahi karte.</p>
+            <p>Agar silent refresh fail ho to <code>auth:session-expired</code> event aata hai aur user khali ho jata hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Routing Decision</div>
+            <p><span class="file-badge">frontend/src/components/protected-route.tsx</span></p>
+            <p><code>PublicRoute</code>: logged-in user <code>/login</code>, <code>/register</code> waghera khole to <code>/dashboard</code>.</p>
+            <p><code>ProtectedRoute</code>: login nahi to <code>/login</code>, saath mein <code>state.from</code> taake login ke baad wapas usi page par aaye.</p>
+            <p>Unknown URL <code>/dashboard</code> par jata hai, aur wahan se guard faisla karta hai.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 2: Register -->
       <div class="flow-card">
         <div class="flow-header">
           <span class="flow-step-num">STAGE 02</span>
@@ -496,29 +534,30 @@
         </div>
         <div class="flow-title">2. New User Registration & OTP Issuance</div>
         <div class="flow-desc">
-          User Register form fill karta hai (Full Name, Email, Password). Backend data validate karta hai, password hash karta hai, aur Resend ke through email bhejta hai.
+          User Register form bharta hai (Full Name, Email, Password). Backend rate limit aur validation ke baad password hash karta hai, OTP Redis mein rakhta hai aur Resend se email bhejta hai.
         </div>
         <div class="flow-grid">
           <div class="sub-box">
             <div class="sub-box-title">Frontend Execution</div>
             <p><span class="file-badge">frontend/src/pages/auth/register.tsx</span></p>
-            <p>Calls: <code>apiRequest("/register", { data: form })</code> via <span class="file-badge">frontend/src/lib/api.ts</span>.</p>
-            <p>Starts 60s cooldown via <span class="file-badge">frontend/src/lib/otp-cooldown.ts</span> aur user ko <code>/verify-email?email=...</code> par redirect karta hai.</p>
+            <p>Calls: <code>apiRequest("/auth/register", { method: "POST", data: form })</code> via <span class="file-badge">frontend/src/lib/api.ts</span>.</p>
+            <p>Response ka <code>resendAfter</code> (60) le kar <code>startOtpCooldown()</code> chalata hai, phir <code>/verify-email?email=...</code> par bhejta hai.</p>
           </div>
           <div class="sub-box">
-            <div class="sub-box-title">Backend Validation & Controller</div>
-            <p><span class="file-badge">backend/src/middlewares/validate.middleware.ts</span> checks input with <code>registerSchema</code> in <span class="file-badge">backend/src/config/validation.ts</span>.</p>
-            <p><span class="file-badge">backend/src/controllers/register.controller.ts</span> hashes password via <code>bcrypt</code> and saves user to MongoDB.</p>
+            <div class="sub-box-title">Middlewares</div>
+            <p><span class="file-badge">backend/src/middlewares/rate-limit.middleware.ts</span>: IP par 15 minute mein 10 requests.</p>
+            <p><span class="file-badge">backend/src/middlewares/validate.middleware.ts</span> + <code>registerSchema</code> (<span class="file-badge">backend/src/config/validation.ts</span>): name 2-100, email lowercase, password kam az kam 6.</p>
           </div>
           <div class="sub-box">
-            <div class="sub-box-title">Services Triggered</div>
-            <p><span class="file-badge">backend/src/services/otp.service.ts</span>: Generates 6-digit OTP, saves in Upstash Redis with 300s expiry.</p>
-            <p><span class="file-badge">backend/src/services/mail.service.ts</span>: Resend API se verification email send karta hai.</p>
+            <div class="sub-box-title">Controller & Services</div>
+            <p><span class="file-badge">backend/src/controllers/register.controller.ts</span></p>
+            <p>Verified email ho to 400. Unverified user dobara register kare to name aur password update hote hain. <code>verificationExpiresAt</code> 24 ghante.</p>
+            <p><span class="file-badge">backend/src/services/otp.service.ts</span>: 6-digit OTP, 300s expiry, 60s cooldown. <span class="file-badge">backend/src/services/mail.service.ts</span>: email bhejta hai. Email fail ho to OTP saaf aur 500.</p>
           </div>
         </div>
       </div>
 
-      <!-- Step 2: Email Verification -->
+      <!-- Stage 3: Verify email -->
       <div class="flow-card">
         <div class="flow-header">
           <span class="flow-step-num">STAGE 03</span>
@@ -526,30 +565,31 @@
         </div>
         <div class="flow-title">3. OTP Verification & Automatic Sign-In</div>
         <div class="flow-desc">
-          User inbox se 6-digit OTP code dekh kar enter karta hai. Backend Redis mein rate-limit ke sath check karta hai, user ko verify mark karta hai aur JWT cookie issue karta hai.
+          User email ka 6-digit code daalta hai. Backend attempts gin kar code check karta hai, account verify karta hai aur dono token cookies set karke user ko sign in kar deta hai.
         </div>
         <div class="flow-grid">
           <div class="sub-box">
-            <div class="sub-box-title">Frontend Page & Timer</div>
+            <div class="sub-box-title">Frontend Page</div>
             <p><span class="file-badge">frontend/src/pages/auth/verify-email.tsx</span></p>
-            <p>Timer Hook: <span class="file-badge">frontend/src/hooks/use-cooldown.ts</span> 60 seconds ka live countdown handle karta hai.</p>
-            <p>Verification hone par <span class="file-badge">frontend/src/components/auth-status.tsx</span> success screen dikha kar 1.2s baad <code>/dashboard</code> bhej deta hai.</p>
+            <p><code>OtpField</code> sirf digits rakhta hai (paste kiya hua <code>123 456</code> bhi <code>123456</code> ban jata hai). <code>ResendCode</code> + <span class="file-badge">frontend/src/hooks/use-cooldown.ts</span> countdown dikhate hain.</p>
+            <p>Success par <code>VerificationSuccess</code> screen, 1.2s baad <code>setUser()</code> aur <code>/dashboard</code>.</p>
           </div>
           <div class="sub-box">
-            <div class="sub-box-title">Backend Rate-Limiting & Verify</div>
-            <p><span class="file-badge">backend/src/controllers/verify-email.controller.ts</span></p>
-            <p><code>verifyOtpWithRateLimit()</code>: Redis mein 5 wrong attempts check karta hai. Agar galat ho to block karta hai.</p>
-            <p>User Model update: <code>isEmailVerified = true</code>, <code>verificationExpiresAt = null</code>.</p>
+            <div class="sub-box-title">Brute-Force Protection</div>
+            <p><span class="file-badge">backend/src/controllers/verify-email.controller.ts</span> &rarr; <code>verifyOtpWithRateLimit()</code></p>
+            <p>Code compare karne se <strong>pehle</strong> Redis <code>INCR</code> se attempt ginta hai. Is liye ek saath 30 galat requests bhi 5 se zyada guess nahi kar saktin.</p>
+            <p>5 galat attempts par OTP delete. Sahi code ek hi dafa use ho sakta hai.</p>
           </div>
           <div class="sub-box">
-            <div class="sub-box-title">Token & Cookie Helpers</div>
-            <p><span class="file-badge">backend/src/utils/token.util.ts</span>: <code>setAuthCookie(res, user._id)</code> JWT create karta hai aur secure <code>httpOnly</code> cookie set karta hai.</p>
-            <p><span class="file-badge">backend/src/utils/user.util.ts</span>: <code>toPublicUser(user)</code> password strip karke clean response deta hai.</p>
+            <div class="sub-box-title">Tokens & Cookies</div>
+            <p><span class="file-badge">backend/src/utils/token.util.ts</span>: <code>setAuthCookies(res, user._id)</code></p>
+            <p>Access JWT (<code>ACCESS_TOKEN_SECRET</code>, 15m) aur refresh JWT (<code>REFRESH_TOKEN_SECRET</code>, 7d, random <code>tokenId</code>). <code>tokenId</code> Redis mein <code>refreshToken:&lt;userId&gt;</code> par save.</p>
+            <p><span class="file-badge">backend/src/utils/user.util.ts</span>: <code>toPublicUser()</code> sirf <code>_id</code>, name, email, isEmailVerified, createdAt bhejta hai.</p>
           </div>
         </div>
       </div>
 
-      <!-- Step 3: Login Flow -->
+      <!-- Stage 4: Login -->
       <div class="flow-card">
         <div class="flow-header">
           <span class="flow-step-num">STAGE 04</span>
@@ -557,27 +597,27 @@
         </div>
         <div class="flow-title">4. Returning User Login</div>
         <div class="flow-desc">
-          User Email aur Password enter karta hai. Backend credentials match karta hai aur check karta hai ke kya email verified hai ya nahi.
+          User email aur password daalta hai. Backend password match karta hai, verified hone ka check karta hai aur naya session banata hai. Purana session (doosre device ka) khud khatam ho jata hai, kyunki ek user ka ek hi refresh token hota hai.
         </div>
         <div class="flow-grid">
           <div class="sub-box">
             <div class="sub-box-title">Frontend Form</div>
             <p><span class="file-badge">frontend/src/pages/auth/login.tsx</span></p>
-            <p>Components: <code>Field</code> (Email), <code>PasswordField</code> (with eye icon toggle).</p>
-            <p>Success hone par seedha <code>/dashboard</code> redirect karta hai.</p>
+            <p>Components: <code>Field</code> (Email), <code>PasswordField</code> (eye toggle).</p>
+            <p>Success par <code>setUser(response.user)</code>, phir <code>state.from</code> ya <code>/dashboard</code> par.</p>
           </div>
           <div class="sub-box">
             <div class="sub-box-title">Backend Controller</div>
-            <p><span class="file-badge">backend/src/controllers/login.controller.ts</span></p>
-            <p>1. <code>userModel.findOne({ email }).select('+password')</code></p>
-            <p>2. <code>bcrypt.compare(password, user.password)</code></p>
-            <p>3. <code>if (!user.isEmailVerified) return 401</code></p>
-            <p>4. <code>setAuthCookie(res, user._id)</code></p>
+            <p><span class="file-badge">backend/src/controllers/login.controller.ts</span> (rate limit: 15 minute mein 10)</p>
+            <p>1. <code>userModel.findOne({ email }).select("+password")</code></p>
+            <p>2. <code>bcrypt.compare(password, user.password)</code>, galat ho to 400</p>
+            <p>3. <code>if (!user.isEmailVerified)</code> 401</p>
+            <p>4. <code>setAuthCookies(res, user._id)</code></p>
           </div>
         </div>
       </div>
 
-      <!-- Step 4: Protected Dashboard & Profile -->
+      <!-- Stage 5: Dashboard -->
       <div class="flow-card">
         <div class="flow-header">
           <span class="flow-step-num">STAGE 05</span>
@@ -585,72 +625,108 @@
         </div>
         <div class="flow-title">5. Protected Dashboard & Auth Middleware</div>
         <div class="flow-desc">
-          User dashboard par aata hai. Browser automatically HTTP cookie ke sath <code>/me</code> request bhejta hai. Agar cookie valid ho tabhi profile show hoti hai, warna foran <code>/login</code> par kick out kar diya jata hai.
+          Dashboard sirf <code>ProtectedRoute</code> ke andar render hota hai, is liye bina login wala user isse dekh hi nahi sakta. Backend par har protected request access cookie se check hoti hai.
         </div>
         <div class="flow-grid">
           <div class="sub-box">
             <div class="sub-box-title">Frontend Dashboard</div>
             <p><span class="file-badge">frontend/src/pages/dashboard/index.tsx</span></p>
-            <p><code>useEffect</code> mein <code>apiRequest("/me")</code> call karta hai. User ka name, email aur verified status cards mein render hota hai.</p>
+            <p><code>useAuth()</code> se user ka name aur email dikhata hai. GitHub links <span class="file-badge">frontend/src/config/site.ts</span> se aate hain.</p>
           </div>
           <div class="sub-box">
             <div class="sub-box-title">Auth Middleware Guard</div>
             <p><span class="file-badge">backend/src/middlewares/auth.middleware.ts</span></p>
-            <p>Cookie ya <code>Bearer</code> token se JWT nikal kar <code>jwt.verify()</code> karta hai. Valid hone par <code>req.userId</code> attach kar ke controller ko pass karta hai.</p>
+            <p>Sirf <code>accessToken</code> cookie padhta hai aur <code>ACCESS_TOKEN_SECRET</code> se verify karta hai. Refresh token yahan kaam nahi karta, kyunki us ka secret alag hai.</p>
+            <p>Valid ho to <code>req.userId</code>, warna 401.</p>
           </div>
           <div class="sub-box">
             <div class="sub-box-title">Me Controller</div>
             <p><span class="file-badge">backend/src/controllers/me.controller.ts</span></p>
-            <p>MongoDB se <code>userModel.findById(req.userId)</code> fetch karke <code>toPublicUser()</code> ke through return karta hai.</p>
+            <p><code>userModel.findById(req.userId)</code> aur <code>toPublicUser()</code>.</p>
           </div>
         </div>
       </div>
 
-      <!-- Step 5: Password Recovery -->
+      <!-- Stage 6: Silent refresh -->
       <div class="flow-card">
         <div class="flow-header">
           <span class="flow-step-num">STAGE 06</span>
-          <span class="endpoint-badge">POST /forgot-password & /reset-password</span>
+          <span class="endpoint-badge">POST /api/auth/refresh</span>
         </div>
-        <div class="flow-title">6. Two-Step Password Recovery</div>
+        <div class="flow-title">6. Silent Refresh & Token Rotation</div>
         <div class="flow-desc">
-          Forgot password flow do steps mein mukammal hota hai: Pehle email par OTP mangwaya jata hai, phir OTP verify hone ke baad naya password save hota hai.
+          15 minute baad access token expire hota hai aur API 401 deti hai. User ko kuch pata nahi chalta: frontend chupke se refresh karta hai aur wahi request dobara bhejta hai.
         </div>
         <div class="flow-grid">
           <div class="sub-box">
-            <div class="sub-box-title">Step 1: Request Reset OTP</div>
-            <p><span class="file-badge">frontend/src/pages/auth/forgot-password.tsx</span></p>
-            <p>Backend: <span class="file-badge">backend/src/controllers/forgot-password.controller.ts</span> Anti-enumeration protection ke sath Redis OTP aur Resend Email send karta hai.</p>
+            <div class="sub-box-title">Frontend Client</div>
+            <p><span class="file-badge">frontend/src/lib/api.ts</span>: <code>refreshSession()</code></p>
+            <p>401 aaye to ek shared promise se <code>/auth/refresh</code> call hota hai. 5 requests ek saath fail hon tab bhi refresh sirf <strong>1 dafa</strong> chalta hai.</p>
+            <p>Refresh kaamyab: request dobara. Nakaam: <code>auth:session-expired</code> event, user login page par.</p>
           </div>
           <div class="sub-box">
-            <div class="sub-box-title">Step 2: Verify & Change Password</div>
-            <p><span class="file-badge">frontend/src/pages/auth/reset-password.tsx</span></p>
-            <p>1. <code>/verify-reset-otp</code>: OTP valid hai ya nahi (consume kiye baghair) check hota hai.</p>
-            <p>2. <code>/reset-password</code>: Naya password hash ho kar DB mein update hota hai aur Redis se OTP delete ho jata hai.</p>
+            <div class="sub-box-title">Backend Rotation</div>
+            <p><span class="file-badge">backend/src/controllers/refresh.controller.ts</span></p>
+            <p>1. <code>verifyRefreshToken()</code>: signature aur expiry check.</p>
+            <p>2. <code>isRefreshTokenActive()</code>: token ka <code>tokenId</code> Redis wale se match hona chahiye.</p>
+            <p>3. <code>setAuthCookies()</code>: naya access + naya refresh token. Purana refresh token ab reject hoga.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Reject Cases</div>
+            <p>Token missing, galat secret, expire, logout ho chuka, ya password reset ho chuka: dono cookies clear aur 401 <code>Session expired</code>.</p>
           </div>
         </div>
       </div>
 
-      <!-- Step 6: Logout -->
+      <!-- Stage 7: Password recovery -->
       <div class="flow-card">
         <div class="flow-header">
           <span class="flow-step-num">STAGE 07</span>
-          <span class="endpoint-badge">POST /api/auth/logout</span>
+          <span class="endpoint-badge">POST /forgot-password, /verify-reset-otp, /reset-password</span>
         </div>
-        <div class="flow-title">7. Logout & Session Termination</div>
+        <div class="flow-title">7. Two-Step Password Recovery</div>
         <div class="flow-desc">
-          User Dashboard par "Sign out" button press karta hai. Modal confirmation ke baad cookie clear hoti hai aur user login screen par wapas chala jata hai.
+          Pehle email par reset code aata hai, phir code check hota hai, phir naya password save hota hai. Password badalte hi purana session bhi khatam ho jata hai.
         </div>
         <div class="flow-grid">
           <div class="sub-box">
-            <div class="sub-box-title">Frontend Dialog</div>
-            <p>Dashboard page par accessible modal dialog khulta hai. Confirm karne par <code>apiRequest("/logout", { method: "POST" })</code> trigger hoti hai.</p>
+            <div class="sub-box-title">Step 1: Request Reset Code</div>
+            <p><span class="file-badge">frontend/src/pages/auth/forgot-password.tsx</span></p>
+            <p><span class="file-badge">backend/src/controllers/forgot-password.controller.ts</span>: hamesha same generic message aur <code>resendAfter</code>, chahe email ka account ho ya na ho. Is se pata nahi chalta ke kaunse emails registered hain.</p>
           </div>
           <div class="sub-box">
-            <div class="sub-box-title">Backend Cookie Clear</div>
+            <div class="sub-box-title">Step 2: Verify Code</div>
+            <p><span class="file-badge">frontend/src/pages/auth/reset-password.tsx</span> (email na ho to <code>/forgot-password</code> par wapas)</p>
+            <p><span class="file-badge">backend/src/controllers/verify-reset-otp.controller.ts</span>: <code>validateOtpWithRateLimit()</code> code ko consume kiye baghair check karta hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Step 3: New Password</div>
+            <p><span class="file-badge">backend/src/controllers/reset-password.controller.ts</span></p>
+            <p>Code dobara check, password hash, <code>clearOtp()</code>, aur <code>revokeRefreshToken()</code>: purane sab sessions khatam.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 8: Logout -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-step-num">STAGE 08</span>
+          <span class="endpoint-badge">POST /api/auth/logout</span>
+        </div>
+        <div class="flow-title">8. Logout & Session Revocation</div>
+        <div class="flow-desc">
+          User "Sign out" dabata hai aur dialog mein confirm karta hai. Backend Redis se refresh token delete karta hai, dono cookies clear karta hai, aur frontend user ko login page par bhej deta hai.
+        </div>
+        <div class="flow-grid">
+          <div class="sub-box">
+            <div class="sub-box-title">Frontend</div>
+            <p>Dashboard ka confirm dialog <code>useAuth().logout()</code> chalata hai: <code>/auth/logout</code> call, phir <code>setUser(null)</code>. <code>ProtectedRoute</code> khud <code>/login</code> par bhej deta hai.</p>
+          </div>
+          <div class="sub-box">
+            <div class="sub-box-title">Backend</div>
             <p><span class="file-badge">backend/src/controllers/logout.controller.ts</span></p>
-            <p><code>res.clearCookie("token", COOKIE_CLEAR_OPTIONS)</code></p>
-            <p>Cookie browser se destroy ho jati hai.</p>
+            <p>Refresh token ko <code>jwt.verify</code> karta hai (sirf decode nahi), active ho to <code>revokeRefreshToken()</code>, phir <code>clearAuthCookies()</code>.</p>
+            <p>Is liye nakli token bana kar koi kisi doosre ko logout nahi kar sakta.</p>
           </div>
         </div>
       </div>
@@ -658,66 +734,108 @@
     </div>
 
 
-    <!-- TAB 2: Architecture Map (Naqsha) -->
+    <!-- TAB 2: Architecture Map -->
     <div id="tab-architecture" class="tab-content">
       <h2 class="section-title">🗺️ Complete System Architecture (Naqsha)</h2>
       <p class="section-sub">Browser se Database tak tamam layers ka aapsi rabta aur data transfer:</p>
 
       <div class="diagram-wrap">
         <div class="diagram-layers">
-          
-          <!-- Layer 1: Client Browser -->
+
           <div class="diagram-layer">
             <div class="layer-label">1. Client Tier (React 18 + Vite 6 + Tailwind v4)</div>
             <div class="layer-nodes">
               <div class="diagram-node">💻 User Browser</div>
               <div class="diagram-node">📦 App.tsx (Router)</div>
-              <div class="diagram-node">🎨 AuthLayout & UI Primitives</div>
-              <div class="diagram-node">⚡ useCooldown & API Client</div>
+              <div class="diagram-node">🔐 AuthProvider (useAuth)</div>
+              <div class="diagram-node">🚧 ProtectedRoute / PublicRoute</div>
+              <div class="diagram-node">⚡ api.ts (Silent Refresh)</div>
             </div>
           </div>
 
-          <div class="arrow-down">⬇️ [HTTP Requests / JSON / httpOnly Cookies] ⬇️</div>
+          <div class="arrow-down">⬇️ [HTTP / JSON / HttpOnly accessToken + refreshToken cookies] ⬇️</div>
 
-          <!-- Layer 2: API Gateway & Middlewares -->
           <div class="diagram-layer">
             <div class="layer-label">2. Express Server Tier (Port 3000)</div>
             <div class="layer-nodes">
-              <div class="diagram-node">🚀 server.ts</div>
-              <div class="diagram-node">🛡️ CORS (Origin 5173)</div>
+              <div class="diagram-node">🚀 server.ts (Env Checks)</div>
+              <div class="diagram-node">🛡️ CORS (FRONTEND_URL)</div>
               <div class="diagram-node">🍪 cookie-parser</div>
-              <div class="diagram-node">🔒 auth.middleware.ts (JWT Guard)</div>
-              <div class="diagram-node">📋 validate.middleware.ts (Zod)</div>
+              <div class="diagram-node">⏱️ rate-limit.middleware</div>
+              <div class="diagram-node">📋 validate.middleware (Zod)</div>
+              <div class="diagram-node">🔒 auth.middleware (Access JWT)</div>
+              <div class="diagram-node">🧯 error.middleware</div>
             </div>
           </div>
 
-          <div class="arrow-down">⬇️ [Routes Dispatcher] ⬇️</div>
+          <div class="arrow-down">⬇️ [auth.routes.ts] ⬇️</div>
 
-          <!-- Layer 3: Controllers & Utilities -->
           <div class="diagram-layer">
             <div class="layer-label">3. Controllers & Utility Helpers</div>
             <div class="layer-nodes">
-              <div class="diagram-node">👤 register.controller</div>
-              <div class="diagram-node">🔑 login.controller</div>
-              <div class="diagram-node">✉️ verify-email.controller</div>
-              <div class="diagram-node">🔄 reset-password.controller</div>
-              <div class="diagram-node">🧰 token.util.ts (setAuthCookie)</div>
-              <div class="diagram-node">🧹 user.util.ts (toPublicUser)</div>
+              <div class="diagram-node">👤 register</div>
+              <div class="diagram-node">✉️ verify-email / resend-otp</div>
+              <div class="diagram-node">🔑 login / me</div>
+              <div class="diagram-node">🔄 refresh</div>
+              <div class="diagram-node">🧩 forgot / verify-reset / reset</div>
+              <div class="diagram-node">🚪 logout</div>
+              <div class="diagram-node">🧰 token.util (setAuthCookies)</div>
+              <div class="diagram-node">🧹 user.util (toPublicUser)</div>
             </div>
           </div>
 
           <div class="arrow-down">⬇️ [Data & Storage Operations] ⬇️</div>
 
-          <!-- Layer 4: Infrastructure & External Services -->
           <div class="diagram-layer">
             <div class="layer-label">4. Infrastructure & Database Tier</div>
             <div class="layer-nodes">
-              <div class="diagram-node" style="border-color: #22c55e;">🍃 MongoDB (Mongoose User Schema & TTL Index)</div>
-              <div class="diagram-node" style="border-color: #ef4444;">⚡ Upstash Redis (OTP Store, Expiry, Rate Limits)</div>
-              <div class="diagram-node" style="border-color: #6366f1;">📧 Resend API (Transactional Auth Emails)</div>
+              <div class="diagram-node" style="border-color: #22c55e;">🍃 MongoDB (User schema + 24h TTL for unverified)</div>
+              <div class="diagram-node" style="border-color: #ef4444;">⚡ Upstash Redis (OTPs, cooldowns, attempts, refresh tokens, rate limits)</div>
+              <div class="diagram-node" style="border-color: #6366f1;">📧 Resend API (verification and reset emails)</div>
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <h2 class="section-title" style="margin-top: 48px;">🧠 Redis Keys</h2>
+      <p class="section-sub">Redis mein sab kuch expiry ke saath save hota hai, is liye purana data khud saaf ho jata hai:</p>
+      <div class="flow-grid">
+        <div class="sub-box">
+          <div class="sub-box-title">OTP (type = verify ya reset)</div>
+          <p><code>auth:&lt;type&gt;_otp:&lt;email&gt;</code>: code, 300s</p>
+          <p><code>auth:&lt;type&gt;_cooldown:&lt;email&gt;</code>: resend lock, 60s</p>
+          <p><code>auth:&lt;type&gt;_attempts:&lt;email&gt;</code>: galat attempts, 300s</p>
+        </div>
+        <div class="sub-box">
+          <div class="sub-box-title">Session</div>
+          <p><code>refreshToken:&lt;userId&gt;</code>: active refresh token ka <code>tokenId</code>, 7 din</p>
+          <p>Logout aur password reset par foran delete.</p>
+        </div>
+        <div class="sub-box">
+          <div class="sub-box-title">Rate Limit</div>
+          <p><code>ratelimit:&lt;login|email|otp&gt;:&lt;ip&gt;</code>: request count, 15 minute</p>
+          <p>Redis down ho to request rokti nahi (log karke aage jane deti hai).</p>
+        </div>
+      </div>
+
+      <h2 class="section-title" style="margin-top: 48px;">⚙️ Configuration</h2>
+      <p class="section-sub">Template badalna ho to sirf yeh jagahen kholni hain:</p>
+      <div class="flow-grid">
+        <div class="sub-box">
+          <div class="sub-box-title">Timings & Limits</div>
+          <p><span class="file-badge">backend/src/config/auth.config.ts</span></p>
+          <p>Access 15m, refresh 7d, OTP 5m, cooldown 60s, max attempts 5, unverified account 24h, bcrypt 10, password min 6, body 10kb, rate limits (login 10, email 10, OTP 20 / 15m).</p>
+        </div>
+        <div class="sub-box">
+          <div class="sub-box-title">Environment (.env)</div>
+          <p><span class="file-badge">backend/.env.example</span>: <code>PORT</code>, <code>NODE_ENV</code>, <code>FRONTEND_URL</code>, <code>COOKIE_SAMESITE</code>, <code>MONGO_URI</code>, <code>ACCESS_TOKEN_SECRET</code>, <code>REFRESH_TOKEN_SECRET</code>, <code>RESEND_API_KEY</code>, <code>UPSTASH_REDIS_REST_URL</code>, <code>UPSTASH_REDIS_REST_TOKEN</code>, <code>EMAIL_FROM</code>, <code>APP_NAME</code></p>
+          <p><span class="file-badge">frontend/.env.example</span>: <code>VITE_API_URL</code></p>
+        </div>
+        <div class="sub-box">
+          <div class="sub-box-title">Branding</div>
+          <p><span class="file-badge">frontend/src/config/site.ts</span>: logo naam, tagline, GitHub links</p>
+          <p><span class="file-badge">frontend/index.html</span>, <span class="file-badge">frontend/public/favicon.svg</span>: title aur icon</p>
         </div>
       </div>
     </div>
@@ -742,50 +860,78 @@
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/main.tsx</div>
-            <div class="file-card-role">React client application ka main mounting entry-point. HTML ke <code>#root</code> div ko pakad kar React application mount karta hai aur global CSS load karta hai.</div>
+            <div class="file-card-role">React app ka entry point. <code>#root</code> div mein app mount karta hai aur global CSS load karta hai.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Loads:</span> index.html</div>
+            <div class="connection-tag"><span class="tag-strong">Loaded by:</span> index.html</div>
             <div class="connection-tag"><span class="tag-strong">Imports:</span> App.tsx, index.css</div>
           </div>
         </div>
 
         <div class="file-card" data-category="frontend">
           <div>
-            <div class="file-card-path">frontend/src/App.tsx</div>
-            <div class="file-card-role">Client-side central routing table (React Router v7). Tamam auth pages ko <code>AuthLayout</code> wrapper ke andar group karta hai aur <code>/dashboard</code> protected route define karta hai.</div>
+            <div class="file-card-path">frontend/src/index.css</div>
+            <div class="file-card-role">Tailwind CSS v4 import, fonts (<code>--font-sans</code>, <code>--font-display</code>), dark base colors aur autofill styling. Baqi saari styling components mein Tailwind classes se.</div>
           </div>
           <div>
             <div class="connection-tag"><span class="tag-strong">Loaded by:</span> main.tsx</div>
-            <div class="connection-tag"><span class="tag-strong">Imports:</span> AuthLayout, All Pages</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/App.tsx</div>
+            <div class="file-card-role">Routing table. <code>AuthProvider</code> poori app ko wrap karta hai. Auth pages <code>PublicRoute</code> + <code>AuthLayout</code> ke andar, dashboard <code>ProtectedRoute</code> ke andar. Naya protected page yahan add hota hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Imports:</span> AuthProvider, route guards, AuthLayout, pages</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/context/auth-context.tsx</div>
+            <div class="file-card-role">Global auth state. App start par <code>/auth/me</code> call, phir <code>user</code>, <code>loading</code>, <code>setUser</code> aur <code>logout</code> <code>useAuth()</code> hook se deta hai. Session expire event par user clear karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> route guards, login, verify-email, dashboard</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/components/protected-route.tsx</div>
+            <div class="file-card-role"><code>ProtectedRoute</code> (login zaroori, warna <code>/login</code> with <code>from</code>) aur <code>PublicRoute</code> (logged-in user ko <code>/dashboard</code>). Loading ke dauraan full-page loader.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> App.tsx</div>
           </div>
         </div>
 
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/components/auth-layout.tsx</div>
-            <div class="file-card-role">Auth pages ka consistent split-screen layout. Left side par brand branding/logo aur right side par form injection card provide karta hai. Isme <code>Logo</code> aur <code>AuthHeader</code> components bhi shamil hain.</div>
+            <div class="file-card-role">Auth pages ka split-screen layout: left brand panel, right form. <code>Logo</code> aur <code>AuthHeader</code> bhi yahin hain. Naam aur tagline <code>site.ts</code> se.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Loaded by:</span> App.tsx</div>
-            <div class="connection-tag"><span class="tag-strong">Renders:</span> Outlet / Children</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> App.tsx, dashboard (Logo), all auth pages (AuthHeader)</div>
           </div>
         </div>
 
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/components/auth-fields.tsx</div>
-            <div class="file-card-role">Form input fields ka reusable bundle. <code>Field</code>, <code>NameField</code>, <code>PasswordField</code> (password toggle button ke sath), <code>OtpField</code>, <code>SubmitButton</code> (loading spinner ke sath) aur <code>ErrorMessage</code> alert box.</div>
+            <div class="file-card-role">Form building blocks: <code>Field</code>, <code>NameField</code>, <code>PasswordField</code> (show/hide), <code>OtpField</code> (sirf 6 digits), <code>ResendCode</code> (cooldown button), <code>SubmitButton</code> aur <code>ErrorMessage</code>.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> login.tsx, register.tsx, reset-password.tsx, forgot-password.tsx</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> All auth pages</div>
           </div>
         </div>
 
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/components/auth-status.tsx</div>
-            <div class="file-card-role">Universal success state card. Email verify hone par aur password reset complete hone par green checkmark icon ke sath informative screen render karta hai.</div>
+            <div class="file-card-role">Success screen (green check icon). Email verify aur password reset complete hone par.</div>
           </div>
           <div>
             <div class="connection-tag"><span class="tag-strong">Used by:</span> verification-success.tsx, reset-password.tsx</div>
@@ -794,38 +940,58 @@
 
         <div class="file-card" data-category="frontend">
           <div>
-            <div class="file-card-path">frontend/src/hooks/use-cooldown.ts</div>
-            <div class="file-card-role">Custom React hook jo OTP resend ke liye 60-second ka countdown timer manage karta hai. Window interval aur localStorage sync ko handle karta hai taake refresh par bhi timer barkarar rahe.</div>
+            <div class="file-card-path">frontend/src/components/ui.tsx</div>
+            <div class="file-card-role">Chhote UI primitives: <code>Input</code>, <code>Label</code> aur <code>Card</code>.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> verify-email.tsx, reset-password.tsx</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> auth-fields.tsx, dashboard</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/config/site.ts</div>
+            <div class="file-card-role">Branding config: logo ka naam, tagline, repo aur issues links. Template ko apna banane ke liye yahi file badlo.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> auth-layout.tsx, dashboard</div>
           </div>
         </div>
 
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/lib/api.ts</div>
-            <div class="file-card-role">Centralized HTTP fetch client. Backend base URL resolve karta hai, <code>credentials: 'include'</code> bhejta hai taake cookies transfer hon, aur backend ke JSON error messages extract karta hai.</div>
+            <div class="file-card-role">HTTP client. <code>credentials: "include"</code> se cookies bhejta hai. 401 par ek shared <code>refreshSession()</code> aur request retry. Server ka error <code>message</code> throw karta hai. <code>getErrorMessage()</code> helper bhi yahin.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> Tamam pages aur dashboard</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> auth-context, all pages, ResendCode</div>
           </div>
         </div>
 
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/lib/otp-cooldown.ts</div>
-            <div class="file-card-role">Pure helper utilities for OTP timers: <code>getOtpCooldownKey</code>, <code>getCooldownRemaining</code>, aur <code>startOtpCooldown</code>. LocalStorage mein timestamp store karti hai.</div>
+            <div class="file-card-role">OTP timer helpers: <code>getOtpCooldownKey</code>, <code>getCooldownRemaining</code>, <code>startOtpCooldown(key, seconds)</code>. Seconds backend ke <code>resendAfter</code> se aate hain. localStorage mein expiry rakhta hai.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> use-cooldown.ts, register.tsx, forgot-password.tsx</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> use-cooldown.ts, register, forgot-password, verify-email, reset-password</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/hooks/use-cooldown.ts</div>
+            <div class="file-card-role">Countdown hook. Har second baqi waqt update karta hai, page refresh par bhi timer chalta rehta hai. <code>start(seconds)</code> naya cooldown shuru karta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> ResendCode (auth-fields.tsx)</div>
           </div>
         </div>
 
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/pages/auth/login.tsx</div>
-            <div class="file-card-role">User login screen. Email aur password collect karta hai aur backend ke <code>/login</code> endpoint ko call kar ke user ko dashboard bhejta hai.</div>
+            <div class="file-card-role">Login screen. Success par <code>setUser()</code> aur user ko <code>from</code> page ya dashboard par bhejta hai.</div>
           </div>
           <div>
             <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /api/auth/login</div>
@@ -835,7 +1001,7 @@
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/pages/auth/register.tsx</div>
-            <div class="file-card-role">New user registration page. Name, email aur password collect karke <code>/register</code> par submit karta hai aur verify-email page par navigate karwata hai.</div>
+            <div class="file-card-role">Registration page. Name, email, password bhejta hai, <code>resendAfter</code> se cooldown shuru karke verify-email par bhejta hai.</div>
           </div>
           <div>
             <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /api/auth/register</div>
@@ -845,17 +1011,27 @@
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/pages/auth/verify-email.tsx</div>
-            <div class="file-card-role">OTP verification page. 6-digit code input karta hai, resend button with countdown dikhata hai, aur verify hone par dashboard bhejta hai.</div>
+            <div class="file-card-role">OTP verification page. Email query string ya state se. Verify hone par success screen, phir user set karke dashboard.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /api/auth/verify-email & /resend-otp</div>
+            <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /api/auth/verify-email, /resend-otp</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="frontend">
+          <div>
+            <div class="file-card-path">frontend/src/pages/auth/verification-success.tsx</div>
+            <div class="file-card-role">"You're all set" screen jo verify ke baad 1.2 second dikhti hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> verify-email.tsx</div>
           </div>
         </div>
 
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/pages/auth/forgot-password.tsx</div>
-            <div class="file-card-role">Password recovery initiation page. User ka email mangta hai aur <code>/forgot-password</code> par OTP send karwa kar <code>/reset-password</code> par bhejta hai.</div>
+            <div class="file-card-role">Email le kar reset code mangwata hai, cooldown shuru karta hai aur <code>/reset-password</code> par email state ke saath bhejta hai.</div>
           </div>
           <div>
             <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /api/auth/forgot-password</div>
@@ -865,20 +1041,20 @@
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/pages/auth/reset-password.tsx</div>
-            <div class="file-card-role">2-Step recovery flow: Step 1 mein OTP verify karta hai aur Step 2 mein naya password aur confirm password set karwata hai.</div>
+            <div class="file-card-role">2 steps: code check, phir naya password aur confirm. Email na ho to <code>/forgot-password</code> par redirect.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /verify-reset-otp & /reset-password</div>
+            <div class="connection-tag"><span class="tag-strong">Calls:</span> POST /verify-reset-otp, /reset-password, /forgot-password</div>
           </div>
         </div>
 
         <div class="file-card" data-category="frontend">
           <div>
             <div class="file-card-path">frontend/src/pages/dashboard/index.tsx</div>
-            <div class="file-card-role">Protected user dashboard. <code>/me</code> call karke user ka data load karta hai, profile aur account status display karta hai, aur logout confirmation modal handle karta hai.</div>
+            <div class="file-card-role">Protected dashboard. <code>useAuth()</code> se user dikhata hai, aur sign-out confirmation dialog handle karta hai.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Calls:</span> GET /api/auth/me & POST /logout</div>
+            <div class="connection-tag"><span class="tag-strong">Calls:</span> useAuth().logout() &rarr; POST /logout</div>
           </div>
         </div>
 
@@ -886,7 +1062,7 @@
         <div class="file-card" data-category="backend">
           <div>
             <div class="file-card-path">backend/server.ts</div>
-            <div class="file-card-role">Backend entry-point. Environment variables load karta hai, MongoDB database connect karta hai aur port 3000 par HTTP listener start karta hai.</div>
+            <div class="file-card-role">Backend entry point. <code>.env</code> load, required env aur <code>COOKIE_SAMESITE</code> check, dono secrets alag hone ka check, MongoDB connect, phir listen.</div>
           </div>
           <div>
             <div class="connection-tag"><span class="tag-strong">Imports:</span> app.ts, db.ts</div>
@@ -896,37 +1072,77 @@
         <div class="file-card" data-category="backend">
           <div>
             <div class="file-card-path">backend/src/app.ts</div>
-            <div class="file-card-role">Express app setup: CORS configuration (Origin 5173 with credentials), JSON body parser, cookie-parser aur <code>/api/auth</code> router mounting.</div>
+            <div class="file-card-role">Express setup: <code>trust proxy</code>, CORS with credentials, JSON body limit, cookie-parser, <code>/health</code>, <code>/api/auth</code> router, phir 404 aur error handlers.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Mounts:</span> /api/auth -> auth.routes.ts</div>
+            <div class="connection-tag"><span class="tag-strong">Mounts:</span> /api/auth &rarr; auth.routes.ts</div>
           </div>
         </div>
 
         <div class="file-card" data-category="backend">
           <div>
             <div class="file-card-path">backend/src/routes/auth.routes.ts</div>
-            <div class="file-card-role">Master authentication router. Tamam HTTP routes (login, register, OTPs, password reset, me, logout) ko Zod validation middlewares aur controllers ke sath map karta hai.</div>
+            <div class="file-card-role">Saare auth routes. Har route par rate limit, Zod validation aur controller. <code>/me</code> par <code>authenticate</code>.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Uses:</span> validate.middleware, auth.middleware, controllers</div>
+            <div class="connection-tag"><span class="tag-strong">Uses:</span> rate-limit, validate, auth middlewares, controllers</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/config/auth.config.ts</div>
+            <div class="file-card-role">Saari timings aur limits ek jagah: token TTLs, OTP time, cooldown, attempts, unverified account TTL, bcrypt rounds, password length, body limit, rate limits.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> token, cookie, otp, mail, routes, validation, app, controllers</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/config/cookie.config.ts</div>
+            <div class="file-card-role">Cookie options: HttpOnly, production mein Secure, <code>sameSite</code> env se, Max-Age config se (access 15m, refresh 7d), aur logout ke liye clear options.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> token.util.ts</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/config/validation.ts</div>
+            <div class="file-card-role">Zod schemas: shared <code>email</code>, <code>password</code>, <code>otp</code> fields se <code>registerSchema</code>, <code>loginSchema</code>, <code>emailSchema</code>, <code>verifyOtpSchema</code>, <code>resetPasswordSchema</code>.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> auth.routes.ts</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/config/db.ts</div>
+            <div class="file-card-role">MongoDB connection. Fail ho to error log karke process exit.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> server.ts</div>
           </div>
         </div>
 
         <div class="file-card" data-category="backend">
           <div>
             <div class="file-card-path">backend/src/models/user.model.ts</div>
-            <div class="file-card-role">Mongoose User Schema. Email, name, hashed password (select: false), emailVerified status, aur TTL auto-delete index for unverified accounts define karta hai.</div>
+            <div class="file-card-role">User schema: name, unique email, password (<code>select: false</code>), verified status, aur <code>verificationExpiresAt</code> par TTL index jo unverified accounts delete karta hai.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> Tamam auth controllers</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> Auth controllers</div>
           </div>
         </div>
 
         <div class="file-card" data-category="backend">
           <div>
             <div class="file-card-path">backend/src/middlewares/auth.middleware.ts</div>
-            <div class="file-card-role">Route protection guard. Incoming request ki cookie (ya Authorization Bearer header) se JWT token check karta hai, verify karta hai aur <code>req.userId</code> attach karta hai.</div>
+            <div class="file-card-role"><code>accessToken</code> cookie ko <code>ACCESS_TOKEN_SECRET</code> se verify karke <code>req.userId</code> lagata hai, warna 401.</div>
           </div>
           <div>
             <div class="connection-tag"><span class="tag-strong">Protects:</span> GET /api/auth/me</div>
@@ -936,7 +1152,7 @@
         <div class="file-card" data-category="backend">
           <div>
             <div class="file-card-path">backend/src/middlewares/validate.middleware.ts</div>
-            <div class="file-card-role">Generic Zod validation middleware. Request body ko Zod schema ke khilaf check karta hai. Agar error ho to 400 aur exact field errors return karta hai.</div>
+            <div class="file-card-role">Request body Zod schema se check. Galat ho to 400 aur pehla error message, sahi ho to saaf kiya hua data <code>req.body</code> mein.</div>
           </div>
           <div>
             <div class="connection-tag"><span class="tag-strong">Used on:</span> register, login, OTP, reset routes</div>
@@ -945,11 +1161,41 @@
 
         <div class="file-card" data-category="backend">
           <div>
-            <div class="file-card-path">backend/src/config/cookie.config.ts</div>
-            <div class="file-card-role">Single source of truth for cookies: <code>COOKIE_OPTIONS</code> (httpOnly, secure in prod, sameSite lax/none, 1 hour) aur <code>COOKIE_CLEAR_OPTIONS</code> (for logout).</div>
+            <div class="file-card-path">backend/src/middlewares/rate-limit.middleware.ts</div>
+            <div class="file-card-role">IP based limit Redis <code>INCR</code> se. Limit se zyada par 429. Redis error par request rokta nahi.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> token.util.ts, logout.controller.ts</div>
+            <div class="connection-tag"><span class="tag-strong">Used on:</span> login, email aur OTP routes</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/middlewares/error.middleware.ts</div>
+            <div class="file-card-role"><code>notFoundHandler</code> (JSON 404) aur <code>errorHandler</code> (400 galat JSON, 413 bada body, baqi 500). Controllers ko try/catch ki zaroorat nahi, Express 5 errors khud yahan bhejta hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> app.ts</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/controllers/*.controller.ts</div>
+            <div class="file-card-role">Har route ki apni file: register, verify-email, resend-otp, login, me, refresh, logout, forgot-password, verify-reset-otp, reset-password.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> auth.routes.ts</div>
+          </div>
+        </div>
+
+        <div class="file-card" data-category="backend">
+          <div>
+            <div class="file-card-path">backend/src/types/express.d.ts</div>
+            <div class="file-card-role">TypeScript ko batata hai ke Express <code>Request</code> par <code>userId</code> field hota hai, jo auth middleware lagata hai.</div>
+          </div>
+          <div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> auth.middleware.ts, me.controller.ts</div>
           </div>
         </div>
 
@@ -957,50 +1203,50 @@
         <div class="file-card" data-category="service">
           <div>
             <div class="file-card-path">backend/src/utils/token.util.ts</div>
-            <div class="file-card-role">Centralized JWT helper: <code>setAuthCookie(res, userId)</code>. JWT create karta hai aur response cookie mein set kar ke token return karta hai.</div>
+            <div class="file-card-role">Dual-token logic: <code>setAuthCookies</code>, <code>verifyRefreshToken</code>, <code>isRefreshTokenActive</code>, <code>revokeRefreshToken</code>, <code>clearAuthCookies</code>. Refresh <code>tokenId</code> Redis mein.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> login.controller.ts, verify-email.controller.ts</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> login, verify-email, refresh, logout, reset-password</div>
           </div>
         </div>
 
         <div class="file-card" data-category="service">
           <div>
             <div class="file-card-path">backend/src/utils/user.util.ts</div>
-            <div class="file-card-role">Data sanitizer: <code>toPublicUser(user)</code>. Mongoose user object se password aur internal verification fields strip karke safe public data return karta hai.</div>
+            <div class="file-card-role"><code>toPublicUser(user)</code>: sirf <code>_id</code>, name, email, isEmailVerified, createdAt. Naya field schema mein aaye to bhi galti se leak nahi hota.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> login, verify-email, me controllers</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> login, verify-email, me</div>
           </div>
         </div>
 
         <div class="file-card" data-category="service">
           <div>
             <div class="file-card-path">backend/src/services/otp.service.ts</div>
-            <div class="file-card-role">Redis OTP engine. Cryptographic 6-digit random code generation, 5-minute expiry, 60s cooldown enforcement, aur 5-attempt rate-limiting logic handle karta hai.</div>
+            <div class="file-card-role">Redis OTP engine: <code>crypto.randomInt</code> se 6-digit code, expiry, cooldown, aur compare se pehle attempt counting jo parallel brute force rokti hai.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> register, verify-email, reset controllers</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> register, resend-otp, verify-email, forgot, verify-reset, reset</div>
           </div>
         </div>
 
         <div class="file-card" data-category="service">
           <div>
             <div class="file-card-path">backend/src/services/mail.service.ts</div>
-            <div class="file-card-role">Resend email delivery service. Unified HTML email layout renderer jo verification aur password reset emails ke liye stylish branded HTML emails dispatch karta hai.</div>
+            <div class="file-card-role">Resend se verification aur reset emails. Ek shared HTML layout. "Expire in X minutes" text OTP config se banta hai.</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Uses:</span> Resend API SDK</div>
+            <div class="connection-tag"><span class="tag-strong">Uses:</span> Resend SDK, EMAIL_FROM, APP_NAME</div>
           </div>
         </div>
 
         <div class="file-card" data-category="service">
           <div>
             <div class="file-card-path">backend/src/services/redis.service.ts</div>
-            <div class="file-card-role">Upstash Redis REST client instantiation using <code>@upstash/redis</code>. Serverless-ready HTTP Redis connection.</div>
+            <div class="file-card-role">Upstash Redis REST client (<code>@upstash/redis</code>).</div>
           </div>
           <div>
-            <div class="connection-tag"><span class="tag-strong">Used by:</span> otp.service.ts</div>
+            <div class="connection-tag"><span class="tag-strong">Used by:</span> otp.service, token.util, rate-limit</div>
           </div>
         </div>
 
@@ -1010,8 +1256,8 @@
   </div>
 
   <footer>
-    <p>CodeNaqsha Architecture Guide · Generated for <strong>express-typescript-server</strong></p>
-    <p style="margin-top: 6px; font-size: 0.8rem;">Clean Architecture · Production Ready · Lifetime Reusable Template</p>
+    <p>CodeNaqsha Architecture Guide · Generated for <strong>Secure Auth</strong></p>
+    <p style="margin-top: 6px; font-size: 0.8rem;">Dual-token auth · Express 5 · React 18 · Last updated October 27, 2026</p>
   </footer>
 
   <script>

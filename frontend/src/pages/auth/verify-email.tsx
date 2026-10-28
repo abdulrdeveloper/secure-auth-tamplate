@@ -56,10 +56,11 @@ export function VerifyEmailPage() {
   const backToLogin = (
     <p className="mt-7 text-center text-[13px] text-zinc-500">
       <Link
-        className="inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300 hover:underline"
+        className="group inline-flex items-center gap-1.5 text-[13px] font-semibold text-lime-300 hover:underline"
         to="/login"
       >
-        <ArrowLeft size={15} /> Back to sign in
+        <ArrowLeft size={15} className="transition-transform duration-200 ease-out group-hover:-translate-x-1" />
+        Back to sign in
       </Link>
     </p>
   );

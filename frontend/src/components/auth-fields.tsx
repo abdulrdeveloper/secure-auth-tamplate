@@ -17,6 +17,12 @@ import {
   UserRound,
 } from "lucide-react";
 import { Input, Label } from "./ui";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  REGEXP_ONLY_DIGITS,
+} from "./ui/input-otp";
 import { useCooldown } from "../hooks/use-cooldown";
 import { getErrorMessage } from "../lib/api";
 
@@ -148,22 +154,37 @@ function PasswordInput({
 export function OtpField({
   value,
   onValueChange,
+  disabled = false,
 }: {
   value: string;
   onValueChange: (value: string) => void;
+  disabled?: boolean;
 }) {
   return (
-    <Field
-      label="Verification code"
-      icon={KeyRound}
-      placeholder="000000"
-      name="otp"
-      value={value}
-      onChange={(event) =>
-        onValueChange(event.target.value.replace(/\D/g, "").slice(0, 6))
-      }
-      inputMode="numeric"
-    />
+    <div className="mb-[22px] block text-[13px] font-semibold text-zinc-300">
+      <div className="mb-3 flex items-center justify-between">
+        <Label>Verification code</Label>
+        <span className="text-xs font-normal text-zinc-500">6 digits</span>
+      </div>
+      <div className="flex justify-center">
+        <InputOTP
+          maxLength={6}
+          value={value}
+          onChange={onValueChange}
+          pattern={REGEXP_ONLY_DIGITS}
+          disabled={disabled}
+        >
+          <InputOTPGroup>
+            <InputOTPSlot index={0} />
+            <InputOTPSlot index={1} />
+            <InputOTPSlot index={2} />
+            <InputOTPSlot index={3} />
+            <InputOTPSlot index={4} />
+            <InputOTPSlot index={5} />
+          </InputOTPGroup>
+        </InputOTP>
+      </div>
+    </div>
   );
 }
 
@@ -223,13 +244,31 @@ export function SubmitButton({
 }) {
   return (
     <button
-      className="mt-[27px] flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-0 bg-lime-300 font-bold text-zinc-950 transition-[filter,transform] hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:transform-none"
+      className="group relative mt-7 flex h-12 w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl border border-lime-200/50 bg-gradient-to-b from-lime-300 via-lime-300 to-lime-400 text-[14px] font-semibold text-zinc-950 tracking-[-0.01em] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_1px_3px_rgba(0,0,0,0.4),0_0_20px_-3px_rgba(190,242,100,0.3)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-lime-200/80 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_8px_20px_-4px_rgba(0,0,0,0.5),0_0_30px_rgba(190,242,100,0.5)] active:translate-y-0 active:scale-[0.985] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:pointer-events-none disabled:opacity-60 disabled:hover:transform-none disabled:shadow-none"
       type="submit"
       disabled={loading}
     >
-      {loading && <LoaderCircle className="animate-spin" size={17} />}
-      {children}
-      {!loading && icon}
+      {/* Light sheen sweep effect on hover (Linear/SaaS signature) */}
+      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+
+      {/* Top subtle highlight line */}
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/40" />
+
+      {loading ? (
+        <span className="relative z-10 flex items-center gap-2">
+          <LoaderCircle className="animate-spin" size={17} />
+          <span>{children}</span>
+        </span>
+      ) : (
+        <span className="relative z-10 flex items-center gap-2">
+          <span>{children}</span>
+          {icon && (
+            <span className="inline-flex transition-transform duration-200 ease-out group-hover:translate-x-1.5">
+              {icon}
+            </span>
+          )}
+        </span>
+      )}
     </button>
   );
 }

@@ -62,12 +62,14 @@ export function LoginPage() {
             setForm({ ...form, password: event.target.value })
           }
         />
-        <Link
-          className="-mt-1.5 mb-[22px] block text-right text-[13px] font-semibold text-lime-300 hover:underline"
-          to="/forgot-password"
-        >
-          Forgot password?
-        </Link>
+        <div className="-mt-1.5 mb-[22px] flex justify-end">
+          <Link
+            className="inline-block text-[13px] font-semibold text-lime-300 transition-colors hover:underline"
+            to="/forgot-password"
+          >
+            Forgot password?
+          </Link>
+        </div>
         {error && <ErrorMessage message={error} />}
         <SubmitButton loading={loading} icon={<ArrowRight size={17} />}>
           {loading ? "Signing in" : "Sign in"}

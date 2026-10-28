@@ -121,20 +121,23 @@ export function DashboardPage() {
             </p>
             <div className="mt-[26px] flex gap-2.5">
               <button
-                className="h-[42px] flex-1 cursor-pointer rounded-[7px] border border-zinc-700 bg-zinc-800 font-semibold text-zinc-300 hover:bg-zinc-700"
+                className="h-[42px] flex-1 cursor-pointer rounded-xl border border-zinc-700/80 bg-zinc-800/80 text-[13px] font-semibold text-zinc-300 transition-all duration-200 hover:border-zinc-600 hover:bg-zinc-700/80 active:scale-[0.985]"
                 onClick={() => setShowLogoutDialog(false)}
               >
                 Cancel
               </button>
               <button
-                className="flex h-[42px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-[7px] border-0 bg-lime-300 font-semibold text-zinc-950 hover:brightness-110 disabled:opacity-70"
+                className="group relative flex h-[42px] flex-1 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl border border-lime-200/50 bg-gradient-to-b from-lime-300 via-lime-300 to-lime-400 text-[13px] font-semibold text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_0_15px_-2px_rgba(190,242,100,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(190,242,100,0.45)] active:translate-y-0 active:scale-[0.985] disabled:opacity-70"
                 onClick={handleLogout}
                 disabled={loggingOut}
               >
-                {loggingOut && (
-                  <LoaderCircle className="animate-spin" size={16} />
-                )}
-                {loggingOut ? "Signing out" : "Sign out"}
+                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+                <span className="relative z-10 flex items-center gap-2">
+                  {loggingOut && (
+                    <LoaderCircle className="animate-spin" size={16} />
+                  )}
+                  <span>{loggingOut ? "Signing out" : "Sign out"}</span>
+                </span>
               </button>
             </div>
           </div>

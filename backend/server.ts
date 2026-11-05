@@ -1,6 +1,7 @@
 import "dotenv/config";
 import app from "./src/app.js";
 import connectDB from "./src/config/db.js";
+import { initializeKeyService } from "./src/services/key.service.js";
 
 const REQUIRED_ENV = [
   "MONGO_URI",
@@ -33,6 +34,8 @@ if (process.env.ACCESS_TOKEN_SECRET === process.env.REFRESH_TOKEN_SECRET) {
 const PORT = process.env.PORT || 3000;
 
 await connectDB();
+
+initializeKeyService();
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
+import oidcRoutes from "./routes/oidc.routes.js";
 import { BODY_LIMIT } from "./config/auth.config.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 
@@ -25,6 +26,11 @@ app.use(cookieParser());
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
+
+// OIDC Discovery endpoints (must be at root level for /.well-known/)
+app.use(oidcRoutes);
+
+// Regular auth routes
 app.use("/api/auth", authRoutes);
 
 app.use(notFoundHandler);

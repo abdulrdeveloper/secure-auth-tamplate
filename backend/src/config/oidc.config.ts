@@ -51,8 +51,6 @@ export const getDiscoveryDocument = () => {
     token_endpoint_auth_methods_supported: OIDC_CONFIG.tokenEndpointAuthMethods,
     claims_supported: OIDC_CONFIG.supportedClaims,
     grant_types_supported: OIDC_CONFIG.grantTypes,
-    code_challenge_methods_supported: OIDC_CONFIG.pkceRequired
-      ? ["S256"]
-      : undefined,
+    code_challenge_methods_supported: ["S256"],
   };
 };

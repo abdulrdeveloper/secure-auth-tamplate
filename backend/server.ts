@@ -21,6 +21,11 @@ if (missingEnv.length > 0) {
   process.exit(1);
 }
 
+if (process.env.NODE_ENV === "production" && !process.env.ISSUER_URL) {
+  console.error("ISSUER_URL must be set in production");
+  process.exit(1);
+}
+
 if (!["lax", "none"].includes(process.env.COOKIE_SAMESITE as string)) {
   console.error('COOKIE_SAMESITE must be "lax" or "none"');
   process.exit(1);

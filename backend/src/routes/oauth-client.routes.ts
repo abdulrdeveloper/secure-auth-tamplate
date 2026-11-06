@@ -6,10 +6,11 @@ import {
   removeClient,
 } from "../controllers/oauth-client.controller.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
+import { rateLimit } from "../middlewares/rate-limit.middleware.js";
 
 const router: ExpressRouter = Router();
 
-router.post("/clients", authenticate, registerClient);
+router.post("/clients", authenticate, rateLimit("client_register", 10, 60), registerClient);
 router.get("/clients", authenticate, getClients);
 router.get("/clients/:clientId", authenticate, getClient);
 router.delete("/clients/:clientId", authenticate, removeClient);

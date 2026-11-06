@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface IOAuthClient extends Document {
   clientId: string;
@@ -9,7 +9,7 @@ export interface IOAuthClient extends Document {
   isTrusted: boolean;
   logoUrl?: string;
   description?: string;
-  owner?: Schema.Types.ObjectId | string;
+  owner?: Types.ObjectId | string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,7 +66,5 @@ const oauthClientSchema = new Schema<IOAuthClient>(
     timestamps: true,
   }
 );
-
-oauthClientSchema.index({ name: 1 });
 
 export const OAuthClient = model<IOAuthClient>("OAuthClient", oauthClientSchema);

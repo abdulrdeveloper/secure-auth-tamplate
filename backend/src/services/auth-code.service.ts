@@ -34,6 +34,23 @@ export const storeAuthCode = async (
   );
 };
 
+export const getAuthCode = async (
+  code: string
+): Promise<AuthCodeData | null> => {
+  const key = `${AUTH_CODE_PREFIX}${code}`;
+  const data = await redis.get<AuthCodeData | string>(key);
+
+  if (!data) {
+    return null;
+  }
+
+  try {
+    return (typeof data === "string" ? JSON.parse(data) : data) as AuthCodeData;
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Minimal store contract needed to redeem an authorization code.
  * The default implementation is the shared Upstash Redis client.

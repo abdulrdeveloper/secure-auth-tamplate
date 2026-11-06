@@ -22,7 +22,6 @@ app.use(
   }),
 );
 app.use(express.json({ limit: BODY_LIMIT }));
-app.use(express.urlencoded({ extended: true, limit: BODY_LIMIT }));
 app.use(cookieParser());
 
 app.get("/health", (_req, res) => {
@@ -30,6 +29,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use(oidcRoutes);
+app.use("/api", oidcRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/oauth", oauthClientRoutes);

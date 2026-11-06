@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 import userModel from "../models/user.model.js";
 import { authenticateClient } from "../services/oauth-client.service.js";
-import { consumeAuthCode } from "../services/auth-code.service.js";
+import { consumeAuthCode, getAuthCode } from "../services/auth-code.service.js";
 import { generateAccessToken, generateIdToken, verifyAccessToken } from "../services/token.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
 
@@ -63,29 +63,29 @@ export const exchangeToken = async (req: Request, res: Response) => {
       });
     }
 
-    const authCodeData = await consumeAuthCode(code);
-    if (!authCodeData) {
+    const peekData = await getAuthCode(code);
+    if (!peekData) {
       return res.status(400).json({
         error: "invalid_grant",
         error_description: "Invalid or expired authorization code",
       });
     }
 
-    if (authCodeData.clientId !== client.clientId) {
+    if (peekData.clientId !== client.clientId) {
       return res.status(400).json({
         error: "invalid_grant",
         error_description: "Authorization code was not issued to this client",
       });
     }
 
-    if (authCodeData.redirectUri !== redirect_uri) {
+    if (peekData.redirectUri !== redirect_uri) {
       return res.status(400).json({
         error: "invalid_grant",
         error_description: "Redirect URI mismatch",
       });
     }
 
-    if (authCodeData.codeChallenge) {
+    if (peekData.codeChallenge) {
       if (!code_verifier) {
         return res.status(400).json({
           error: "invalid_grant",
@@ -94,19 +94,27 @@ export const exchangeToken = async (req: Request, res: Response) => {
       }
 
       let computedChallenge = code_verifier;
-      if (authCodeData.codeChallengeMethod === "S256") {
+      if (peekData.codeChallengeMethod === "S256") {
         computedChallenge = crypto
           .createHash("sha256")
           .update(code_verifier)
           .digest("base64url");
       }
 
-      if (computedChallenge !== authCodeData.codeChallenge) {
+      if (computedChallenge !== peekData.codeChallenge) {
         return res.status(400).json({
           error: "invalid_grant",
           error_description: "Invalid code_verifier",
         });
       }
+    }
+
+    const authCodeData = await consumeAuthCode(code);
+    if (!authCodeData) {
+      return res.status(400).json({
+        error: "invalid_grant",
+        error_description: "Authorization code already used or expired",
+      });
     }
 
     const user = await userModel.findById(authCodeData.userId);

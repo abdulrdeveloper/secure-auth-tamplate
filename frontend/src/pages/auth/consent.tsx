@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, Shield, XCircle } from "lucide-react";
 import { AuthHeader } from "../../components/auth-layout";
 import { ErrorMessage, SubmitButton } from "../../components/auth-fields";
+import { apiRequest, getErrorMessage } from "../../lib/api";
 
 export function ConsentPage() {
   const [searchParams] = useSearchParams();
@@ -29,33 +30,26 @@ export function ConsentPage() {
     setError("");
 
     try {
-      const backendUrl =
-        import.meta.env.VITE_API_URL ?? "http://localhost:3000";
-      const response = await fetch(`${backendUrl}/oauth/authorize/consent`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_id: clientId,
-          redirect_uri: redirectUri,
-          scope,
-          state: state || undefined,
-          ...(codeChallenge && { code_challenge: codeChallenge }),
-          ...(codeChallengeMethod && { code_challenge_method: codeChallengeMethod }),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error_description || data.message || "Consent failed");
-      }
+      const data = await apiRequest<{ redirect_url: string }>(
+        "/oauth/authorize/consent",
+        {
+          method: "POST",
+          data: {
+            client_id: clientId,
+            redirect_uri: redirectUri,
+            scope,
+            state: state || undefined,
+            ...(codeChallenge && { code_challenge: codeChallenge }),
+            ...(codeChallengeMethod && { code_challenge_method: codeChallengeMethod }),
+          },
+        }
+      );
 
       if (data.redirect_url) {
         window.location.href = data.redirect_url;
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to approve consent");
+      setError(getErrorMessage(err));
       setLoading(false);
     }
   }
@@ -64,13 +58,16 @@ export function ConsentPage() {
     if (redirectUri) {
       try {
         const url = new URL(redirectUri);
-        url.searchParams.set("error", "access_denied");
-        url.searchParams.set("error_description", "User denied authorization");
-        if (state) url.searchParams.set("state", state);
-        window.location.href = url.toString();
-        return;
+        // Strictly allow only http and https protocols to prevent javascript: or data: XSS execution
+        if (url.protocol === "http:" || url.protocol === "https:") {
+          url.searchParams.set("error", "access_denied");
+          url.searchParams.set("error_description", "User denied authorization");
+          if (state) url.searchParams.set("state", state);
+          window.location.href = url.toString();
+          return;
+        }
       } catch {
-        // invalid URL
+        // Invalid redirect_uri
       }
     }
     window.location.href = "/dashboard";

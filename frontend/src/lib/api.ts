@@ -57,12 +57,14 @@ export async function apiRequest<T>(
   }
 
   const body = (await response.json().catch(() => null)) as
-    | ({ message?: string } & T)
+    | ({ message?: string; error_description?: string } & T)
     | null;
 
   if (!response.ok) {
     throw new Error(
-      body?.message ?? "Something went wrong. Please try again in a moment.",
+      body?.error_description ??
+        body?.message ??
+        "Something went wrong. Please try again in a moment.",
     );
   }
 

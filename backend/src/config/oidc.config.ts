@@ -19,9 +19,6 @@ export const OIDC_CONFIG = {
     "iss",
   ],
   grantTypes: ["authorization_code"],
-  pkceRequired: false,
-  discoveryMaxAge: 3600,
-  jwksMaxAge: 3600,
 } as const;
 
 export const getEndpointUrls = () => {

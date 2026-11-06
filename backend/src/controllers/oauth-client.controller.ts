@@ -8,7 +8,7 @@ import {
 
 export const registerClient = async (req: Request, res: Response) => {
   try {
-    const { name, redirectUris, allowedScopes, isTrusted, logoUrl, description } =
+    const { name, redirectUris, allowedScopes, logoUrl, description } =
       req.body;
 
     if (!name || !redirectUris || redirectUris.length === 0) {
@@ -22,9 +22,10 @@ export const registerClient = async (req: Request, res: Response) => {
       name,
       redirectUris,
       allowedScopes,
-      isTrusted,
+      isTrusted: false,
       logoUrl,
       description,
+      ...(req.userId && { owner: req.userId }),
     });
 
     res.status(201).json({
@@ -47,7 +48,7 @@ export const registerClient = async (req: Request, res: Response) => {
 
 export const getClients = async (req: Request, res: Response) => {
   try {
-    const clients = await listClients();
+    const clients = await listClients(req.userId);
 
     res.json({
       clients: clients.map((client) => ({
@@ -90,6 +91,13 @@ export const getClient = async (req: Request, res: Response) => {
       });
     }
 
+    if (client.owner && String(client.owner) !== req.userId) {
+      return res.status(403).json({
+        error: "forbidden",
+        error_description: "You do not have access to this client",
+      });
+    }
+
     res.json({
       client_id: client.clientId,
       name: client.name,
@@ -120,12 +128,12 @@ export const removeClient = async (req: Request, res: Response) => {
       });
     }
     
-    const deleted = await deleteClient(clientId);
+    const deleted = await deleteClient(clientId, req.userId);
 
     if (!deleted) {
       return res.status(404).json({
         error: "not_found",
-        error_description: "Client not found",
+        error_description: "Client not found or you are not authorized to delete it",
       });
     }
 

@@ -29,6 +29,7 @@ export const createClient = async (data: {
   isTrusted?: boolean;
   logoUrl?: string;
   description?: string;
+  owner?: string | undefined;
 }): Promise<{ client: IOAuthClient; clientSecret: string }> => {
   const clientId = generateClientId();
   const clientSecret = generateClientSecret();
@@ -43,6 +44,7 @@ export const createClient = async (data: {
     isTrusted: data.isTrusted || false,
     ...(data.logoUrl && { logoUrl: data.logoUrl }),
     ...(data.description && { description: data.description }),
+    ...(data.owner && { owner: data.owner }),
   });
 
   return { client, clientSecret };
@@ -77,11 +79,19 @@ export const authenticateClient = async (
   return client;
 };
 
-export const listClients = async (): Promise<IOAuthClient[]> => {
-  return await OAuthClient.find().select("-clientSecretHash");
+export const listClients = async (ownerId?: string): Promise<IOAuthClient[]> => {
+  const query = ownerId ? { owner: ownerId } : {};
+  return await OAuthClient.find(query).select("-clientSecretHash");
 };
 
-export const deleteClient = async (clientId: string): Promise<boolean> => {
-  const result = await OAuthClient.deleteOne({ clientId });
+export const deleteClient = async (
+  clientId: string,
+  ownerId?: string
+): Promise<boolean> => {
+  const query: Record<string, unknown> = { clientId };
+  if (ownerId) {
+    query.owner = ownerId;
+  }
+  const result = await OAuthClient.deleteOne(query);
   return result.deletedCount > 0;
 };

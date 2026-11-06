@@ -29,6 +29,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use(oidcRoutes);
+app.use("/api", oidcRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/oauth", oauthClientRoutes);

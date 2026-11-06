@@ -34,11 +34,44 @@ export const storeAuthCode = async (
   );
 };
 
-export const consumeAuthCode = async (
+export const getAuthCode = async (
   code: string
 ): Promise<AuthCodeData | null> => {
   const key = `${AUTH_CODE_PREFIX}${code}`;
-  const data = await redis.getdel<string>(key);
+  const data = await redis.get<AuthCodeData | string>(key);
+
+  if (!data) {
+    return null;
+  }
+
+  try {
+    return (typeof data === "string" ? JSON.parse(data) : data) as AuthCodeData;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Minimal store contract needed to redeem an authorization code.
+ * The default implementation is the shared Upstash Redis client.
+ */
+export interface AuthCodeStore {
+  getdel<TData>(key: string): Promise<TData | null>;
+}
+
+/**
+ * Redeems an authorization code exactly once.
+ *
+ * Uses Redis GETDEL so the read and delete happen as a single atomic
+ * operation: when several token requests race with the same code, only
+ * one of them receives the payload and all others get `null`.
+ */
+export const consumeAuthCode = async (
+  code: string,
+  store: AuthCodeStore = redis
+): Promise<AuthCodeData | null> => {
+  const key = `${AUTH_CODE_PREFIX}${code}`;
+  const data = await store.getdel<AuthCodeData | string>(key);
 
   if (!data) {
     return null;

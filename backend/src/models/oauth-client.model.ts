@@ -9,6 +9,7 @@ export interface IOAuthClient extends Document {
   isTrusted: boolean;
   logoUrl?: string;
   description?: string;
+  owner?: Schema.Types.ObjectId | string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +55,11 @@ const oauthClientSchema = new Schema<IOAuthClient>(
     description: {
       type: String,
       trim: true,
+    },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      index: true,
     },
   },
   {

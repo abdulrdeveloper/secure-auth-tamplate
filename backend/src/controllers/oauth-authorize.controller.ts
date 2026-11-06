@@ -10,6 +10,17 @@ const authorizeSchema = z.object({
   response_type: z.literal("code"),
   scope: z.string(),
   state: z.string().optional(),
+  code_challenge: z.string().optional(),
+  code_challenge_method: z.enum(["S256", "plain"]).optional(),
+});
+
+const consentBodySchema = z.object({
+  client_id: z.string(),
+  redirect_uri: z.string().url(),
+  scope: z.string(),
+  state: z.string().optional(),
+  code_challenge: z.string().optional(),
+  code_challenge_method: z.enum(["S256", "plain"]).optional(),
 });
 
 export const authorize = async (req: Request, res: Response) => {
@@ -23,7 +34,14 @@ export const authorize = async (req: Request, res: Response) => {
       });
     }
 
-    const { client_id, redirect_uri, scope, state } = validation.data;
+    const {
+      client_id,
+      redirect_uri,
+      scope,
+      state,
+      code_challenge,
+      code_challenge_method,
+    } = validation.data;
 
     const client = await getClientById(client_id);
     if (!client) {
@@ -41,14 +59,16 @@ export const authorize = async (req: Request, res: Response) => {
       });
     }
 
-    const requestedScopes = scope.split(" ");
+    const requestedScopes = scope.split(" ").filter(Boolean);
     const supported = OIDC_CONFIG.supportedScopes as readonly string[];
-    const invalidScopes = requestedScopes.filter((s) => !supported.includes(s));
+    const invalidScopes = requestedScopes.filter(
+      (s) => !supported.includes(s) || !client.allowedScopes.includes(s)
+    );
 
     if (invalidScopes.length > 0) {
       return res.status(400).json({
         error: "invalid_scope",
-        error_description: `Unsupported scopes: ${invalidScopes.join(", ")}`,
+        error_description: `Unsupported or disallowed scopes: ${invalidScopes.join(", ")}`,
       });
     }
 
@@ -61,8 +81,11 @@ export const authorize = async (req: Request, res: Response) => {
 
     const userId = req.userId;
     if (!userId) {
+      const frontendUrl =
+        (process.env.FRONTEND_URL ?? "http://localhost:5173").split(",")[0] ??
+        "http://localhost:5173";
       const returnUrl = encodeURIComponent(req.originalUrl);
-      return res.redirect(`/login?return_to=${returnUrl}`);
+      return res.redirect(`${frontendUrl}/login?return_to=${returnUrl}`);
     }
 
     if (client.isTrusted) {
@@ -70,7 +93,9 @@ export const authorize = async (req: Request, res: Response) => {
         userId,
         client_id,
         redirect_uri,
-        requestedScopes
+        requestedScopes,
+        code_challenge,
+        code_challenge_method
       );
 
       const redirectUrl = new URL(redirect_uri);
@@ -84,9 +109,17 @@ export const authorize = async (req: Request, res: Response) => {
       (process.env.FRONTEND_URL ?? "http://localhost:5173").split(",")[0] ??
       "http://localhost:5173";
 
-    return res.redirect(
-      `${frontendUrl}/consent?client_id=${encodeURIComponent(client_id)}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state || "")}`
-    );
+    const consentUrl = new URL(`${frontendUrl}/consent`);
+    consentUrl.searchParams.set("client_id", client_id);
+    consentUrl.searchParams.set("redirect_uri", redirect_uri);
+    consentUrl.searchParams.set("scope", scope);
+    if (state) consentUrl.searchParams.set("state", state);
+    if (code_challenge) consentUrl.searchParams.set("code_challenge", code_challenge);
+    if (code_challenge_method) {
+      consentUrl.searchParams.set("code_challenge_method", code_challenge_method);
+    }
+
+    return res.redirect(consentUrl.toString());
   } catch (error) {
     console.error("Authorization error");
     res.status(500).json({
@@ -98,9 +131,25 @@ export const authorize = async (req: Request, res: Response) => {
 
 export const approveConsent = async (req: Request, res: Response) => {
   try {
-    const { client_id, redirect_uri, scope, state } = req.body;
-    const userId = req.userId;
+    const validation = consentBodySchema.safeParse(req.body);
 
+    if (!validation.success) {
+      return res.status(400).json({
+        error: "invalid_request",
+        error_description: validation.error.issues[0]?.message || "Invalid consent payload",
+      });
+    }
+
+    const {
+      client_id,
+      redirect_uri,
+      scope,
+      state,
+      code_challenge,
+      code_challenge_method,
+    } = validation.data;
+
+    const userId = req.userId;
     if (!userId) {
       return res.status(401).json({
         error: "unauthorized",
@@ -124,12 +173,33 @@ export const approveConsent = async (req: Request, res: Response) => {
       });
     }
 
-    const scopes = typeof scope === "string" ? scope.split(" ") : [];
+    const scopes = scope.split(" ").filter(Boolean);
+    const supported = OIDC_CONFIG.supportedScopes as readonly string[];
+    const invalidScopes = scopes.filter(
+      (s) => !supported.includes(s) || !client.allowedScopes.includes(s)
+    );
+
+    if (invalidScopes.length > 0) {
+      return res.status(400).json({
+        error: "invalid_scope",
+        error_description: `Unsupported or disallowed scopes: ${invalidScopes.join(", ")}`,
+      });
+    }
+
+    if (!scopes.includes("openid")) {
+      return res.status(400).json({
+        error: "invalid_scope",
+        error_description: "openid scope is required",
+      });
+    }
+
     const authCode = await createAuthorizationCode(
       userId,
       client_id,
       redirect_uri,
-      scopes
+      scopes,
+      code_challenge,
+      code_challenge_method
     );
 
     const redirectUrl = new URL(redirect_uri);

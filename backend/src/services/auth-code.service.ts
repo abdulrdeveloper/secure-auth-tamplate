@@ -8,6 +8,8 @@ export interface AuthCodeData {
   redirectUri: string;
   scope: string[];
   createdAt: number;
+  codeChallenge?: string | undefined;
+  codeChallengeMethod?: string | undefined;
 }
 
 const AUTH_CODE_PREFIX = "oauth_code:";
@@ -36,13 +38,11 @@ export const consumeAuthCode = async (
   code: string
 ): Promise<AuthCodeData | null> => {
   const key = `${AUTH_CODE_PREFIX}${code}`;
-  const data = await redis.get<string>(key);
+  const data = await redis.getdel<string>(key);
 
   if (!data) {
     return null;
   }
-
-  await redis.del(key);
 
   try {
     return (typeof data === "string" ? JSON.parse(data) : data) as AuthCodeData;
@@ -55,9 +55,18 @@ export const createAuthorizationCode = async (
   userId: string,
   clientId: string,
   redirectUri: string,
-  scope: string[]
+  scope: string[],
+  codeChallenge?: string | undefined,
+  codeChallengeMethod?: string | undefined
 ): Promise<string> => {
   const code = generateAuthCode();
-  await storeAuthCode(code, { userId, clientId, redirectUri, scope });
+  await storeAuthCode(code, {
+    userId,
+    clientId,
+    redirectUri,
+    scope,
+    ...(codeChallenge && { codeChallenge }),
+    ...(codeChallengeMethod && { codeChallengeMethod }),
+  });
   return code;
 };

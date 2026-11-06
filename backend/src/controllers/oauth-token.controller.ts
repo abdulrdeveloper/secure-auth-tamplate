@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import type { Request, Response } from "express";
 import { z } from "zod";
 import userModel from "../models/user.model.js";
@@ -12,20 +13,23 @@ const tokenSchema = z.object({
   redirect_uri: z.string().url(),
   client_id: z.string().optional(),
   client_secret: z.string().optional(),
+  code_verifier: z.string().optional(),
 });
 
 export const exchangeToken = async (req: Request, res: Response) => {
   try {
-    let clientId = req.body.client_id;
-    let clientSecret = req.body.client_secret;
+    let clientId = req.body?.client_id;
+    let clientSecret = req.body?.client_secret;
 
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Basic ")) {
-      const credentials = Buffer.from(authHeader.slice(6), "base64").toString("utf8");
-      const [basicId, basicSecret] = credentials.split(":");
-      if (basicId && basicSecret) {
-        clientId = basicId;
-        clientSecret = basicSecret;
+      const credentials = Buffer.from(authHeader.slice(6).trim(), "base64").toString("utf8");
+      const colonIndex = credentials.indexOf(":");
+      if (colonIndex !== -1) {
+        const basicId = decodeURIComponent(credentials.slice(0, colonIndex));
+        const basicSecret = decodeURIComponent(credentials.slice(colonIndex + 1));
+        if (basicId) clientId = basicId;
+        if (basicSecret) clientSecret = basicSecret;
       }
     }
 
@@ -42,7 +46,7 @@ export const exchangeToken = async (req: Request, res: Response) => {
       });
     }
 
-    const { code, redirect_uri } = validation.data;
+    const { code, redirect_uri, code_verifier } = validation.data;
 
     if (!clientId || !clientSecret) {
       return res.status(401).json({
@@ -79,6 +83,30 @@ export const exchangeToken = async (req: Request, res: Response) => {
         error: "invalid_grant",
         error_description: "Redirect URI mismatch",
       });
+    }
+
+    if (authCodeData.codeChallenge) {
+      if (!code_verifier) {
+        return res.status(400).json({
+          error: "invalid_grant",
+          error_description: "code_verifier is required for PKCE",
+        });
+      }
+
+      let computedChallenge = code_verifier;
+      if (authCodeData.codeChallengeMethod === "S256") {
+        computedChallenge = crypto
+          .createHash("sha256")
+          .update(code_verifier)
+          .digest("base64url");
+      }
+
+      if (computedChallenge !== authCodeData.codeChallenge) {
+        return res.status(400).json({
+          error: "invalid_grant",
+          error_description: "Invalid code_verifier",
+        });
+      }
     }
 
     const user = await userModel.findById(authCodeData.userId);
@@ -158,6 +186,9 @@ export const getUserInfo = async (req: Request, res: Response) => {
       response.email = user.email;
       response.email_verified = user.isEmailVerified;
     }
+
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Pragma", "no-cache");
 
     return res.status(200).json(response);
   } catch (error) {

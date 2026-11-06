@@ -9,6 +9,7 @@
 		"dev": "tsc-watch --onSuccess \"node dist/server.js\"",
 		"start": "node dist/server.js",
 		"type-check": "tsc --noEmit",
+		"test": "tsx --test \"src/**/*.test.ts\"",
 		"build": "tsc",
 		"generate:keys": "tsx src/scripts/generate-keys.ts"
 	},

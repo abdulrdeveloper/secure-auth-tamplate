@@ -1,13 +1,15 @@
 import crypto from "node:crypto";
-import { redis } from "../config/db.js";
+import redis from "./redis.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
 
-interface AuthCodeData {
+export interface AuthCodeData {
   userId: string;
   clientId: string;
   redirectUri: string;
   scope: string[];
   createdAt: number;
+  codeChallenge?: string | undefined;
+  codeChallengeMethod?: string | undefined;
 }
 
 const AUTH_CODE_PREFIX = "oauth_code:";
@@ -25,10 +27,10 @@ export const storeAuthCode = async (
     createdAt: Date.now(),
   };
 
-  await redis.setex(
+  await redis.set(
     `${AUTH_CODE_PREFIX}${code}`,
-    OIDC_CONFIG.authCodeTTL,
-    JSON.stringify(authData)
+    JSON.stringify(authData),
+    { ex: OIDC_CONFIG.authCodeTTL }
   );
 };
 
@@ -36,18 +38,15 @@ export const consumeAuthCode = async (
   code: string
 ): Promise<AuthCodeData | null> => {
   const key = `${AUTH_CODE_PREFIX}${code}`;
-  const data = await redis.get(key);
+  const data = await redis.getdel<string>(key);
 
   if (!data) {
     return null;
   }
 
-  await redis.del(key);
-
   try {
-    return JSON.parse(data) as AuthCodeData;
-  } catch (error) {
-    console.error("Failed to parse auth code data");
+    return (typeof data === "string" ? JSON.parse(data) : data) as AuthCodeData;
+  } catch {
     return null;
   }
 };
@@ -56,9 +55,18 @@ export const createAuthorizationCode = async (
   userId: string,
   clientId: string,
   redirectUri: string,
-  scope: string[]
+  scope: string[],
+  codeChallenge?: string | undefined,
+  codeChallengeMethod?: string | undefined
 ): Promise<string> => {
   const code = generateAuthCode();
-  await storeAuthCode(code, { userId, clientId, redirectUri, scope });
+  await storeAuthCode(code, {
+    userId,
+    clientId,
+    redirectUri,
+    scope,
+    ...(codeChallenge && { codeChallenge }),
+    ...(codeChallengeMethod && { codeChallengeMethod }),
+  });
   return code;
 };

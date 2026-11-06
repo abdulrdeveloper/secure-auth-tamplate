@@ -28,8 +28,20 @@ export function LoginPage() {
         method: "POST",
         data: form,
       });
+      const searchParams = new URLSearchParams(location.search);
+      const returnTo = searchParams.get("return_to");
       const from = (location.state as { from?: string } | null)?.from;
       setUser(response.user);
+
+      if (returnTo) {
+        if (returnTo.startsWith("http://") || returnTo.startsWith("https://")) {
+          window.location.href = returnTo;
+          return;
+        }
+        navigate(returnTo, { replace: true });
+        return;
+      }
+
       navigate(from ?? "/dashboard", { replace: true });
     } catch (requestError) {
       setError(getErrorMessage(requestError));

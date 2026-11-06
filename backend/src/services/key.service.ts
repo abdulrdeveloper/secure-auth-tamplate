@@ -1,59 +1,9 @@
-/**
- * RSA Key Management Service
- * Handles keypair generation, loading, and JWK export for RS256 JWT signing
- */
-
 import crypto from "node:crypto";
 
 const KEY_ID = process.env.OIDC_KEY_ID || "myauth-key-v1";
 
 let privateKey: string | null = null;
 let publicKey: string | null = null;
-
-export const generateKeyPair = (): {
-  privateKey: string;
-  publicKey: string;
-} => {
-  const { privateKey: privKey, publicKey: pubKey } =
-    crypto.generateKeyPairSync("rsa", {
-      modulusLength: 2048,
-      publicKeyEncoding: {
-        type: "spki",
-        format: "pem",
-      },
-      privateKeyEncoding: {
-        type: "pkcs8",
-        format: "pem",
-      },
-    });
-
-  return { privateKey: privKey, publicKey: pubKey };
-};
-
-export const loadKeyPair = () => {
-  const envPrivateKey = process.env.OIDC_PRIVATE_KEY;
-  const envPublicKey = process.env.OIDC_PUBLIC_KEY;
-
-  if (envPrivateKey && envPublicKey) {
-    privateKey = envPrivateKey.replace(/\\n/g, "\n");
-    publicKey = envPublicKey.replace(/\\n/g, "\n");
-    console.log("Loaded RSA keypair from environment");
-    return;
-  }
-
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "OIDC_PRIVATE_KEY and OIDC_PUBLIC_KEY must be set in production"
-    );
-  }
-
-  console.warn("WARNING: Generating temporary RSA keypair for development");
-  console.warn("For production, generate keys securely and add to environment variables");
-  
-  const { privateKey: newPrivKey, publicKey: newPubKey } = generateKeyPair();
-  privateKey = newPrivKey;
-  publicKey = newPubKey;
-};
 
 export const getPrivateKey = (): string => {
   if (!privateKey) {
@@ -71,6 +21,89 @@ export const getPublicKey = (): string => {
 
 export const getKeyId = (): string => {
   return KEY_ID;
+};
+
+export const generateKeyPair = (): {
+  privateKey: string;
+  publicKey: string;
+} => {
+  const { privateKey: privKey, publicKey: pubKey } = crypto.generateKeyPairSync(
+    "rsa",
+    {
+      modulusLength: 2048,
+      publicKeyEncoding: {
+        type: "spki",
+        format: "pem",
+      },
+      privateKeyEncoding: {
+        type: "pkcs8",
+        format: "pem",
+      },
+    },
+  );
+
+  return { privateKey: privKey, publicKey: pubKey };
+};
+
+export const loadKeyPair = () => {
+  const envPrivateKey = process.env.OIDC_PRIVATE_KEY;
+  const envPublicKey = process.env.OIDC_PUBLIC_KEY;
+
+  if (envPrivateKey && envPublicKey) {
+    privateKey = envPrivateKey.replace(/\\n/g, "\n");
+    publicKey = envPublicKey.replace(/\\n/g, "\n");
+    console.log("Loaded RSA keypair from environment");
+    return;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "OIDC_PRIVATE_KEY and OIDC_PUBLIC_KEY must be set in production",
+    );
+  }
+
+  console.warn("WARNING: Generating temporary RSA keypair for development");
+  console.warn(
+    "For production, generate keys securely and add to environment variables",
+  );
+
+  const { privateKey: newPrivKey, publicKey: newPubKey } = generateKeyPair();
+  privateKey = newPrivKey;
+  publicKey = newPubKey;
+};
+
+export const verifyKeyPair = (): boolean => {
+  try {
+    const testData = "test-verification";
+
+    const sign = crypto.createSign("RSA-SHA256");
+    sign.update(testData);
+    const signature = sign.sign(getPrivateKey(), "base64");
+
+    const verify = crypto.createVerify("RSA-SHA256");
+    verify.update(testData);
+    const isValid = verify.verify(getPublicKey(), signature, "base64");
+
+    if (!isValid) {
+      console.error("RSA keypair verification failed");
+    }
+
+    return isValid;
+  } catch (error) {
+    console.error("Error verifying RSA keypair");
+    return false;
+  }
+};
+
+export const initializeKeyService = () => {
+  console.log("Initializing RSA key service");
+  loadKeyPair();
+  
+  const result = verifyKeyPair();
+  if (!result) {
+    throw new Error("RSA keypair verification failed");
+  }
+  console.log(`Key service ready (kid: ${KEY_ID})`);
 };
 
 export const getPublicKeyJWK = (): {
@@ -103,38 +136,4 @@ export const getJWKS = () => {
   return {
     keys: [getPublicKeyJWK()],
   };
-};
-
-export const verifyKeyPair = (): boolean => {
-  try {
-    const testData = "test-verification";
-    
-    const sign = crypto.createSign("RSA-SHA256");
-    sign.update(testData);
-    const signature = sign.sign(getPrivateKey(), "base64");
-
-    const verify = crypto.createVerify("RSA-SHA256");
-    verify.update(testData);
-    const isValid = verify.verify(getPublicKey(), signature, "base64");
-
-    if (!isValid) {
-      console.error("RSA keypair verification failed");
-    }
-
-    return isValid;
-  } catch (error) {
-    console.error("Error verifying RSA keypair");
-    return false;
-  }
-};
-
-export const initializeKeyService = () => {
-  console.log("Initializing RSA key service");
-  loadKeyPair();
-  
-  if (!verifyKeyPair()) {
-    throw new Error("RSA keypair verification failed");
-  }
-  
-  console.log(`Key service ready (kid: ${KEY_ID})`);
 };

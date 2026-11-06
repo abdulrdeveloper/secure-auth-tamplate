@@ -9,8 +9,7 @@ export const getOpenIdConfiguration = (req: Request, res: Response) => {
     res.setHeader("Cache-Control", "public, max-age=3600");
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET");
-    
-    res.json(discoveryDoc);
+    return res.status(200).json(discoveryDoc);
   } catch (error) {
     console.error("Error generating OpenID Configuration");
     res.status(500).json({
@@ -27,8 +26,7 @@ export const getJWKS = (req: Request, res: Response) => {
     res.setHeader("Cache-Control", "public, max-age=3600");
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET");
-    
-    res.json(jwks);
+    return res.status(200).json(jwks);
   } catch (error) {
     console.error("Error generating JWKS");
     res.status(500).json({

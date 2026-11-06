@@ -1,7 +1,3 @@
-/**
- * OIDC Discovery Routes
- */
-
 import { Router, type Router as ExpressRouter } from "express";
 import {
   getOpenIdConfiguration,

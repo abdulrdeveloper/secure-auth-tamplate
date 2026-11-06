@@ -27,10 +27,8 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// OIDC Discovery endpoints (must be at root level for /.well-known/)
 app.use(oidcRoutes);
 
-// Regular auth routes
 app.use("/api/auth", authRoutes);
 
 app.use(notFoundHandler);

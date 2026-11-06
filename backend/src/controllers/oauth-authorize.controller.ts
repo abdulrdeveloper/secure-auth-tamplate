@@ -19,7 +19,7 @@ export const authorize = async (req: Request, res: Response) => {
     if (!validation.success) {
       return res.status(400).json({
         error: "invalid_request",
-        error_description: validation.error.errors[0].message,
+        error_description: validation.error.issues[0]?.message || "Invalid request",
       });
     }
 
@@ -42,9 +42,8 @@ export const authorize = async (req: Request, res: Response) => {
     }
 
     const requestedScopes = scope.split(" ");
-    const invalidScopes = requestedScopes.filter(
-      (s) => !OIDC_CONFIG.supportedScopes.includes(s)
-    );
+    const supported = OIDC_CONFIG.supportedScopes as readonly string[];
+    const invalidScopes = requestedScopes.filter((s) => !supported.includes(s));
 
     if (invalidScopes.length > 0) {
       return res.status(400).json({
@@ -60,14 +59,15 @@ export const authorize = async (req: Request, res: Response) => {
       });
     }
 
-    if (!req.user) {
+    const userId = req.userId;
+    if (!userId) {
       const returnUrl = encodeURIComponent(req.originalUrl);
       return res.redirect(`/login?return_to=${returnUrl}`);
     }
 
     if (client.isTrusted) {
       const authCode = await createAuthorizationCode(
-        req.user._id.toString(),
+        userId,
         client_id,
         redirect_uri,
         requestedScopes
@@ -80,12 +80,13 @@ export const authorize = async (req: Request, res: Response) => {
       return res.redirect(redirectUrl.toString());
     }
 
-    return res.render("consent", {
-      client,
-      scopes: requestedScopes,
-      state,
-      redirect_uri,
-    });
+    const frontendUrl =
+      (process.env.FRONTEND_URL ?? "http://localhost:5173").split(",")[0] ??
+      "http://localhost:5173";
+
+    return res.redirect(
+      `${frontendUrl}/consent?client_id=${encodeURIComponent(client_id)}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state || "")}`
+    );
   } catch (error) {
     console.error("Authorization error");
     res.status(500).json({
@@ -98,8 +99,9 @@ export const authorize = async (req: Request, res: Response) => {
 export const approveConsent = async (req: Request, res: Response) => {
   try {
     const { client_id, redirect_uri, scope, state } = req.body;
+    const userId = req.userId;
 
-    if (!req.user) {
+    if (!userId) {
       return res.status(401).json({
         error: "unauthorized",
         error_description: "User not authenticated",
@@ -122,9 +124,9 @@ export const approveConsent = async (req: Request, res: Response) => {
       });
     }
 
-    const scopes = scope.split(" ");
+    const scopes = typeof scope === "string" ? scope.split(" ") : [];
     const authCode = await createAuthorizationCode(
-      req.user._id.toString(),
+      userId,
       client_id,
       redirect_uri,
       scopes

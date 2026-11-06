@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { getPrivateKey, getKeyId } from "./key.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
-import type { IUser } from "../models/user.model.js";
+import type { User } from "../models/user.model.js";
 
 interface TokenPayload {
   sub: string;
@@ -15,14 +15,14 @@ interface TokenPayload {
 }
 
 export const generateIdToken = (
-  user: IUser,
+  user: User & { _id: unknown },
   clientId: string,
   scope: string[]
 ): string => {
   const now = Math.floor(Date.now() / 1000);
 
   const payload: TokenPayload = {
-    sub: user._id.toString(),
+    sub: String(user._id),
     aud: clientId,
     iss: OIDC_CONFIG.issuer,
     iat: now,
@@ -31,7 +31,7 @@ export const generateIdToken = (
 
   if (scope.includes("email")) {
     payload.email = user.email;
-    payload.email_verified = user.isVerified;
+    payload.email_verified = user.isEmailVerified;
   }
 
   if (scope.includes("profile")) {
@@ -66,12 +66,12 @@ export const generateAccessToken = (
   });
 };
 
-export const verifyAccessToken = (token: string): any => {
+export const verifyAccessToken = (token: string): jwt.JwtPayload | null => {
   try {
     return jwt.verify(token, getPrivateKey(), {
       algorithms: ["RS256"],
-    });
-  } catch (error) {
+    }) as jwt.JwtPayload;
+  } catch {
     return null;
   }
 };

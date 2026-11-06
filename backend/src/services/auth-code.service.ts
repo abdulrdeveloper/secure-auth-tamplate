@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
-import { redis } from "../config/db.js";
+import redis from "./redis.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
 
-interface AuthCodeData {
+export interface AuthCodeData {
   userId: string;
   clientId: string;
   redirectUri: string;
@@ -25,10 +25,10 @@ export const storeAuthCode = async (
     createdAt: Date.now(),
   };
 
-  await redis.setex(
+  await redis.set(
     `${AUTH_CODE_PREFIX}${code}`,
-    OIDC_CONFIG.authCodeTTL,
-    JSON.stringify(authData)
+    JSON.stringify(authData),
+    { ex: OIDC_CONFIG.authCodeTTL }
   );
 };
 
@@ -36,7 +36,7 @@ export const consumeAuthCode = async (
   code: string
 ): Promise<AuthCodeData | null> => {
   const key = `${AUTH_CODE_PREFIX}${code}`;
-  const data = await redis.get(key);
+  const data = await redis.get<string>(key);
 
   if (!data) {
     return null;
@@ -45,9 +45,8 @@ export const consumeAuthCode = async (
   await redis.del(key);
 
   try {
-    return JSON.parse(data) as AuthCodeData;
-  } catch (error) {
-    console.error("Failed to parse auth code data");
+    return (typeof data === "string" ? JSON.parse(data) : data) as AuthCodeData;
+  } catch {
     return null;
   }
 };

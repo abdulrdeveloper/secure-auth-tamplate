@@ -14,6 +14,7 @@ const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+app.disable("x-powered-by");
 app.set("trust proxy", 1);
 app.use(
   cors({
@@ -28,9 +29,10 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+// Protocol routes mounted once at root (.well-known, /oauth/authorize, /oauth/token, /oauth/userinfo)
 app.use(oidcRoutes);
-app.use("/api", oidcRoutes);
 
+// First-party application endpoints
 app.use("/api/auth", authRoutes);
 app.use("/api/oauth", oauthClientRoutes);
 

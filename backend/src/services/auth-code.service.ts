@@ -8,6 +8,7 @@ export interface AuthCodeData {
   redirectUri: string;
   scope: string[];
   createdAt: number;
+  nonce?: string | undefined;
   codeChallenge?: string | undefined;
   codeChallengeMethod?: string | undefined;
 }
@@ -89,6 +90,7 @@ export const createAuthorizationCode = async (
   clientId: string,
   redirectUri: string,
   scope: string[],
+  nonce?: string | undefined,
   codeChallenge?: string | undefined,
   codeChallengeMethod?: string | undefined
 ): Promise<string> => {
@@ -98,6 +100,7 @@ export const createAuthorizationCode = async (
     clientId,
     redirectUri,
     scope,
+    ...(nonce && { nonce }),
     ...(codeChallenge && { codeChallenge }),
     ...(codeChallengeMethod && { codeChallengeMethod }),
   });

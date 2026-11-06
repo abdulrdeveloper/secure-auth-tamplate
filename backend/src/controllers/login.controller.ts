@@ -4,20 +4,19 @@ import userModel from "../models/user.model.js";
 import { setAuthCookies } from "../utils/token.util.js";
 import { toPublicUser } from "../utils/user.util.js";
 
+// Dummy hash for constant-time comparison when email is not found
+const DUMMY_HASH = "$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
+
 async function loginUser(req: Request, res: Response) {
   const { email, password } = req.body;
 
   const user = await userModel.findOne({ email }).select("+password");
-  if (!user) {
-    return res.status(400).json({ message: "Invalid credentials" });
-  }
+  const hashToCompare = user?.password ?? DUMMY_HASH;
 
-  const isPasswordValid = await bcrypt.compare(
-    password,
-    user.password as string,
-  );
-  if (!isPasswordValid) {
-    return res.status(400).json({ message: "Invalid credentials" });
+  const isPasswordValid = await bcrypt.compare(password, hashToCompare);
+
+  if (!user || !isPasswordValid) {
+    return res.status(401).json({ message: "Invalid email or password." });
   }
 
   if (!user.isEmailVerified) {

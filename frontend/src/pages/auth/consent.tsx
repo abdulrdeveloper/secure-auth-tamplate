@@ -8,9 +8,11 @@ import { apiRequest, getErrorMessage } from "../../lib/api";
 export function ConsentPage() {
   const [searchParams] = useSearchParams();
   const clientId = searchParams.get("client_id") || "";
+  const clientName = searchParams.get("client_name") || clientId || "Unknown Application";
   const redirectUri = searchParams.get("redirect_uri") || "";
   const scope = searchParams.get("scope") || "openid";
   const state = searchParams.get("state") || "";
+  const nonce = searchParams.get("nonce") || undefined;
   const codeChallenge = searchParams.get("code_challenge") || undefined;
   const codeChallengeMethod = searchParams.get("code_challenge_method") || undefined;
 
@@ -39,6 +41,7 @@ export function ConsentPage() {
             redirect_uri: redirectUri,
             scope,
             state: state || undefined,
+            ...(nonce && { nonce }),
             ...(codeChallenge && { code_challenge: codeChallenge }),
             ...(codeChallengeMethod && { code_challenge_method: codeChallengeMethod }),
           },
@@ -46,7 +49,13 @@ export function ConsentPage() {
       );
 
       if (data.redirect_url) {
-        window.location.href = data.redirect_url;
+        const url = new URL(data.redirect_url);
+        if (url.protocol === "http:" || url.protocol === "https:") {
+          window.location.href = url.toString();
+          return;
+        }
+        setError("Invalid redirect URI protocol returned from server.");
+        setLoading(false);
       }
     } catch (err: unknown) {
       setError(getErrorMessage(err));
@@ -88,7 +97,10 @@ export function ConsentPage() {
           </div>
           <div>
             <p className="text-sm font-semibold text-zinc-200">
-              Client ID: <span className="font-mono text-xs text-lime-300">{clientId || "Unknown"}</span>
+              {clientName}
+            </p>
+            <p className="text-xs text-zinc-400 font-mono">
+              Client ID: <span className="text-lime-300">{clientId || "Unknown"}</span>
             </p>
             <p className="text-xs text-zinc-500 truncate max-w-[260px]">
               Redirect: {redirectUri}

@@ -34,6 +34,8 @@ async function registerUser(req: Request, res: Response) {
     existingUser.password = hashedPassword;
     existingUser.verificationExpiresAt = verificationExpiresAt;
     await existingUser.save();
+    // Invalidate any previously pending OTP to mitigate pre-verification account takeover races
+    await clearOtp(email, "verify");
   } else {
     await userModel.create({
       name,
@@ -50,7 +52,7 @@ async function registerUser(req: Request, res: Response) {
     resendAfter: OTP_COOLDOWN_SECONDS,
   };
 
-  if (await checkCooldown(email, "verify")) {
+  if (!existingUser && (await checkCooldown(email, "verify"))) {
     return res.status(201).json(successResponse);
   }
 

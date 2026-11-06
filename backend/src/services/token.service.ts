@@ -10,6 +10,7 @@ interface IdTokenPayload {
   iat: number;
   exp: number;
   token_use: "id_token";
+  nonce?: string;
   email?: string;
   email_verified?: boolean;
   name?: string;
@@ -18,7 +19,8 @@ interface IdTokenPayload {
 export const generateIdToken = (
   user: User & { _id: unknown },
   clientId: string,
-  scope: string[]
+  scope: string[],
+  nonce?: string
 ): string => {
   const now = Math.floor(Date.now() / 1000);
 
@@ -29,6 +31,7 @@ export const generateIdToken = (
     iat: now,
     exp: now + OIDC_CONFIG.idTokenTTL,
     token_use: "id_token",
+    ...(nonce && { nonce }),
   };
 
   if (scope.includes("email")) {

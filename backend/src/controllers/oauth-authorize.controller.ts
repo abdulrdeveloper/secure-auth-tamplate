@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { getClientById, validateRedirectUri } from "../services/oauth-client.service.js";
+import { getClientById } from "../services/oauth-client.service.js";
 import { createAuthorizationCode } from "../services/auth-code.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
 
@@ -10,8 +10,9 @@ const authorizeSchema = z.object({
   response_type: z.literal("code"),
   scope: z.string(),
   state: z.string().optional(),
+  nonce: z.string().optional(),
   code_challenge: z.string().optional(),
-  code_challenge_method: z.enum(["S256", "plain"]).optional(),
+  code_challenge_method: z.literal("S256").optional(),
 });
 
 const consentBodySchema = z.object({
@@ -19,9 +20,17 @@ const consentBodySchema = z.object({
   redirect_uri: z.string().url(),
   scope: z.string(),
   state: z.string().optional(),
+  nonce: z.string().optional(),
   code_challenge: z.string().optional(),
-  code_challenge_method: z.enum(["S256", "plain"]).optional(),
+  code_challenge_method: z.literal("S256").optional(),
 });
+
+const getFrontendUrl = (): string => {
+  return (
+    (process.env.FRONTEND_URL ?? "http://localhost:5173").split(",")[0]?.trim() ??
+    "http://localhost:5173"
+  );
+};
 
 export const authorize = async (req: Request, res: Response) => {
   try {
@@ -39,6 +48,7 @@ export const authorize = async (req: Request, res: Response) => {
       redirect_uri,
       scope,
       state,
+      nonce,
       code_challenge,
       code_challenge_method,
     } = validation.data;
@@ -51,8 +61,7 @@ export const authorize = async (req: Request, res: Response) => {
       });
     }
 
-    const isValidRedirect = await validateRedirectUri(client_id, redirect_uri);
-    if (!isValidRedirect) {
+    if (!client.redirectUris.includes(redirect_uri)) {
       return res.status(400).json({
         error: "invalid_request",
         error_description: "Invalid redirect_uri for this client",
@@ -65,25 +74,28 @@ export const authorize = async (req: Request, res: Response) => {
       (s) => !supported.includes(s) || !client.allowedScopes.includes(s)
     );
 
+    const redirectWithError = (errorCode: string, errorDescription: string) => {
+      const redirectUrl = new URL(redirect_uri);
+      redirectUrl.searchParams.set("error", errorCode);
+      redirectUrl.searchParams.set("error_description", errorDescription);
+      if (state) redirectUrl.searchParams.set("state", state);
+      return res.redirect(redirectUrl.toString());
+    };
+
     if (invalidScopes.length > 0) {
-      return res.status(400).json({
-        error: "invalid_scope",
-        error_description: `Unsupported or disallowed scopes: ${invalidScopes.join(", ")}`,
-      });
+      return redirectWithError(
+        "invalid_scope",
+        `Unsupported or disallowed scopes: ${invalidScopes.join(", ")}`
+      );
     }
 
     if (!requestedScopes.includes("openid")) {
-      return res.status(400).json({
-        error: "invalid_scope",
-        error_description: "openid scope is required",
-      });
+      return redirectWithError("invalid_scope", "openid scope is required");
     }
 
     const userId = req.userId;
     if (!userId) {
-      const frontendUrl =
-        (process.env.FRONTEND_URL ?? "http://localhost:5173").split(",")[0] ??
-        "http://localhost:5173";
+      const frontendUrl = getFrontendUrl();
       const returnUrl = encodeURIComponent(req.originalUrl);
       return res.redirect(`${frontendUrl}/login?return_to=${returnUrl}`);
     }
@@ -94,6 +106,7 @@ export const authorize = async (req: Request, res: Response) => {
         client_id,
         redirect_uri,
         requestedScopes,
+        nonce,
         code_challenge,
         code_challenge_method
       );
@@ -105,15 +118,14 @@ export const authorize = async (req: Request, res: Response) => {
       return res.redirect(redirectUrl.toString());
     }
 
-    const frontendUrl =
-      (process.env.FRONTEND_URL ?? "http://localhost:5173").split(",")[0] ??
-      "http://localhost:5173";
-
+    const frontendUrl = getFrontendUrl();
     const consentUrl = new URL(`${frontendUrl}/consent`);
     consentUrl.searchParams.set("client_id", client_id);
+    consentUrl.searchParams.set("client_name", client.name);
     consentUrl.searchParams.set("redirect_uri", redirect_uri);
     consentUrl.searchParams.set("scope", scope);
     if (state) consentUrl.searchParams.set("state", state);
+    if (nonce) consentUrl.searchParams.set("nonce", nonce);
     if (code_challenge) consentUrl.searchParams.set("code_challenge", code_challenge);
     if (code_challenge_method) {
       consentUrl.searchParams.set("code_challenge_method", code_challenge_method);
@@ -121,7 +133,7 @@ export const authorize = async (req: Request, res: Response) => {
 
     return res.redirect(consentUrl.toString());
   } catch (error) {
-    console.error("Authorization error");
+    console.error("Authorization error:", error);
     res.status(500).json({
       error: "server_error",
       error_description: "Authorization failed",
@@ -145,6 +157,7 @@ export const approveConsent = async (req: Request, res: Response) => {
       redirect_uri,
       scope,
       state,
+      nonce,
       code_challenge,
       code_challenge_method,
     } = validation.data;
@@ -165,8 +178,7 @@ export const approveConsent = async (req: Request, res: Response) => {
       });
     }
 
-    const isValidRedirect = await validateRedirectUri(client_id, redirect_uri);
-    if (!isValidRedirect) {
+    if (!client.redirectUris.includes(redirect_uri)) {
       return res.status(400).json({
         error: "invalid_request",
         error_description: "Invalid redirect_uri",
@@ -198,6 +210,7 @@ export const approveConsent = async (req: Request, res: Response) => {
       client_id,
       redirect_uri,
       scopes,
+      nonce,
       code_challenge,
       code_challenge_method
     );
@@ -208,7 +221,7 @@ export const approveConsent = async (req: Request, res: Response) => {
 
     res.json({ redirect_url: redirectUrl.toString() });
   } catch (error) {
-    console.error("Consent approval error");
+    console.error("Consent approval error:", error);
     res.status(500).json({
       error: "server_error",
       error_description: "Consent approval failed",

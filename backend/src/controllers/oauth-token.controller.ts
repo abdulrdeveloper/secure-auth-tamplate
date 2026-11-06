@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 import userModel from "../models/user.model.js";
 import { authenticateClient } from "../services/oauth-client.service.js";
-import { consumeAuthCode, getAuthCode } from "../services/auth-code.service.js";
+import { consumeAuthCode } from "../services/auth-code.service.js";
 import { generateAccessToken, generateIdToken, verifyAccessToken } from "../services/token.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
 
@@ -13,7 +13,10 @@ const tokenSchema = z.object({
   redirect_uri: z.string().url(),
   client_id: z.string().optional(),
   client_secret: z.string().optional(),
-  code_verifier: z.string().optional(),
+  code_verifier: z
+    .string()
+    .regex(/^[A-Za-z0-9\-._~]{43,128}$/, "Invalid code_verifier format")
+    .optional(),
 });
 
 export const exchangeToken = async (req: Request, res: Response) => {
@@ -23,13 +26,21 @@ export const exchangeToken = async (req: Request, res: Response) => {
 
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Basic ")) {
-      const credentials = Buffer.from(authHeader.slice(6).trim(), "base64").toString("utf8");
-      const colonIndex = credentials.indexOf(":");
-      if (colonIndex !== -1) {
-        const basicId = decodeURIComponent(credentials.slice(0, colonIndex));
-        const basicSecret = decodeURIComponent(credentials.slice(colonIndex + 1));
-        if (basicId) clientId = basicId;
-        if (basicSecret) clientSecret = basicSecret;
+      try {
+        const credentials = Buffer.from(authHeader.slice(6).trim(), "base64").toString("utf8");
+        const colonIndex = credentials.indexOf(":");
+        if (colonIndex !== -1) {
+          const basicId = decodeURIComponent(credentials.slice(0, colonIndex));
+          const basicSecret = decodeURIComponent(credentials.slice(colonIndex + 1));
+          if (basicId) clientId = basicId;
+          if (basicSecret) clientSecret = basicSecret;
+        }
+      } catch {
+        res.setHeader("WWW-Authenticate", 'Basic realm="OAuth"');
+        return res.status(401).json({
+          error: "invalid_client",
+          error_description: "Malformed Authorization header",
+        });
       }
     }
 
@@ -49,6 +60,7 @@ export const exchangeToken = async (req: Request, res: Response) => {
     const { code, redirect_uri, code_verifier } = validation.data;
 
     if (!clientId || !clientSecret) {
+      res.setHeader("WWW-Authenticate", 'Basic realm="OAuth"');
       return res.status(401).json({
         error: "invalid_client",
         error_description: "Client credentials are required",
@@ -57,35 +69,37 @@ export const exchangeToken = async (req: Request, res: Response) => {
 
     const client = await authenticateClient(clientId, clientSecret);
     if (!client) {
+      res.setHeader("WWW-Authenticate", 'Basic realm="OAuth"');
       return res.status(401).json({
         error: "invalid_client",
         error_description: "Client authentication failed",
       });
     }
 
-    const peekData = await getAuthCode(code);
-    if (!peekData) {
+    // Atomic redemption with GETDEL
+    const authCodeData = await consumeAuthCode(code);
+    if (!authCodeData) {
       return res.status(400).json({
         error: "invalid_grant",
-        error_description: "Invalid or expired authorization code",
+        error_description: "Invalid, expired, or already redeemed authorization code",
       });
     }
 
-    if (peekData.clientId !== client.clientId) {
+    if (authCodeData.clientId !== client.clientId) {
       return res.status(400).json({
         error: "invalid_grant",
         error_description: "Authorization code was not issued to this client",
       });
     }
 
-    if (peekData.redirectUri !== redirect_uri) {
+    if (authCodeData.redirectUri !== redirect_uri) {
       return res.status(400).json({
         error: "invalid_grant",
         error_description: "Redirect URI mismatch",
       });
     }
 
-    if (peekData.codeChallenge) {
+    if (authCodeData.codeChallenge) {
       if (!code_verifier) {
         return res.status(400).json({
           error: "invalid_grant",
@@ -94,27 +108,19 @@ export const exchangeToken = async (req: Request, res: Response) => {
       }
 
       let computedChallenge = code_verifier;
-      if (peekData.codeChallengeMethod === "S256") {
+      if (authCodeData.codeChallengeMethod === "S256") {
         computedChallenge = crypto
           .createHash("sha256")
           .update(code_verifier)
           .digest("base64url");
       }
 
-      if (computedChallenge !== peekData.codeChallenge) {
+      if (computedChallenge !== authCodeData.codeChallenge) {
         return res.status(400).json({
           error: "invalid_grant",
           error_description: "Invalid code_verifier",
         });
       }
-    }
-
-    const authCodeData = await consumeAuthCode(code);
-    if (!authCodeData) {
-      return res.status(400).json({
-        error: "invalid_grant",
-        error_description: "Authorization code already used or expired",
-      });
     }
 
     const user = await userModel.findById(authCodeData.userId);
@@ -125,7 +131,12 @@ export const exchangeToken = async (req: Request, res: Response) => {
       });
     }
 
-    const idToken = generateIdToken(user, client.clientId, authCodeData.scope);
+    const idToken = generateIdToken(
+      user,
+      client.clientId,
+      authCodeData.scope,
+      authCodeData.nonce
+    );
     const accessToken = generateAccessToken(
       String(user._id),
       client.clientId,
@@ -143,7 +154,7 @@ export const exchangeToken = async (req: Request, res: Response) => {
       scope: authCodeData.scope.join(" "),
     });
   } catch (error) {
-    console.error("Token exchange error");
+    console.error("Token exchange error:", error);
     return res.status(500).json({
       error: "server_error",
       error_description: "Failed to exchange token",
@@ -155,6 +166,7 @@ export const getUserInfo = async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res.setHeader("WWW-Authenticate", 'Bearer error="invalid_token"');
       return res.status(401).json({
         error: "invalid_token",
         error_description: "Bearer token required",
@@ -165,6 +177,7 @@ export const getUserInfo = async (req: Request, res: Response) => {
     const payload = verifyAccessToken(token);
 
     if (!payload || !payload.sub) {
+      res.setHeader("WWW-Authenticate", 'Bearer error="invalid_token"');
       return res.status(401).json({
         error: "invalid_token",
         error_description: "Invalid or expired access token",
@@ -173,7 +186,8 @@ export const getUserInfo = async (req: Request, res: Response) => {
 
     const user = await userModel.findById(payload.sub);
     if (!user) {
-      return res.status(404).json({
+      res.setHeader("WWW-Authenticate", 'Bearer error="invalid_token"');
+      return res.status(401).json({
         error: "invalid_token",
         error_description: "User not found",
       });
@@ -200,7 +214,7 @@ export const getUserInfo = async (req: Request, res: Response) => {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error("UserInfo error");
+    console.error("UserInfo error:", error);
     return res.status(500).json({
       error: "server_error",
       error_description: "Failed to fetch user info",

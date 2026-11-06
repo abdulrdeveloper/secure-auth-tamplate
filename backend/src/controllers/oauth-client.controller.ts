@@ -72,7 +72,15 @@ export const getClients = async (req: Request, res: Response) => {
 
 export const getClient = async (req: Request, res: Response) => {
   try {
-    const { clientId } = req.params;
+    const clientId = req.params.clientId as string;
+    
+    if (!clientId) {
+      return res.status(400).json({
+        error: "invalid_request",
+        error_description: "clientId is required",
+      });
+    }
+    
     const client = await getClientById(clientId);
 
     if (!client) {
@@ -103,7 +111,15 @@ export const getClient = async (req: Request, res: Response) => {
 
 export const removeClient = async (req: Request, res: Response) => {
   try {
-    const { clientId } = req.params;
+    const clientId = req.params.clientId as string;
+    
+    if (!clientId) {
+      return res.status(400).json({
+        error: "invalid_request",
+        error_description: "clientId is required",
+      });
+    }
+    
     const deleted = await deleteClient(clientId);
 
     if (!deleted) {

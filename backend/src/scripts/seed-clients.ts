@@ -34,7 +34,7 @@ const clients = [
 
 async function seedClients() {
   try {
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(MONGO_URI!);
     console.log("Connected to MongoDB");
 
     for (const clientData of clients) {

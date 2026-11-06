@@ -41,8 +41,8 @@ export const createClient = async (data: {
     redirectUris: data.redirectUris,
     allowedScopes: data.allowedScopes || ["openid", "profile", "email"],
     isTrusted: data.isTrusted || false,
-    logoUrl: data.logoUrl,
-    description: data.description,
+    ...(data.logoUrl && { logoUrl: data.logoUrl }),
+    ...(data.description && { description: data.description }),
   });
 
   return { client, clientSecret };

@@ -10,7 +10,7 @@
 - ❌ Use the same keys across environments
 
 ### DO:
-- ✅ Generate keys using `pnpm tsx src/scripts/generate-keys.ts`
+- ✅ Generate keys using `pnpm generate:keys`
 - ✅ Store keys in environment variables only
 - ✅ Use different keys for dev/staging/prod
 - ✅ Rotate keys periodically
@@ -30,7 +30,7 @@ NODE_ENV="production"
 ### Key Generation:
 ```bash
 cd backend
-pnpm tsx src/scripts/generate-keys.ts
+pnpm generate:keys
 # Keys saved to .keys file (gitignored)
 # Copy to .env and delete .keys file immediately
 ```

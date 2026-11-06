@@ -1,6 +1,6 @@
 /**
  * Secure RSA Key Generation Script
- * Run: pnpm tsx src/scripts/generate-keys.ts
+ * Run: pnpm generate:keys
  * 
  * Keys are written to a .keys file (gitignored) and NOT logged to console
  */

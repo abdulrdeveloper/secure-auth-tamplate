@@ -34,12 +34,33 @@ export function LoginPage() {
       setUser(response.user);
 
       if (returnTo) {
-        if (returnTo.startsWith("http://") || returnTo.startsWith("https://")) {
-          window.location.href = returnTo;
+        const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+        const apiOrigin = new URL(apiUrl).origin;
+        const currentOrigin = window.location.origin;
+
+        if (returnTo.startsWith("/")) {
+          if (returnTo.startsWith("/oauth/authorize")) {
+            // Forward authorization flow back to the backend
+            window.location.href = `${apiOrigin}${returnTo}`;
+            return;
+          }
+          // Relative route within the frontend
+          navigate(returnTo, { replace: true });
           return;
         }
-        navigate(returnTo, { replace: true });
-        return;
+
+        try {
+          const parsed = new URL(returnTo);
+          if (
+            (parsed.origin === currentOrigin || parsed.origin === apiOrigin) &&
+            parsed.pathname.startsWith("/oauth/authorize")
+          ) {
+            window.location.href = parsed.toString();
+            return;
+          }
+        } catch {
+          // Fall through to default navigation
+        }
       }
 
       navigate(from ?? "/dashboard", { replace: true });

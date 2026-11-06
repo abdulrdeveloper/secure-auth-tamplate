@@ -21,7 +21,8 @@ export function ProtectedRoute() {
   if (loading) return <FullPageLoader />;
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    const fullPath = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to="/login" replace state={{ from: fullPath }} />;
   }
 
   return <Outlet />;

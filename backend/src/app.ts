@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
+import oauthClientRoutes from "./routes/oauth-client.routes.js";
 import { BODY_LIMIT } from "./config/auth.config.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 
@@ -26,6 +27,7 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 app.use("/api/auth", authRoutes);
+app.use("/api/oauth", oauthClientRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

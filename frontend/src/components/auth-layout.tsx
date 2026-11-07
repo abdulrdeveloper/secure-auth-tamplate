@@ -1,19 +1,16 @@
 import { type ReactNode } from "react";
 import { Link, Outlet } from "react-router-dom";
 import { SITE } from "../config/site";
-import { CircuitBackground } from "./circuit-background";
 
 export function AuthLayout({ children }: { children?: ReactNode }) {
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-zinc-950 px-4 py-12">
-      <CircuitBackground />
-      <div className="relative w-full max-w-[340px] rounded-2xl border border-zinc-800 bg-zinc-900/95 p-7 shadow-2xl shadow-black/50">
-        <div className="mb-6 flex justify-center">
+    <main className="dot-grid flex min-h-screen items-center justify-center px-4 py-8">
+      <div className="w-full max-w-[400px] rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl shadow-black/50 sm:p-8">
+        <div className="mb-5 flex justify-center">
           <img src="/logo-mark.png" alt={SITE.name} className="size-12" />
         </div>
         {children ?? <Outlet />}
       </div>
-      <p className="relative mt-6 text-xs text-zinc-600">Secured by {SITE.name}</p>
     </main>
   );
 }

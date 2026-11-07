@@ -26,6 +26,12 @@
   }
 }
 
+.dot-grid {
+  background-color: #09090b;
+  background-image: radial-gradient(rgb(63 63 70 / 0.6) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
 @keyframes caret-blink {
   0%, 70%, 100% {
     opacity: 1;

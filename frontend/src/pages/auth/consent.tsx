@@ -89,7 +89,7 @@ export function ConsentPage() {
           type="button"
           onClick={() => respond(true)}
           disabled={loading}
-          className="h-10 cursor-pointer rounded-md bg-blue-600 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-10 cursor-pointer rounded-lg text-sm font-semibold transition-all bg-[linear-gradient(135deg,hsl(38,100%,58%)_0%,hsl(20,95%,55%)_100%)] text-[hsl(228,18%,7%)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Working..." : "Allow"}
         </button>

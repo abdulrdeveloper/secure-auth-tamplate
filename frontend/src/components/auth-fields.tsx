@@ -174,7 +174,7 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={loading}
-      className="mt-2 flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-600 text-sm font-medium text-white transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
+      className="mt-2 flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all bg-[linear-gradient(135deg,hsl(38,100%,58%)_0%,hsl(20,95%,55%)_100%)] text-[hsl(228,18%,7%)] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(38,100%,58%)] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {loading && <LoaderCircle className="animate-spin" size={16} />}
       {children}

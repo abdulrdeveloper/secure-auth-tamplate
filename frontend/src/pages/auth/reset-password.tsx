@@ -80,7 +80,7 @@ export function ResetPasswordPage() {
           <Link
             to="/login"
             replace
-            className="flex h-10 w-full items-center justify-center rounded-md bg-blue-600 text-sm font-medium text-white hover:bg-blue-500"
+            className="flex h-10 w-full items-center justify-center rounded-lg text-sm font-semibold bg-[linear-gradient(135deg,hsl(38,100%,58%)_0%,hsl(20,95%,55%)_100%)] text-[hsl(228,18%,7%)] hover:brightness-110"
           >
             Back to sign in
           </Link>

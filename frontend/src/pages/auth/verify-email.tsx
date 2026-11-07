@@ -54,7 +54,7 @@ export function VerifyEmailPage() {
 
   const backToLogin = (
     <p className="mt-6 text-center text-sm">
-      <Link className="font-medium text-blue-400 hover:text-blue-300" to="/login">
+      <Link className="font-medium text-zinc-100 hover:text-white" to="/login">
         Back to sign in
       </Link>
     </p>

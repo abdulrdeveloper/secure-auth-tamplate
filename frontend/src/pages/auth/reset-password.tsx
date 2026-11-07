@@ -80,7 +80,7 @@ export function ResetPasswordPage() {
           <Link
             to="/login"
             replace
-            className="flex h-10 w-full items-center justify-center rounded-lg text-sm font-semibold bg-[linear-gradient(135deg,hsl(38,100%,58%)_0%,hsl(20,95%,55%)_100%)] text-[hsl(228,18%,7%)] hover:brightness-110"
+            className="flex h-10 w-full items-center justify-center rounded-lg text-sm font-semibold bg-white text-zinc-950 hover:bg-zinc-200"
           >
             Back to sign in
           </Link>
@@ -135,7 +135,7 @@ export function ResetPasswordPage() {
         </SubmitButton>
       </form>
       <p className="mt-6 text-center text-sm">
-        <Link className="font-medium text-blue-400 hover:text-blue-300" to="/login">
+        <Link className="font-medium text-zinc-100 hover:text-white" to="/login">
           Back to sign in
         </Link>
       </p>

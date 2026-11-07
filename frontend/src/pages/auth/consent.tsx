@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { AuthHeader } from "../../components/auth-layout";
@@ -20,6 +20,14 @@ export function ConsentPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [appName, setAppName] = useState("");
+
+  useEffect(() => {
+    if (!clientId) return;
+    apiRequest<{ name: string }>(`/oauth/client-info?client_id=${encodeURIComponent(clientId)}`)
+      .then((info) => setAppName(info.name))
+      .catch(() => setAppName(""));
+  }, [clientId]);
 
   async function respond(approve: boolean) {
     setLoading(true);
@@ -59,7 +67,8 @@ export function ConsentPage() {
 
       <div className="mb-5 rounded-lg border border-zinc-800 bg-zinc-950 p-4">
         <p className="text-xs font-medium text-zinc-500">Application</p>
-        <p className="mt-1 break-all font-mono text-sm text-zinc-100">{clientId || "Unknown"}</p>
+        <p className="mt-1 text-sm font-semibold text-zinc-100">{appName || "Unknown application"}</p>
+        <p className="mt-0.5 break-all font-mono text-xs text-zinc-500">{clientId}</p>
         <p className="mt-3 text-xs font-medium text-zinc-500">Redirects to</p>
         <p className="mt-1 break-all text-sm text-zinc-300">{redirectUri || "Unknown"}</p>
       </div>
@@ -68,7 +77,7 @@ export function ConsentPage() {
       <ul className="mb-6 space-y-2">
         {scopes.map((s) => (
           <li key={s} className="flex items-center gap-2 text-sm text-zinc-300">
-            <Check size={16} className="text-blue-400" />
+            <Check size={16} className="text-zinc-100" />
             {SCOPE_LABELS[s] ?? s}
           </li>
         ))}
@@ -89,7 +98,7 @@ export function ConsentPage() {
           type="button"
           onClick={() => respond(true)}
           disabled={loading}
-          className="h-10 cursor-pointer rounded-lg text-sm font-semibold transition-all bg-[linear-gradient(135deg,hsl(38,100%,58%)_0%,hsl(20,95%,55%)_100%)] text-[hsl(228,18%,7%)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-10 cursor-pointer rounded-lg text-sm font-semibold transition-all bg-white text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Working..." : "Allow"}
         </button>

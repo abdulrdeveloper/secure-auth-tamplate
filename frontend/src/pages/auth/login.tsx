@@ -54,7 +54,7 @@ export function LoginPage() {
         />
         <div className="-mt-2 mb-5 flex justify-end">
           <Link
-            className="text-sm font-medium text-blue-400 hover:text-blue-300"
+            className="text-sm font-medium text-zinc-100 hover:text-white"
             to="/forgot-password"
           >
             Forgot password?
@@ -67,7 +67,7 @@ export function LoginPage() {
       </form>
       <p className="mt-6 text-center text-sm text-zinc-400">
         Don&apos;t have an account?{" "}
-        <Link className="font-medium text-blue-400 hover:text-blue-300" to="/register">
+        <Link className="font-medium text-zinc-100 hover:text-white" to="/register">
           Sign up
         </Link>
       </p>

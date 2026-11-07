@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/auth-context";
 import { ProtectedRoute, PublicRoute } from "./components/protected-route";
 import { DashboardPage } from "./pages/dashboard";
@@ -9,6 +9,7 @@ import { RegisterPage } from "./pages/auth/register";
 import { ResetPasswordPage } from "./pages/auth/reset-password";
 import { VerifyEmailPage } from "./pages/auth/verify-email";
 import { ConsentPage } from "./pages/auth/consent";
+import { NotFoundPage } from "./pages/not-found";
 
 export default function App() {
   return (
@@ -30,7 +31,7 @@ export default function App() {
               <Route path="/consent" element={<ConsentPage />} />
             </Route>
           </Route>
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

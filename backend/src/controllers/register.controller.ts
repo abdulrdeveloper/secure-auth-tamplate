@@ -16,45 +16,32 @@ import { sendVerificationEmail } from "../services/mail.service.js";
 
 async function registerUser(req: Request, res: Response) {
   const { name, email, password } = req.body;
-  const existingUser = await userModel.findOne({ email });
 
-  if (existingUser?.isEmailVerified) {
+  const successResponse = {
+    message: "Registration successful. Please check your email for the verification OTP.",
+    email,
+    resendAfter: OTP_COOLDOWN_SECONDS,
+  };
+
+  if (await userModel.exists({ email, isEmailVerified: true })) {
     return res
       .status(400)
       .json({ message: "Unable to create an account with these details." });
   }
 
-  const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
-  const verificationExpiresAt = new Date(
-    Date.now() + UNVERIFIED_ACCOUNT_TTL_MS,
-  );
-
-  if (existingUser) {
-    existingUser.name = name;
-    existingUser.password = hashedPassword;
-    existingUser.verificationExpiresAt = verificationExpiresAt;
-    await existingUser.save();
-    // Invalidate any previously pending OTP to mitigate pre-verification account takeover races
-    await clearOtp(email, "verify");
-  } else {
-    await userModel.create({
-      name,
-      email,
-      password: hashedPassword,
-      verificationExpiresAt,
-    });
-  }
-
-  const successResponse = {
-    message:
-      "Registration successful. Please check your email for the verification OTP.",
-    email,
-    resendAfter: OTP_COOLDOWN_SECONDS,
-  };
-
-  if (!existingUser && (await checkCooldown(email, "verify"))) {
+  if (await checkCooldown(email, "verify")) {
     return res.status(201).json(successResponse);
   }
+
+  await userModel.updateOne(
+    { email },
+    {
+      name,
+      password: await bcrypt.hash(password, BCRYPT_ROUNDS),
+      verificationExpiresAt: new Date(Date.now() + UNVERIFIED_ACCOUNT_TTL_MS),
+    },
+    { upsert: true },
+  );
 
   const otp = await generateAndStoreOtp(email, "verify");
 

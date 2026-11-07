@@ -29,10 +29,8 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// Protocol routes mounted once at root (.well-known, /oauth/authorize, /oauth/token, /oauth/userinfo)
 app.use(oidcRoutes);
 
-// First-party application endpoints
 app.use("/api/auth", authRoutes);
 app.use("/api/oauth", oauthClientRoutes);
 

@@ -1,6 +1,6 @@
 import crypto, { type KeyObject } from "node:crypto";
 
-const KEY_ID = process.env.OIDC_KEY_ID || "myauth-key-v1";
+const KEY_ID = process.env.OIDC_KEY_ID || "clavis-key-v1";
 
 let privateKey: KeyObject;
 let publicKey: KeyObject;

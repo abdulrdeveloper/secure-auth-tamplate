@@ -17,7 +17,7 @@ type OtpEmailOptions = {
 
 async function sendOtpEmail(to: string, options: OtpEmailOptions) {
   const fromEmail = process.env.EMAIL_FROM as string;
-  const appName = process.env.APP_NAME || "Auth App";
+  const appName = process.env.APP_NAME || "Clavis";
 
   const { data, error } = await resend.emails.send({
     from: `${appName} <${fromEmail}>`,

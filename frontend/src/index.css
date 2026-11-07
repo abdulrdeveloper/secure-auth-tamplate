@@ -9,7 +9,7 @@
 @layer base {
   :root {
     @apply font-sans text-zinc-50 antialiased;
-    background-color: #0f1015;
+    background-color: #000000;
     font-synthesis: none;
   }
 

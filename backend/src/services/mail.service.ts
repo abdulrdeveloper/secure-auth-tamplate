@@ -54,8 +54,8 @@ export async function sendVerificationEmail(to: string, code: string) {
     heading: "Email Verification",
     message: "Your verification code is:",
     code,
-    accentColor: "#4F46E5",
-    backgroundColor: "#EEF2FF",
+    accentColor: "#18181b",
+    backgroundColor: "#f4f4f5",
     notice: `This code will expire in ${OTP_MINUTES} minutes.`,
   });
 }
@@ -66,8 +66,8 @@ export async function sendPasswordResetEmail(to: string, code: string) {
     heading: "Password Reset",
     message: "We received a request to reset your password. Your reset code is:",
     code,
-    accentColor: "#DC2626",
-    backgroundColor: "#FEF2F2",
+    accentColor: "#18181b",
+    backgroundColor: "#f4f4f5",
     notice: `This code will expire in ${OTP_MINUTES} minutes. If you did not request this, you can ignore this email.`,
   });
 }

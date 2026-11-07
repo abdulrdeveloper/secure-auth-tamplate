@@ -20,7 +20,6 @@ const oauthClientSchema = new Schema<IOAuthClient>(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     clientSecretHash: {
       type: String,

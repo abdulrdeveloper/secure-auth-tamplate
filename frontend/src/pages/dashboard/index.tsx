@@ -13,7 +13,7 @@ export function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950">
+    <main className="app-bg min-h-screen">
       <header className="flex h-16 items-center justify-between border-b border-zinc-800 px-6">
         <Logo />
         <button

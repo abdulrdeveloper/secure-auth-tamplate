@@ -18,7 +18,7 @@ function getAuthorizeUrl(returnTo: string | null): string | null {
 function FullPageLoader() {
   return (
     <div
-      className="grid min-h-screen place-items-center bg-zinc-950 text-blue-400"
+      className="app-bg grid min-h-screen place-items-center text-blue-400"
       role="status"
       aria-label="Loading"
     >

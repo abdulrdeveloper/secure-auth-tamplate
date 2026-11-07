@@ -8,7 +8,8 @@
 
 @layer base {
   :root {
-    @apply bg-zinc-950 font-sans text-zinc-50 antialiased;
+    @apply font-sans text-zinc-50 antialiased;
+    background-color: #0f1015;
     font-synthesis: none;
   }
 
@@ -28,10 +29,7 @@
 
 .app-bg {
   position: relative;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(40, 40, 40, 0.16) 0%, transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(40, 40, 40, 0.15) 0%, transparent 40%),
-    #0f1015;
+  background-color: #0f1015;
 }
 
 .app-bg::after {

@@ -1,6 +1,7 @@
 import { Router, type Router as ExpressRouter } from "express";
 import {
   registerClient,
+  getClientInfo,
   getClients,
   getClient,
   removeClient,
@@ -11,6 +12,7 @@ import { rateLimit } from "../middlewares/rate-limit.middleware.js";
 
 const router: ExpressRouter = Router();
 
+router.get("/client-info", rateLimit("client_info", 60, 60), getClientInfo);
 router.post("/clients", authenticate, rateLimit("client_register", 10, 60), registerClient);
 router.get("/clients", authenticate, getClients);
 router.get("/clients/:clientId", authenticate, getClient);

@@ -1,13 +1,11 @@
 <p align="center">
-  <img src="frontend/public/favicon.svg" alt="Secure Auth" height="64" />
+  <img src="frontend/public/logo-mark.png" alt="Clavis" height="120" />
 </p>
 
-<h3 align="center">Production-ready email and password authentication you can drop into any project.</h3>
+<h3 align="center">Open-source identity for your apps: sign-up, sign-in, and OpenID Connect, self-hosted.</h3>
 
 <p align="center">
-  Secure Auth is a free, open-source full-stack authentication starter. It gives you
-  registration with email verification, login, password reset and silent session
-  refresh out of the box, so you can start building your actual product on day one.
+  Clavis is an open-source identity platform, built in the same spirit as Clerk. Users sign up, verify their email and sign in once. Your other apps then receive standard OpenID Connect tokens. You run it on your own infrastructure with MongoDB, Redis and Resend.
 </p>
 
 <p align="center">
@@ -20,22 +18,21 @@
 
 ---
 
-## What is Secure Auth?
+## What is Clavis?
 
 Almost every SaaS, dashboard or side project needs the same thing first: a safe
 way for people to sign up and sign in. Building it properly takes days, and small
 mistakes (tokens in `localStorage`, unlimited OTP guesses, leaking stack traces)
 turn into real security problems.
 
-Secure Auth is that first week of work, already done and tested:
+Clavis covers the parts that are easy to get wrong, already built and tested:
 
 - **Backend:** Express 5, TypeScript, MongoDB (Mongoose), Upstash Redis and Resend.
 - **Frontend:** React 18, Vite and Tailwind CSS v4.
 - **Sessions:** a short-lived access token and a rotating refresh token, both in
   HttpOnly cookies that JavaScript cannot read.
 
-It is deliberately small: no social login, no admin panel and no UI library. It
-handles authentication well and stays out of the way of the rest of your app.
+It is focused on a few things done well: email and password accounts, a hosted-style sign-in UI, and an OpenID Connect provider for your other apps. Social login and an admin dashboard are not included yet.
 
 ## Features
 
@@ -160,7 +157,7 @@ Never commit `.env` files. Both folders include a `.env.example`.
 | Token lifetimes, OTP timings, password length, rate limits | `backend/src/config/auth.config.ts` |
 | Brand name, tagline and repository links | `frontend/src/config/site.ts` |
 | Email design and wording | `backend/src/services/mail.service.ts` |
-| Page title and favicon | `frontend/index.html`, `frontend/public/favicon.svg` |
+| Page title and favicon | `frontend/index.html`, `frontend/public/logo-mark.png` |
 | New protected pages | Add a `<Route>` inside `<ProtectedRoute>` in `frontend/src/App.tsx` |
 
 ### Deploy
@@ -257,6 +254,49 @@ Two limitations are intentional, to keep the template simple:
   account with forgot password.
 
 There are no automated tests in the repository yet.
+
+## Use it as a login provider for other sites (OpenID Connect)
+
+The backend is an OpenID Connect provider. Any site can use it for login with a
+standard OIDC library (for example `openid-client`, Auth.js / NextAuth, or Passport).
+
+**Environment variables**
+
+| Variable | Purpose |
+|---|---|
+| `ISSUER_URL` | Public URL of the backend, for example `https://auth.example.com`. Required in production. |
+| `OIDC_PRIVATE_KEY` | RSA private key used to sign tokens. Generate it with `pnpm generate:keys`. |
+| `OIDC_KEY_ID` | Key id placed in the token header, for example `clavis-key-v1`. |
+
+**Endpoints**
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /.well-known/openid-configuration` | Discovery document. Most libraries only need this URL. |
+| `GET /.well-known/jwks.json` | Public key for verifying tokens. |
+| `GET /oauth/authorize` | Starts login. Signs the user in and asks for consent if needed. |
+| `POST /oauth/token` | Exchanges the code for `id_token` and `access_token`. |
+| `GET /oauth/userinfo` | Returns the user's profile for a Bearer access token. |
+
+**Register a site (client)**
+
+- Your own sites (no consent screen), from `backend/`:
+  ```bash
+  pnpm run new-client "My Site" https://mysite.com/auth/callback
+  ```
+  Add `--untrusted` to show the consent screen instead.
+- Other people's sites: a signed-in user calls `POST /api/oauth/clients` with `name` and `redirectUris`.
+  These clients always show a consent screen.
+
+The client secret is shown only once, when the client is created.
+
+**Flow**
+
+1. Send the user to `/oauth/authorize?response_type=code&client_id=...&redirect_uri=...&scope=openid profile email&state=...&nonce=...&code_challenge=...&code_challenge_method=S256`.
+2. The user comes back to `redirect_uri?code=...&state=...`.
+3. Your server posts `grant_type=authorization_code`, `code`, `redirect_uri` and `code_verifier`
+   to `/oauth/token` as a form, with the client id and secret in a Basic auth header.
+4. Verify the `id_token` with the JWKS, or call `/oauth/userinfo` with the access token.
 
 ## Contributing
 

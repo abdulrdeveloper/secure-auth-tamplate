@@ -2,7 +2,7 @@
 
 **Last updated: October 27, 2026**
 
-These Terms of Use govern your use of Secure Auth, a free, open-source
+These Terms of Use govern your use of Clavis, a free, open-source
 authentication starter template, and of the demo hosted by the maintainer. By
 using the demo or the code, you agree to these terms.
 
@@ -10,7 +10,7 @@ If you do not agree with these terms, please do not use the project.
 
 ## The project
 
-Secure Auth provides source code for registration, email verification, login,
+Clavis provides source code for registration, email verification, login,
 password reset and session handling, and a demo to try it.
 
 The source code is licensed under the [MIT License](LICENSE). That license
@@ -55,7 +55,7 @@ when these terms are violated.
 
 ## If you deploy this template
 
-When you build on Secure Auth, you are responsible for your own deployment:
+When you build on Clavis, you are responsible for your own deployment:
 
 - Your terms of use and privacy policy.
 - Configuring secrets, cookies, CORS and email securely.

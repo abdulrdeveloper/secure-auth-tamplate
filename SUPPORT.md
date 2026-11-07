@@ -1,6 +1,6 @@
 # Support
 
-Secure Auth is an independent open-source project. If something is unclear or
+Clavis is an independent open-source project. If something is unclear or
 does not work as expected, help is available.
 
 ## Before asking for help
@@ -52,11 +52,11 @@ response. Security reports follow the timelines in [SECURITY.md](SECURITY.md).
 ## Feature requests
 
 Feature ideas are welcome. Strong requests explain the problem, who benefits,
-and the proposed outcome. Secure Auth stays deliberately minimal, so requests
+and the proposed outcome. Clavis stays deliberately minimal, so requests
 are weighed against security, simplicity and maintenance cost.
 
 ## Your own deployment
 
-If you deployed Secure Auth for your own project, you are responsible for
+If you deployed Clavis for your own project, you are responsible for
 supporting your users. The maintainer can help with the template itself, but
 not with your hosting, data or users.

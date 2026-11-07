@@ -12,7 +12,7 @@ export function AuthStatus({
 }) {
   return (
     <div className="text-center">
-      <div className="mx-auto mb-5 grid size-12 place-items-center rounded-full bg-blue-500/15 text-blue-400">
+      <div className="mx-auto mb-5 grid size-12 place-items-center rounded-full bg-white/10 text-zinc-100">
         <CheckCircle2 size={26} />
       </div>
       <h1 className="text-xl font-semibold text-zinc-50">{title}</h1>

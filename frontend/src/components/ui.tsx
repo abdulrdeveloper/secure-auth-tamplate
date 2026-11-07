@@ -10,7 +10,7 @@ export const Input = forwardRef<
 >(({ className = "", ...props }, ref) => (
   <input
     ref={ref}
-    className={`h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-zinc-50 outline-none transition-colors placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 ${className}`}
+    className={`h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-zinc-50 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-500/30 ${className}`}
     style={{ colorScheme: "dark" }}
     {...props}
   />

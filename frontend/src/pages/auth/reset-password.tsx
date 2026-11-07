@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { AuthHeader } from "../../components/auth-layout";
 import {
@@ -75,23 +74,15 @@ export function ResetPasswordPage() {
   if (completed) {
     return (
       <AuthStatus
-        eyebrow="PASSWORD UPDATED"
-        title="Password reset complete"
-        description="Your password has been updated successfully. You can now sign in with your new password."
+        title="Password updated"
+        description="You can now sign in with your new password."
         action={
           <Link
-            className="group relative mt-7 flex h-12 w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl border border-lime-200/50 bg-gradient-to-b from-lime-300 via-lime-300 to-lime-400 text-[14px] font-semibold text-zinc-950 no-underline tracking-[-0.01em] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_1px_3px_rgba(0,0,0,0.4),0_0_20px_-3px_rgba(190,242,100,0.3)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-lime-200/80 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_8px_20px_-4px_rgba(0,0,0,0.5),0_0_30px_rgba(190,242,100,0.5)] active:translate-y-0 active:scale-[0.985]"
             to="/login"
             replace
+            className="flex h-10 w-full items-center justify-center rounded-md bg-blue-600 text-sm font-medium text-white hover:bg-blue-500"
           >
-            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
-            <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/40" />
-            <span className="relative z-10 flex items-center gap-2">
-              <span>Go back to sign in</span>
-              <span className="inline-flex transition-transform duration-200 ease-out group-hover:translate-x-1.5">
-                <ArrowRight size={17} />
-              </span>
-            </span>
+            Back to sign in
           </Link>
         }
       />
@@ -103,12 +94,11 @@ export function ResetPasswordPage() {
   return (
     <>
       <AuthHeader
-        eyebrow="ACCOUNT RECOVERY"
         title={isOtpStep ? "Enter your reset code" : "Choose a new password"}
         description={
           isOtpStep
-            ? "Use the code sent to your email to continue."
-            : "Create a new password for your secure account."
+            ? `Use the code sent to ${email}.`
+            : "Create a new password for your account."
         }
       />
       <form onSubmit={submit}>
@@ -138,18 +128,14 @@ export function ResetPasswordPage() {
           </>
         )}
         {error && <ErrorMessage message={error} />}
-        <SubmitButton loading={loading} icon={<ArrowRight size={17} />}>
+        <SubmitButton loading={loading}>
           {isOtpStep
-            ? loading ? "Continuing" : "Continue"
-            : loading ? "Resetting password" : "Reset password"}
+            ? loading ? "Continuing..." : "Continue"
+            : loading ? "Resetting password..." : "Reset password"}
         </SubmitButton>
       </form>
-      <p className="mt-7 text-center text-[13px] text-zinc-500">
-        <Link
-          className="group inline-flex items-center gap-1.5 text-[13px] font-semibold text-lime-300 hover:underline"
-          to="/login"
-        >
-          <ArrowLeft size={15} className="transition-transform duration-200 ease-out group-hover:-translate-x-1" />
+      <p className="mt-6 text-center text-sm">
+        <Link className="font-medium text-blue-400 hover:text-blue-300" to="/login">
           Back to sign in
         </Link>
       </p>

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ArrowRight, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthHeader } from "../../components/auth-layout";
 import {
@@ -39,9 +38,8 @@ export function RegisterPage() {
   return (
     <>
       <AuthHeader
-        eyebrow="GET STARTED"
         title="Create your account"
-        description="Join securely with your email and password."
+        description="Sign up with your email and a password."
       />
       <form onSubmit={submit}>
         <NameField
@@ -51,7 +49,6 @@ export function RegisterPage() {
         />
         <Field
           label="Email address"
-          icon={Mail}
           type="email"
           placeholder="you@example.com"
           name="email"
@@ -61,21 +58,16 @@ export function RegisterPage() {
         <PasswordField
           name="password"
           value={form.password}
-          onChange={(event) =>
-            setForm({ ...form, password: event.target.value })
-          }
+          onChange={(event) => setForm({ ...form, password: event.target.value })}
         />
         {error && <ErrorMessage message={error} />}
-        <SubmitButton loading={loading} icon={<ArrowRight size={17} />}>
-          {loading ? "Creating account" : "Create account"}
+        <SubmitButton loading={loading}>
+          {loading ? "Creating account..." : "Continue"}
         </SubmitButton>
       </form>
-      <p className="mt-7 text-center text-[13px] text-zinc-500">
+      <p className="mt-6 text-center text-sm text-zinc-400">
         Already have an account?{" "}
-        <Link
-          className="inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300 hover:underline"
-          to="/login"
-        >
+        <Link className="font-medium text-blue-400 hover:text-blue-300" to="/login">
           Sign in
         </Link>
       </p>

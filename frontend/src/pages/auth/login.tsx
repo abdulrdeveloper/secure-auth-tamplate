@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Mail } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth, type AuthUser } from "../../context/auth-context";
 import { AuthHeader } from "../../components/auth-layout";
 import {
@@ -12,8 +11,6 @@ import {
 import { apiRequest, getErrorMessage } from "../../lib/api";
 
 export function LoginPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
   const { setUser } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -28,45 +25,9 @@ export function LoginPage() {
         method: "POST",
         data: form,
       });
-      const searchParams = new URLSearchParams(location.search);
-      const returnTo = searchParams.get("return_to");
-      const from = (location.state as { from?: string } | null)?.from;
       setUser(response.user);
-
-      if (returnTo) {
-        const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
-        const apiOrigin = new URL(apiUrl).origin;
-        const currentOrigin = window.location.origin;
-
-        if (returnTo.startsWith("/")) {
-          if (returnTo.startsWith("/oauth/authorize")) {
-            // Forward authorization flow back to the backend
-            window.location.href = `${apiOrigin}${returnTo}`;
-            return;
-          }
-          // Relative route within the frontend
-          navigate(returnTo, { replace: true });
-          return;
-        }
-
-        try {
-          const parsed = new URL(returnTo);
-          if (
-            (parsed.origin === currentOrigin || parsed.origin === apiOrigin) &&
-            parsed.pathname.startsWith("/oauth/authorize")
-          ) {
-            window.location.href = parsed.toString();
-            return;
-          }
-        } catch {
-          // Fall through to default navigation
-        }
-      }
-
-      navigate(from ?? "/dashboard", { replace: true });
     } catch (requestError) {
       setError(getErrorMessage(requestError));
-    } finally {
       setLoading(false);
     }
   }
@@ -74,14 +35,12 @@ export function LoginPage() {
   return (
     <>
       <AuthHeader
-        eyebrow="SECURE ACCESS"
         title="Welcome back"
-        description="Enter your details to access your account."
+        description="Sign in to continue to Clavis."
       />
       <form onSubmit={submit}>
         <Field
           label="Email address"
-          icon={Mail}
           type="email"
           placeholder="you@example.com"
           name="email"
@@ -91,30 +50,25 @@ export function LoginPage() {
         <PasswordField
           name="password"
           value={form.password}
-          onChange={(event) =>
-            setForm({ ...form, password: event.target.value })
-          }
+          onChange={(event) => setForm({ ...form, password: event.target.value })}
         />
-        <div className="-mt-1.5 mb-[22px] flex justify-end">
+        <div className="-mt-2 mb-5 flex justify-end">
           <Link
-            className="inline-block text-[13px] font-semibold text-lime-300 transition-colors hover:underline"
+            className="text-sm font-medium text-blue-400 hover:text-blue-300"
             to="/forgot-password"
           >
             Forgot password?
           </Link>
         </div>
         {error && <ErrorMessage message={error} />}
-        <SubmitButton loading={loading} icon={<ArrowRight size={17} />}>
-          {loading ? "Signing in" : "Sign in"}
+        <SubmitButton loading={loading}>
+          {loading ? "Signing in..." : "Sign in"}
         </SubmitButton>
       </form>
-      <p className="mt-7 text-center text-[13px] text-zinc-500">
-        Don’t have an account?{" "}
-        <Link
-          className="inline-flex items-center gap-1 text-[13px] font-semibold text-lime-300 hover:underline"
-          to="/register"
-        >
-          Create one
+      <p className="mt-6 text-center text-sm text-zinc-400">
+        Don&apos;t have an account?{" "}
+        <Link className="font-medium text-blue-400 hover:text-blue-300" to="/register">
+          Sign up
         </Link>
       </p>
     </>

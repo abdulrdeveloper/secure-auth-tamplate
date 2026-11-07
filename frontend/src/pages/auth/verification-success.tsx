@@ -3,9 +3,8 @@ import { AuthStatus } from "../../components/auth-status";
 export function VerificationSuccess() {
   return (
     <AuthStatus
-      eyebrow="EMAIL VERIFIED"
-      title="You're all set"
-      description="Your email has been verified. Taking you to your dashboard..."
+      title="Email verified"
+      description="Your account is ready. Taking you to your dashboard..."
     />
   );
 }

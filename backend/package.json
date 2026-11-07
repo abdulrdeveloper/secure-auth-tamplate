@@ -1,5 +1,5 @@
 {
-	"name": "backend",
+	"name": "clavis-backend",
 	"type": "module",
 	"packageManager": "pnpm@11.8.0",
 	"engines": {
@@ -9,9 +9,9 @@
 		"dev": "tsc-watch --onSuccess \"node dist/server.js\"",
 		"start": "node dist/server.js",
 		"type-check": "tsc --noEmit",
-		"test": "tsx --test \"src/**/*.test.ts\"",
 		"build": "tsc",
-		"generate:keys": "tsx src/scripts/generate-keys.ts"
+		"generate:keys": "tsx src/scripts/generate-keys.ts",
+		"new-client": "tsx src/scripts/new-client.ts"
 	},
 	"dependencies": {
 		"@upstash/redis": "^1.39.0",

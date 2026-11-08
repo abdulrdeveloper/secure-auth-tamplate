@@ -21,9 +21,12 @@ if (missingEnv.length > 0) {
   process.exit(1);
 }
 
-if (process.env.NODE_ENV === "production" && !process.env.ISSUER_URL) {
-  console.error("ISSUER_URL must be set in production");
-  process.exit(1);
+if (process.env.NODE_ENV === "production") {
+  const missing = ["ISSUER_URL", "OIDC_PRIVATE_KEY"].filter((key) => !process.env[key]);
+  if (missing.length > 0) {
+    console.error(`Missing production environment variables: ${missing.join(", ")}`);
+    process.exit(1);
+  }
 }
 
 if (!["lax", "none"].includes(process.env.COOKIE_SAMESITE as string)) {

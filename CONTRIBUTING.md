@@ -1,6 +1,6 @@
-# Contributing to Secure Auth
+# Contributing to Clavis
 
-Thanks for helping make Secure Auth better. This guide explains how to set up
+Thanks for helping make Clavis better. This guide explains how to set up
 the project, how we work, and what a good pull request looks like.
 
 By participating you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md).

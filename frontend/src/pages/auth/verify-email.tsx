@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthHeader } from "../../components/auth-layout";
 import {
@@ -8,6 +7,7 @@ import {
   ResendCode,
   SubmitButton,
 } from "../../components/auth-fields";
+import { FormError } from "../../components/toast";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 import { getOtpCooldownKey } from "../../lib/otp-cooldown";
 import { useAuth, type AuthUser } from "../../context/auth-context";
@@ -54,12 +54,8 @@ export function VerifyEmailPage() {
   }
 
   const backToLogin = (
-    <p className="mt-7 text-center text-[13px] text-zinc-500">
-      <Link
-        className="group inline-flex items-center gap-1.5 text-[13px] font-semibold text-lime-300 hover:underline"
-        to="/login"
-      >
-        <ArrowLeft size={15} className="transition-transform duration-200 ease-out group-hover:-translate-x-1" />
+    <p className="mt-6 text-center text-sm">
+      <Link className="font-medium text-zinc-100 hover:text-white" to="/login">
         Back to sign in
       </Link>
     </p>
@@ -69,9 +65,8 @@ export function VerifyEmailPage() {
     return (
       <>
         <AuthHeader
-          eyebrow="EMAIL VERIFICATION"
           title="Verification link incomplete"
-          description="Return to sign in and use your account email to continue."
+          description="Go back to sign in and use your account email to continue."
         />
         <ErrorMessage message="We could not find the email address for this verification request." />
         {backToLogin}
@@ -84,9 +79,8 @@ export function VerifyEmailPage() {
   return (
     <>
       <AuthHeader
-        eyebrow="EMAIL VERIFICATION"
-        title="Check your inbox"
-        description="Enter the 6-digit code we sent to verify your email."
+        title="Verify your email"
+        description={`Enter the 6-digit code we sent to ${email}.`}
       />
       <form onSubmit={submit}>
         <OtpField value={otp} onValueChange={setOtp} />
@@ -100,8 +94,8 @@ export function VerifyEmailPage() {
           }
           onError={setError}
         />
-        {error && <ErrorMessage message={error} />}
-        <SubmitButton loading={loading} icon={<ArrowRight size={17} />}>
+        {error && <FormError message={error} />}
+        <SubmitButton loading={loading}>
           {loading ? "Verifying..." : "Verify email"}
         </SubmitButton>
       </form>

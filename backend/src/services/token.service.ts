@@ -1,89 +1,47 @@
 import jwt from "jsonwebtoken";
-import { getPrivateKey, getPublicKey, getKeyId } from "./key.service.js";
+import { getKeyId, getPrivateKey, getPublicKey } from "./key.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
 import type { User } from "../models/user.model.js";
 
-interface IdTokenPayload {
-  sub: string;
-  aud: string;
-  iss: string;
-  iat: number;
-  exp: number;
-  token_use: "id_token";
-  nonce?: string;
-  email?: string;
-  email_verified?: boolean;
-  name?: string;
+function sign(claims: object, subject: string, audience: string, expiresIn: number) {
+  return jwt.sign(claims, getPrivateKey(), {
+    algorithm: "RS256",
+    keyid: getKeyId(),
+    issuer: OIDC_CONFIG.issuer,
+    subject,
+    audience,
+    expiresIn,
+  });
 }
 
-export const generateIdToken = (
+export function generateIdToken(
   user: User & { _id: unknown },
   clientId: string,
   scope: string[],
-  nonce?: string
-): string => {
-  const now = Math.floor(Date.now() / 1000);
-
-  const payload: IdTokenPayload = {
-    sub: String(user._id),
-    aud: clientId,
-    iss: OIDC_CONFIG.issuer,
-    iat: now,
-    exp: now + OIDC_CONFIG.idTokenTTL,
+  nonce?: string,
+) {
+  const claims = {
     token_use: "id_token",
     ...(nonce && { nonce }),
+    ...(scope.includes("profile") && { name: user.name }),
+    ...(scope.includes("email") && { email: user.email, email_verified: user.isEmailVerified }),
   };
+  return sign(claims, String(user._id), clientId, OIDC_CONFIG.idTokenTTL);
+}
 
-  if (scope.includes("email")) {
-    payload.email = user.email;
-    payload.email_verified = user.isEmailVerified;
-  }
+export function generateAccessToken(userId: string, clientId: string, scope: string[]) {
+  const claims = { token_use: "access_token", scope: scope.join(" ") };
+  return sign(claims, userId, clientId, OIDC_CONFIG.accessTokenTTL);
+}
 
-  if (scope.includes("profile")) {
-    payload.name = user.name;
-  }
-
-  return jwt.sign(payload, getPrivateKey(), {
-    algorithm: "RS256",
-    keyid: getKeyId(),
-  });
-};
-
-export const generateAccessToken = (
-  userId: string,
-  clientId: string,
-  scope: string[]
-): string => {
-  const now = Math.floor(Date.now() / 1000);
-
-  const payload = {
-    sub: userId,
-    aud: clientId,
-    iss: OIDC_CONFIG.issuer,
-    iat: now,
-    exp: now + OIDC_CONFIG.accessTokenTTL,
-    scope: scope.join(" "),
-    token_use: "access_token",
-  };
-
-  return jwt.sign(payload, getPrivateKey(), {
-    algorithm: "RS256",
-    keyid: getKeyId(),
-  });
-};
-
-export const verifyAccessToken = (token: string): jwt.JwtPayload | null => {
+export function verifyAccessToken(token: string): jwt.JwtPayload | null {
   try {
     const payload = jwt.verify(token, getPublicKey(), {
       algorithms: ["RS256"],
-    }) as jwt.JwtPayload;
-
-    if (payload.token_use !== "access_token") {
-      return null;
-    }
-
-    return payload;
+      issuer: OIDC_CONFIG.issuer,
+    });
+    return typeof payload === "object" && payload.token_use === "access_token" ? payload : null;
   } catch {
     return null;
   }
-};
+}

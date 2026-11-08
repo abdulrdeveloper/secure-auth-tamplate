@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthHeader } from "../../components/auth-layout";
 import {
@@ -7,6 +6,7 @@ import {
   Field,
   SubmitButton,
 } from "../../components/auth-fields";
+import { FormError } from "../../components/toast";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
 
@@ -16,52 +16,46 @@ export function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const { resendAfter } = await apiRequest<{ resendAfter: number }>(
+        "/auth/forgot-password",
+        { method: "POST", data: { email } },
+      );
+      startOtpCooldown(getOtpCooldownKey(email, "reset"), resendAfter);
+      navigate("/reset-password", { state: { email } });
+    } catch (requestError) {
+      setError(getErrorMessage(requestError));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <>
       <AuthHeader
-        eyebrow="ACCOUNT RECOVERY"
         title="Forgot password?"
-        description="Enter your email and we’ll send you a reset code."
+        description="Enter your email and we will send you a reset code."
       />
-      <form
-        onSubmit={async (event) => {
-          event.preventDefault();
-          setError("");
-          setLoading(true);
-          try {
-            const { resendAfter } = await apiRequest<{ resendAfter: number }>(
-              "/auth/forgot-password",
-              { method: "POST", data: { email } },
-            );
-            startOtpCooldown(getOtpCooldownKey(email, "reset"), resendAfter);
-            navigate("/reset-password", { state: { email } });
-          } catch (requestError) {
-            setError(getErrorMessage(requestError));
-          } finally {
-            setLoading(false);
-          }
-        }}
-      >
+      <form onSubmit={submit}>
         <Field
           label="Email address"
-          icon={Mail}
           type="email"
           placeholder="you@example.com"
           name="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
-        {error && <ErrorMessage message={error} />}
-        <SubmitButton loading={loading} icon={<ArrowRight size={17} />}>
-          {loading ? "Sending code" : "Send reset code"}
+        {error && <FormError message={error} />}
+        <SubmitButton loading={loading}>
+          {loading ? "Sending code..." : "Send reset code"}
         </SubmitButton>
       </form>
-      <p className="mt-7 text-center text-[13px] text-zinc-500">
-        <Link
-          className="group inline-flex items-center gap-1.5 text-[13px] font-semibold text-lime-300 hover:underline"
-          to="/login"
-        >
-          <ArrowLeft size={15} className="transition-transform duration-200 ease-out group-hover:-translate-x-1" />
+      <p className="mt-6 text-center text-sm">
+        <Link className="font-medium text-zinc-100 hover:text-white" to="/login">
           Back to sign in
         </Link>
       </p>

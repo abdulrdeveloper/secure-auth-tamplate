@@ -1,6 +1,6 @@
 # Security Policy
 
-Secure Auth handles passwords, email verification codes and session tokens, so
+Clavis handles passwords, email verification codes and session tokens, so
 we take security reports seriously.
 
 ## Supported versions

@@ -1,62 +1,32 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-interface AccessPayload {
-  userId: string;
-}
-
-export const authenticate = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+function readUserId(req: Request): string | undefined {
+  const header = req.headers.authorization;
   const token =
     req.cookies?.accessToken ||
-    (req.headers.authorization?.startsWith("Bearer ")
-      ? req.headers.authorization.slice(7).trim()
-      : undefined);
-
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized: No token provided" });
-  }
+    (header?.startsWith("Bearer ") ? header.slice(7).trim() : undefined);
+  if (!token) return undefined;
 
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.ACCESS_TOKEN_SECRET as string,
-    ) as AccessPayload;
-
-    req.userId = decoded.userId;
-    next();
+    const payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as { userId: string };
+    return payload.userId;
   } catch {
-    return res
-      .status(401)
-      .json({ message: "Unauthorized: Invalid or expired token" });
+    return undefined;
   }
+}
+
+export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+  const userId = readUserId(req);
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  req.userId = userId;
+  next();
 };
 
-export const resolveSession = (
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-) => {
-  const token =
-    req.cookies?.accessToken ||
-    (req.headers.authorization?.startsWith("Bearer ")
-      ? req.headers.authorization.slice(7).trim()
-      : undefined);
-
-  if (token) {
-    try {
-      const decoded = jwt.verify(
-        token,
-        process.env.ACCESS_TOKEN_SECRET as string,
-      ) as AccessPayload;
-      req.userId = decoded.userId;
-    } catch {
-      // Invalid/expired token: req.userId remains undefined
-    }
-  }
-
+export const resolveSession = (req: Request, _res: Response, next: NextFunction) => {
+  const userId = readUserId(req);
+  if (userId) req.userId = userId;
   next();
 };

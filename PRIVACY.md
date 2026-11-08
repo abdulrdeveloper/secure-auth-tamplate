@@ -2,8 +2,8 @@
 
 **Last updated: October 27, 2026**
 
-Secure Auth is a free, open-source authentication starter template. This
-policy explains what information the Secure Auth demo handles, why it is used,
+Clavis is a free, open-source authentication starter template. This
+policy explains what information the Clavis demo handles, why it is used,
 and the choices available to users.
 
 This document is written for the current implementation and may be updated as
@@ -13,7 +13,7 @@ the project grows.
 
 This policy covers the demo hosted by the maintainer.
 
-If you deploy Secure Auth for your own project, you are the operator of that
+If you deploy Clavis for your own project, you are the operator of that
 deployment. You are responsible for your own privacy policy, for the data your
 users provide, and for the services you connect. You may adapt this file as a
 starting point.

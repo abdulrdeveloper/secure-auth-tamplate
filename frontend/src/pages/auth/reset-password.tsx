@@ -8,6 +8,7 @@ import {
   ResendCode,
   SubmitButton,
 } from "../../components/auth-fields";
+import { FormError } from "../../components/toast";
 import { AuthStatus } from "../../components/auth-status";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 import { getOtpCooldownKey } from "../../lib/otp-cooldown";
@@ -127,7 +128,7 @@ export function ResetPasswordPage() {
             />
           </>
         )}
-        {error && <ErrorMessage message={error} />}
+        {error && <FormError message={error} />}
         <SubmitButton loading={loading}>
           {isOtpStep
             ? loading ? "Continuing..." : "Continue"

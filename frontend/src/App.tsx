@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/auth-context";
+import { ToastProvider } from "./components/toast";
 import { ProtectedRoute, PublicRoute } from "./components/protected-route";
 import { DashboardPage } from "./pages/dashboard";
 import { AuthLayout } from "./components/auth-layout";
@@ -14,6 +15,7 @@ import { NotFoundPage } from "./pages/not-found";
 export default function App() {
   return (
     <BrowserRouter>
+      <ToastProvider>
       <AuthProvider>
         <Routes>
           <Route element={<PublicRoute />}>
@@ -34,6 +36,7 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

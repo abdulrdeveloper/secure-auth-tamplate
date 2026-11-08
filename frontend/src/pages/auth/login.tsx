@@ -8,6 +8,7 @@ import {
   PasswordField,
   SubmitButton,
 } from "../../components/auth-fields";
+import { FormError } from "../../components/toast";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 
 export function LoginPage() {
@@ -60,7 +61,7 @@ export function LoginPage() {
             Forgot password?
           </Link>
         </div>
-        {error && <ErrorMessage message={error} />}
+        {error && <FormError message={error} />}
         <SubmitButton loading={loading}>
           {loading ? "Signing in..." : "Sign in"}
         </SubmitButton>

@@ -7,6 +7,7 @@ import {
   ResendCode,
   SubmitButton,
 } from "../../components/auth-fields";
+import { FormError } from "../../components/toast";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 import { getOtpCooldownKey } from "../../lib/otp-cooldown";
 import { useAuth, type AuthUser } from "../../context/auth-context";
@@ -93,7 +94,7 @@ export function VerifyEmailPage() {
           }
           onError={setError}
         />
-        {error && <ErrorMessage message={error} />}
+        {error && <FormError message={error} />}
         <SubmitButton loading={loading}>
           {loading ? "Verifying..." : "Verify email"}
         </SubmitButton>

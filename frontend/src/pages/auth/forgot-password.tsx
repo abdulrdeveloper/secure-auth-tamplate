@@ -6,6 +6,7 @@ import {
   Field,
   SubmitButton,
 } from "../../components/auth-fields";
+import { FormError } from "../../components/toast";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
 
@@ -48,7 +49,7 @@ export function ForgotPasswordPage() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
-        {error && <ErrorMessage message={error} />}
+        {error && <FormError message={error} />}
         <SubmitButton loading={loading}>
           {loading ? "Sending code..." : "Send reset code"}
         </SubmitButton>

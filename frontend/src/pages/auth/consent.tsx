@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { AuthHeader } from "../../components/auth-layout";
 import { ErrorMessage } from "../../components/auth-fields";
+import { FormError } from "../../components/toast";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 
 const SCOPE_LABELS: Record<string, string> = {
@@ -83,7 +84,7 @@ export function ConsentPage() {
         ))}
       </ul>
 
-      {error && <ErrorMessage message={error} />}
+      {error && <FormError message={error} />}
 
       <div className="grid grid-cols-2 gap-3">
         <button

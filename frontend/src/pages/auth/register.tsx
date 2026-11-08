@@ -8,6 +8,7 @@ import {
   PasswordField,
   SubmitButton,
 } from "../../components/auth-fields";
+import { FormError } from "../../components/toast";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 import { getOtpCooldownKey, startOtpCooldown } from "../../lib/otp-cooldown";
 
@@ -60,7 +61,7 @@ export function RegisterPage() {
           value={form.password}
           onChange={(event) => setForm({ ...form, password: event.target.value })}
         />
-        {error && <ErrorMessage message={error} />}
+        {error && <FormError message={error} />}
         <SubmitButton loading={loading}>
           {loading ? "Creating account..." : "Continue"}
         </SubmitButton>

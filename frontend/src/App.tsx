@@ -11,6 +11,7 @@ import { ResetPasswordPage } from "./pages/auth/reset-password";
 import { VerifyEmailPage } from "./pages/auth/verify-email";
 import { ConsentPage } from "./pages/auth/consent";
 import { NotFoundPage } from "./pages/not-found";
+import { LandingPage } from "./pages/landing";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
       <ToastProvider>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route element={<PublicRoute />}>
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<LoginPage />} />

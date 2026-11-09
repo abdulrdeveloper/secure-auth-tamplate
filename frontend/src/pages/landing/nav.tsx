@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "../../components/auth-layout";
-import { SITE } from "../../config/site";
 import { useAuth } from "../../context/auth-context";
-import { BrandMark } from "./brand-mark";
 
 const LINKS = [
-  { label: "How it works", href: "#how-it-works", external: false },
-  { label: "Security", href: "#security", external: false },
-  { label: "Integrate", href: "#integrate", external: false },
-  { label: "Docs", href: `${SITE.githubUrl}#readme`, external: true },
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Security", href: "#security" },
+  { label: "Integrate", href: "#integrate" },
 ];
 
 export function LandingNav() {
@@ -31,57 +28,23 @@ export function LandingNav() {
           : "border-transparent bg-transparent"
       }`}
     >
-      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-6">
-        <div className="flex items-center gap-8">
-          <Logo />
-          <ul className="hidden items-center gap-7 text-[15px] text-zinc-300 md:flex">
-            {LINKS.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  {...(link.external && { target: "_blank", rel: "noreferrer" })}
-                  className="transition-colors hover:text-zinc-50"
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <a
-            href={SITE.githubUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Clavis on GitHub"
-            className="hidden rounded-md p-2 text-zinc-400 transition-colors hover:text-zinc-50 sm:block"
-          >
-            <BrandMark name="github" className="size-[18px]" />
-          </a>
-          {!loading && user ? (
-            <Link
-              to="/dashboard"
-              className="rounded-md bg-white px-4 py-2 text-[15px] font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="rounded-md px-3 py-2 text-[15px] text-zinc-300 transition-colors hover:text-zinc-50"
-              >
-                Sign in
-              </Link>
-              <Link
-                to="/register"
-                className="rounded-md bg-white px-4 py-2 text-[15px] font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
-              >
-                Get started
-              </Link>
-            </>
-          )}
-        </div>
+      <nav className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
+        <Logo />
+        <ul className="hidden items-center gap-6 text-sm text-zinc-400 sm:flex">
+          {LINKS.map((link) => (
+            <li key={link.href}>
+              <a href={link.href} className="transition-colors hover:text-zinc-50">
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <Link
+          to={!loading && user ? "/dashboard" : "/login"}
+          className="rounded-lg bg-white px-3.5 py-1.5 text-sm font-medium text-zinc-950 transition-colors hover:bg-zinc-200"
+        >
+          {!loading && user ? "Dashboard" : "Sign in"}
+        </Link>
       </nav>
     </header>
   );

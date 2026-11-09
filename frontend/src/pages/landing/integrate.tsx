@@ -84,12 +84,6 @@ const TABS: { id: string; label: string; brand: BrandName; files: { title: strin
   },
 ];
 
-const STEPS = [
-  "Register your app in Clavis and set its redirect URI. You get a client ID and a secret.",
-  "Put them in your app's environment, with the address of your Clavis server as the issuer.",
-  "Add the provider. The library finds every endpoint from the discovery document.",
-];
-
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -108,7 +102,7 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       onClick={copy}
       aria-label={copied ? "Copied" : "Copy code"}
-      className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-[13px] text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-50"
+      className="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-50"
     >
       {copied ? <Check size={14} /> : <Copy size={14} />}
       {copied ? "Copied" : "Copy"}
@@ -119,11 +113,11 @@ function CopyButton({ text }: { text: string }) {
 function CodeBlock({ title, code }: { title: string; code: string }) {
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-800 bg-[#0b0b0d]">
-      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
-        <span className="truncate font-mono text-[13px] text-zinc-400">{title}</span>
+      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-1.5">
+        <span className="truncate font-mono text-xs text-zinc-400">{title}</span>
         <CopyButton text={code} />
       </div>
-      <pre className="max-h-[420px] overflow-auto p-4 font-mono text-sm leading-[1.75] text-zinc-300">
+      <pre className="max-h-[420px] overflow-auto p-4 font-mono text-[13px] leading-[1.7] text-zinc-300">
         <code>{code}</code>
       </pre>
     </div>
@@ -139,45 +133,33 @@ export function Integrate() {
       id="integrate"
       kicker="Integrate"
       title="Add it to your app in a few lines."
-      lead="Any OpenID Connect library works. Pick yours, or read the discovery document the library reads."
+      lead="Register an app in Clavis for a client ID and secret, then point any OIDC library at your issuer URL. It finds every endpoint from the discovery document."
+      band
     >
-      <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-        <ol className="space-y-6">
-          {STEPS.map((step, index) => (
-            <li key={step} className="flex gap-4 text-base leading-relaxed text-zinc-400">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-zinc-800 font-mono text-sm text-brass">
-                {index + 1}
-              </span>
-              <span className="pt-0.5">{step}</span>
-            </li>
+      <div className="max-w-3xl">
+        <div role="tablist" aria-label="Integration examples" className="mb-3 flex flex-wrap gap-2">
+          {TABS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={item.id === tab}
+              onClick={() => setTab(item.id)}
+              className={`inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors ${
+                item.id === tab
+                  ? "border-zinc-600 bg-zinc-900 text-zinc-50"
+                  : "border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+              }`}
+            >
+              <BrandMark name={item.brand} className="size-3.5" />
+              {item.label}
+            </button>
           ))}
-        </ol>
-
-        <div className="min-w-0">
-          <div role="tablist" aria-label="Integration examples" className="mb-4 flex flex-wrap gap-2">
-            {TABS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={item.id === tab}
-                onClick={() => setTab(item.id)}
-                className={`inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3.5 text-sm font-medium transition-colors ${
-                  item.id === tab
-                    ? "border-zinc-600 bg-zinc-900 text-zinc-50"
-                    : "border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
-                }`}
-              >
-                <BrandMark name={item.brand} className="size-4" />
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <div role="tabpanel" className="space-y-4">
-            {active.files.map((file) => (
-              <CodeBlock key={file.title} title={file.title} code={file.code} />
-            ))}
-          </div>
+        </div>
+        <div role="tabpanel" className="space-y-3">
+          {active.files.map((file) => (
+            <CodeBlock key={file.title} title={file.title} code={file.code} />
+          ))}
         </div>
       </div>
     </Section>

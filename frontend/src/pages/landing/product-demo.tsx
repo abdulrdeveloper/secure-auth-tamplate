@@ -205,7 +205,7 @@ export function ProductDemo() {
           )}
         </div>
 
-        <div className="relative min-h-[470px] px-6 py-8" aria-live="polite">
+        <div className="relative min-h-[430px] px-5 py-7" aria-live="polite">
           <div key={active} className="demo-enter flex h-full items-center">
             <Screen />
           </div>

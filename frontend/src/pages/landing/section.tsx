@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 // One section shape for the whole page: kicker, heading, optional lead, content.
-// Spacing, type sizes and the alternating tinted band live here and nowhere else.
+// Compact on purpose (same scale as Klar): spacing and sizes live here only.
 
 type SectionProps = {
   id?: string;
@@ -18,22 +18,18 @@ export function Section({ id, kicker, title, lead, band = false, children }: Sec
     <section
       id={id}
       aria-labelledby={headingId}
-      className={`scroll-mt-16 py-20 sm:py-28 ${
-        band ? "border-y border-zinc-800/80 bg-[#09090b]" : ""
-      }`}
+      className={`scroll-mt-14 py-16 ${band ? "border-y border-zinc-800/80 bg-[#09090b]" : ""}`}
     >
-      <div className="mx-auto max-w-6xl px-5 sm:px-6">
-        <p className="font-mono text-[13px] font-medium uppercase tracking-[0.16em] text-brass">
-          {kicker}
-        </p>
+      <div className="mx-auto max-w-5xl px-5">
+        <p className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-brass">{kicker}</p>
         <h2
           id={headingId}
-          className="mt-4 max-w-3xl text-balance text-[34px] font-semibold leading-[1.1] tracking-[-0.02em] text-zinc-50 sm:text-5xl"
+          className="mt-3 max-w-2xl text-balance text-2xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-3xl"
         >
           {title}
         </h2>
-        {lead && <p className="mt-5 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg">{lead}</p>}
-        <div className="mt-12 sm:mt-14">{children}</div>
+        {lead && <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-400">{lead}</p>}
+        <div className="mt-9">{children}</div>
       </div>
     </section>
   );

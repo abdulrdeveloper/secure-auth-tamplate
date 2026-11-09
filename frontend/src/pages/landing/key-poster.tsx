@@ -3,10 +3,10 @@
 // and instead of it on small screens or when motion is reduced.
 
 const RING_RADIUS = 150;
-const APP_COUNT = 5;
+const APP_COUNT = 6;
 
 const apps = Array.from({ length: APP_COUNT }, (_, i) => {
-  const angle = (i / APP_COUNT) * Math.PI * 2 - Math.PI / 2;
+  const angle = (i / APP_COUNT) * Math.PI * 2;
   return {
     x: 200 + Math.cos(angle) * RING_RADIUS,
     y: 200 + Math.sin(angle) * RING_RADIUS,

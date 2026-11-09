@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SITE } from "../../config/site";
-import { KeyPoster } from "./key-poster";
+import { HeroVisual } from "./hero-visual";
 
 export function Hero() {
   return (
@@ -37,9 +37,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto aspect-square w-full max-w-[520px]">
-          <KeyPoster className="absolute inset-0 size-full" />
-        </div>
+        <HeroVisual />
       </div>
     </section>
   );

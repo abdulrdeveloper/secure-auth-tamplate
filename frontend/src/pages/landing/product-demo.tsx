@@ -1,4 +1,4 @@
-import { Check, Lock } from "lucide-react";
+import { Check, Lock, RotateCcw } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { SITE } from "../../config/site";
 
@@ -16,9 +16,9 @@ const STEPS = [
 function Field({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <p className="mb-1.5 text-xs font-medium text-zinc-300">{label}</p>
+      <p className="mb-1.5 text-[13px] font-medium text-zinc-300">{label}</p>
       <div
-        className={`flex h-9 items-center rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-200 ${
+        className={`flex h-9 items-center rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 ${
           mono ? "tracking-[0.3em]" : ""
         }`}
       >
@@ -35,7 +35,7 @@ function AuthCard({ children }: { children: ReactNode }) {
         <img src="/logo-mark.png" alt="" className="mx-auto mb-4 size-9" />
         {children}
       </div>
-      <p className="mt-3 text-center text-[11px] text-zinc-600">Secured by {SITE.name}</p>
+      <p className="mt-3 text-center text-xs text-zinc-400">Secured by {SITE.name}</p>
     </div>
   );
 }
@@ -45,7 +45,7 @@ function SignInScreen() {
     <AuthCard>
       <div className="mb-5 text-center">
         <p className="text-base font-semibold text-zinc-50">Welcome back</p>
-        <p className="mt-1 text-xs text-zinc-400">Sign in to continue to {SITE.name}.</p>
+        <p className="mt-1 text-[13px] text-zinc-400">Sign in to continue to {SITE.name}.</p>
       </div>
       <div className="space-y-3">
         <Field label="Email address" value="maya@example.com" />
@@ -63,18 +63,18 @@ function ConsentScreen() {
     <AuthCard>
       <div className="mb-4 text-center">
         <p className="text-base font-semibold text-zinc-50">Allow access?</p>
-        <p className="mt-1 text-xs text-zinc-400">An application is asking to sign you in.</p>
+        <p className="mt-1 text-[13px] text-zinc-400">An application is asking to sign you in.</p>
       </div>
       <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-950 p-3">
-        <p className="text-[11px] font-medium text-zinc-500">Application</p>
+        <p className="text-xs font-medium text-zinc-400">Application</p>
         <p className="mt-0.5 text-sm font-semibold text-zinc-100">Notes</p>
-        <p className="font-mono text-[11px] text-zinc-500">notes_app</p>
-        <p className="mt-2 text-[11px] font-medium text-zinc-500">Redirects to</p>
-        <p className="mt-0.5 text-xs text-zinc-300">https://notes.example.com/callback</p>
+        <p className="font-mono text-xs text-zinc-400">notes_app</p>
+        <p className="mt-2 text-xs font-medium text-zinc-400">Redirects to</p>
+        <p className="mt-0.5 break-all text-[13px] text-zinc-200">https://notes.example.com/callback</p>
       </div>
       <ul className="mb-4 space-y-1.5">
         {["Verify your identity", "View your name", "View your email address"].map((scope) => (
-          <li key={scope} className="flex items-center gap-2 text-xs text-zinc-300">
+          <li key={scope} className="flex items-center gap-2 text-[13px] text-zinc-200">
             <Check size={14} className="text-zinc-100" />
             {scope}
           </li>
@@ -114,8 +114,8 @@ const PAYLOAD = [
 function JsonBlock({ title, rows }: { title: string; rows: string[][] }) {
   return (
     <div>
-      <p className="mb-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">{title}</p>
-      <pre className="overflow-x-auto font-mono text-[12px] leading-[1.7] text-zinc-400">
+      <p className="mb-1.5 font-mono text-xs uppercase tracking-[0.16em] text-zinc-400">{title}</p>
+      <pre className="overflow-x-auto font-mono text-[13px] leading-[1.7] text-zinc-400">
         {"{\n"}
         {rows.map(([key, value], index) => (
           <span key={key}>
@@ -135,10 +135,10 @@ function TokenScreen() {
     <div className="mx-auto w-full max-w-[400px] space-y-4">
       <JsonBlock title="Header" rows={HEADER} />
       <JsonBlock title="Payload" rows={PAYLOAD} />
-      <p className="flex items-center gap-2 border-t border-zinc-800 pt-3 text-xs text-zinc-400">
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-zinc-800 pt-3 text-[13px] text-zinc-400">
         <Lock size={13} className="text-brass" />
         Checked against the public key at
-        <span className="font-mono text-zinc-300">/.well-known/jwks.json</span>
+        <span className="font-mono text-zinc-200">/.well-known/jwks.json</span>
       </p>
     </div>
   );
@@ -148,17 +148,30 @@ const SCREENS = [SignInScreen, ConsentScreen, TokenScreen];
 
 export function ProductDemo() {
   const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [stopped, setStopped] = useState(false);
   const [reducedMotion] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
-  const autoplay = !paused && !reducedMotion;
+  const finished = active === STEPS.length - 1;
+  const autoplay = !stopped && !reducedMotion && !finished;
 
+  // Plays through the three screens once, then settles on the ID token.
+  // Any click on a tab hands control to the visitor for good.
   useEffect(() => {
     if (!autoplay) return;
-    const timer = window.setTimeout(() => setActive((step) => (step + 1) % STEPS.length), STEP_MS);
+    const timer = window.setTimeout(() => setActive((step) => step + 1), STEP_MS);
     return () => window.clearTimeout(timer);
   }, [active, autoplay]);
+
+  function pick(index: number) {
+    setStopped(true);
+    setActive(index);
+  }
+
+  function replay() {
+    setStopped(false);
+    setActive(0);
+  }
 
   const Screen = SCREENS[active];
 
@@ -166,10 +179,6 @@ export function ProductDemo() {
     <div
       className="hero-enter relative w-full min-w-0"
       style={{ animationDelay: "120ms" }}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
     >
       <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b0b0d] shadow-[0_40px_120px_-40px_rgba(201,161,90,0.25)]">
         <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-3">
@@ -178,13 +187,25 @@ export function ProductDemo() {
             <span className="size-2.5 rounded-full bg-zinc-700" />
             <span className="size-2.5 rounded-full bg-zinc-700" />
           </div>
-          <div className="flex h-7 min-w-0 flex-1 items-center gap-2 rounded-md bg-zinc-900 px-3 font-mono text-[11px] text-zinc-400">
-            <Lock size={11} className="shrink-0 text-zinc-500" />
+          <div className="flex h-7 min-w-0 flex-1 items-center gap-2 rounded-md bg-zinc-900 px-3 font-mono text-xs text-zinc-400">
+            <Lock size={12} className="shrink-0 text-zinc-500" />
             <span className="truncate">{STEPS[active].url}</span>
           </div>
+          {!reducedMotion && (
+            <button
+              type="button"
+              onClick={replay}
+              disabled={!finished}
+              aria-label="Replay the example"
+              className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-50 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-zinc-400"
+            >
+              <RotateCcw size={13} aria-hidden="true" />
+              Replay
+            </button>
+          )}
         </div>
 
-        <div className="relative h-[460px] px-6 py-8" aria-live="polite">
+        <div className="relative min-h-[470px] px-6 py-8" aria-live="polite">
           <div key={active} className="demo-enter flex h-full items-center">
             <Screen />
           </div>
@@ -197,13 +218,13 @@ export function ProductDemo() {
               type="button"
               role="tab"
               aria-selected={index === active}
-              onClick={() => setActive(index)}
-              className={`relative cursor-pointer px-3 py-3 text-left transition-colors ${
-                index === active ? "text-zinc-50" : "text-zinc-500 hover:text-zinc-300"
+              onClick={() => pick(index)}
+              className={`relative min-h-12 cursor-pointer px-3 py-3 text-left transition-colors ${
+                index === active ? "text-zinc-50" : "text-zinc-400 hover:text-zinc-200"
               } ${index > 0 ? "border-l border-zinc-800" : ""}`}
             >
-              <span className="font-mono text-[11px] text-zinc-600">0{index + 1}</span>
-              <span className="ml-2 text-xs font-medium">{step.label}</span>
+              <span className="font-mono text-xs text-zinc-400">0{index + 1}</span>
+              <span className="ml-2 text-sm font-medium">{step.label}</span>
               <span className="absolute inset-x-0 bottom-0 h-px bg-zinc-800">
                 {index === active && (
                   <span

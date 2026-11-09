@@ -10,12 +10,12 @@ const DOCS = [
 export function LandingFooter() {
   return (
     <footer className="border-t border-zinc-800/80">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 sm:px-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Logo />
-          <span className="text-xs text-zinc-500">Open source under the MIT license</span>
+          <span className="text-sm text-zinc-400">Open source under the MIT license</span>
         </div>
-        <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-zinc-400">
+        <ul className="flex flex-wrap gap-x-6 gap-y-2 text-[15px] text-zinc-300">
           <li>
             <a href={SITE.githubUrl} target="_blank" rel="noreferrer" className="hover:text-zinc-50">
               GitHub

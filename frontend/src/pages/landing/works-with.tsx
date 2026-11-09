@@ -17,9 +17,9 @@ const STACKS: { brand: BrandName; framework: string; library: string; color: str
 
 export function WorksWith() {
   return (
-    <section aria-labelledby="works-with" className="border-t border-zinc-800/80 py-14">
-      <div className="mx-auto max-w-6xl px-6">
-        <p id="works-with" className="text-center text-sm text-zinc-500">
+    <section aria-labelledby="works-with" className="border-t border-zinc-800/80 py-16 sm:py-20">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6">
+        <p id="works-with" className="text-center text-[15px] text-zinc-400">
           Works with the OpenID Connect library you already use
         </p>
         <ul className="mt-8 grid grid-cols-2 overflow-hidden rounded-2xl border border-zinc-800 sm:grid-cols-4">
@@ -27,15 +27,15 @@ export function WorksWith() {
             <li
               key={stack.brand}
               style={{ "--brand": stack.color } as CSSProperties}
-              className="group -mb-px -mr-px flex items-center gap-3 border-b border-r border-zinc-800 px-5 py-5 transition-colors hover:bg-zinc-900/60"
+              className="group -mb-px -mr-px flex items-center gap-3.5 border-b border-r border-zinc-800 px-5 py-5 transition-colors hover:bg-zinc-900/60"
             >
               <BrandMark
                 name={stack.brand}
-                className="size-6 shrink-0 text-zinc-400 transition-colors group-hover:text-[var(--brand)]"
+                className="size-7 shrink-0 text-zinc-400 transition-colors group-hover:text-[var(--brand)]"
               />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-zinc-200">{stack.framework}</p>
-                <p className="truncate font-mono text-[11px] text-zinc-500">{stack.library}</p>
+                <p className="text-[15px] font-medium text-zinc-100">{stack.framework}</p>
+                <p className="truncate font-mono text-xs text-zinc-400">{stack.library}</p>
               </div>
             </li>
           ))}

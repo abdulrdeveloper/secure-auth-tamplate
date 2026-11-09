@@ -16,19 +16,19 @@ export function FinalCta() {
       />
       <div
         ref={ref}
-        className="relative mx-auto grid max-w-6xl items-center gap-6 px-6 py-20 md:grid-cols-[1fr_1fr] md:py-12"
+        className="relative mx-auto grid max-w-6xl items-center gap-6 px-5 py-20 sm:px-6 md:grid-cols-[1fr_1fr] md:py-12"
       >
         <div className="reveal text-center md:text-left">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
             Give your apps one front door.
           </h2>
-          <p className="mx-auto mt-5 max-w-md text-zinc-400 md:mx-0">
+          <p className="mx-auto mt-5 max-w-md text-base text-zinc-300 sm:text-lg md:mx-0">
             Create an account, register your first app, and run your first sign-in today.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3 md:justify-start">
             <Link
               to="/register"
-              className="group inline-flex h-11 items-center gap-2 rounded-lg bg-white px-5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+              className="group inline-flex h-12 items-center gap-2 rounded-lg bg-white px-6 text-[15px] font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
             >
               Get started
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
@@ -37,7 +37,7 @@ export function FinalCta() {
               href={SITE.githubUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-11 items-center gap-2 rounded-lg border border-zinc-800 px-5 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:text-zinc-50"
+              className="inline-flex h-12 items-center gap-2 rounded-lg border border-zinc-800 px-6 text-[15px] font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:text-zinc-50"
             >
               <BrandMark name="github" className="size-4" />
               Read the code

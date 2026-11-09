@@ -31,10 +31,10 @@ export function LandingNav() {
           : "border-transparent bg-transparent"
       }`}
     >
-      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-6">
         <div className="flex items-center gap-8">
           <Logo />
-          <ul className="hidden items-center gap-6 text-sm text-zinc-400 md:flex">
+          <ul className="hidden items-center gap-7 text-[15px] text-zinc-300 md:flex">
             {LINKS.map((link) => (
               <li key={link.href}>
                 <a
@@ -61,7 +61,7 @@ export function LandingNav() {
           {!loading && user ? (
             <Link
               to="/dashboard"
-              className="rounded-md bg-white px-3.5 py-1.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+              className="rounded-md bg-white px-4 py-2 text-[15px] font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
             >
               Dashboard
             </Link>
@@ -69,13 +69,13 @@ export function LandingNav() {
             <>
               <Link
                 to="/login"
-                className="rounded-md px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:text-zinc-50"
+                className="rounded-md px-3 py-2 text-[15px] text-zinc-300 transition-colors hover:text-zinc-50"
               >
                 Sign in
               </Link>
               <Link
                 to="/register"
-                className="rounded-md bg-white px-3.5 py-1.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+                className="rounded-md bg-white px-4 py-2 text-[15px] font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
               >
                 Get started
               </Link>

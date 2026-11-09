@@ -22,7 +22,7 @@ export function Logo({ to = "/" }: { to?: string }) {
   return (
     <Link to={to} className="flex items-center gap-2.5">
       <img src="/logo-mark.png" alt="" className="size-7" />
-      <span className="font-brand text-sm tracking-[0.28em] text-zinc-50">
+      <span className="font-brand text-sm font-extrabold tracking-[0.1em] text-zinc-50">
         {SITE.name.toUpperCase()}
       </span>
     </Link>

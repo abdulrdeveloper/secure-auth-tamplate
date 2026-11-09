@@ -1,3 +1,4 @@
+import { Rolling } from "./rolling-number";
 import { Section } from "./section";
 import { useReveal } from "./use-reveal";
 
@@ -34,7 +35,9 @@ export function Security() {
             className="grid gap-0.5 border-b border-zinc-800/80 py-3 sm:grid-cols-[0.9fr_1.1fr] sm:gap-4"
           >
             <dt className="text-sm text-zinc-400">{label}</dt>
-            <dd className="font-mono text-[13px] text-zinc-100">{value}</dd>
+            <dd className="font-mono text-[13px] text-zinc-100">
+              <Rolling text={value} />
+            </dd>
           </div>
         ))}
       </dl>

@@ -165,6 +165,22 @@
   animation: demo-progress linear both;
 }
 
+/* Walkthrough panel: swaps with a short settle, never loops. */
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.panel-enter {
+  animation: panel-enter 350ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -174,7 +190,8 @@ html {
     scroll-behavior: auto;
   }
 
-  .demo-enter {
+  .demo-enter,
+  .panel-enter {
     animation: none;
   }
 }

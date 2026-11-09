@@ -1,72 +1,218 @@
-import { useReveal } from "./use-reveal";
+import { Check, Lock } from "lucide-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Section } from "./section";
+
+// Scroll-linked walkthrough without scroll hijacking. Steps scroll normally and
+// the sticky panel shows the one nearest the middle of the viewport. Each step is
+// also a button, so keyboard users pick a step directly. Under 1024px every step
+// carries its own panel instead. Requests and responses match the backend.
+
+function Panel({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-zinc-800 bg-[#0b0b0d]">
+      <p className="border-b border-zinc-800 px-4 py-2.5 font-mono text-[13px] text-zinc-400">{label}</p>
+      <div className="p-4 text-[13px] leading-[1.75] text-zinc-300 sm:p-5 sm:text-sm">{children}</div>
+    </div>
+  );
+}
+
+const Dim = ({ children }: { children: ReactNode }) => <span className="text-zinc-400">{children}</span>;
+const Key = ({ children }: { children: ReactNode }) => <span className="text-brass">{children}</span>;
+const Row = ({ children }: { children: ReactNode }) => (
+  <div className="font-mono [overflow-wrap:anywhere]">{children}</div>
+);
+
+function RedirectPanel() {
+  return (
+    <Panel label="Browser → Clavis">
+      <Row><span className="text-zinc-50">GET</span> /oauth/authorize</Row>
+      <Row><Dim>  ?</Dim>response_type=<Key>code</Key></Row>
+      <Row><Dim>  &amp;</Dim>client_id=<Key>notes_app</Key></Row>
+      <Row><Dim>  &amp;</Dim>redirect_uri=<Key>https://notes.example.com/callback</Key></Row>
+      <Row><Dim>  &amp;</Dim>scope=<Key>openid profile email</Key></Row>
+      <Row><Dim>  &amp;</Dim>code_challenge=<Key>E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM</Key></Row>
+      <Row><Dim>  &amp;</Dim>code_challenge_method=<Key>S256</Key></Row>
+    </Panel>
+  );
+}
+
+function SignInPanel() {
+  return (
+    <div className="grid gap-4">
+      <div className="rounded-xl border border-zinc-800 bg-[#0b0b0d] p-5">
+        <p className="flex items-center gap-2 text-sm font-semibold text-zinc-50">
+          <Lock size={15} className="text-brass" aria-hidden="true" />
+          Allow access?
+        </p>
+        <p className="mt-1 text-sm text-zinc-400">Notes · notes_app</p>
+        <ul className="mt-4 space-y-2">
+          {["Verify your identity", "View your name", "View your email address"].map((scope) => (
+            <li key={scope} className="flex items-center gap-2 text-sm text-zinc-300">
+              <Check size={15} className="text-zinc-100" aria-hidden="true" />
+              {scope}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="text-sm leading-relaxed text-zinc-400">
+        Visitors without a session are sent to sign in first. Apps you mark as trusted skip this
+        screen.
+      </p>
+    </div>
+  );
+}
+
+function CodePanel() {
+  return (
+    <Panel label="Clavis → Browser">
+      <Row><span className="text-zinc-50">302</span> Location:</Row>
+      <Row>
+        <Key>https://notes.example.com/callback</Key>
+      </Row>
+      <Row><Dim>  ?</Dim>code=<Key>8f3c1a7e9b2d4f60a5c8e1b7d3f9a246</Key></Row>
+      <Row><Dim>  &amp;</Dim>state=<Key>xyz</Key></Row>
+      <p className="mt-4 border-t border-zinc-800 pt-4 font-sans text-zinc-400">
+        The code is deleted the moment it is used, and expires after 120 seconds.
+      </p>
+    </Panel>
+  );
+}
+
+function TokenPanel() {
+  return (
+    <div className="grid gap-4">
+      <Panel label="POST /oauth/token">
+        <Row><Dim>Authorization:</Dim> Basic <Key>base64(client_id:secret)</Key></Row>
+        <Row>grant_type=<Key>authorization_code</Key></Row>
+        <Row>code=<Key>8f3c1a7e…</Key></Row>
+        <Row>code_verifier=<Key>dBjftJeZ4CVP…</Key></Row>
+      </Panel>
+      <Panel label="200 OK">
+        <Row>{"{"}</Row>
+        <Row>{"  "}"access_token": <Key>"eyJhbGciOiJSUzI1NiIs…"</Key>,</Row>
+        <Row>{"  "}"id_token": <Key>"eyJhbGciOiJSUzI1NiIs…"</Key>,</Row>
+        <Row>{"  "}"token_type": <Key>"Bearer"</Key>,</Row>
+        <Row>{"  "}"expires_in": <Key>3600</Key></Row>
+        <Row>{"}"}</Row>
+      </Panel>
+    </div>
+  );
+}
 
 const STEPS = [
   {
     from: "Your app",
     title: "Sends the user to Clavis",
-    detail: "A redirect with the app's client ID, its redirect URI and a PKCE challenge.",
-    endpoint: "GET /oauth/authorize",
+    detail:
+      "A redirect carrying the app's client ID, its redirect URI and a PKCE challenge. Nothing secret travels in the URL.",
+    panel: <RedirectPanel />,
   },
   {
     from: "Clavis",
     title: "Signs the user in",
-    detail: "Email and password, then a consent screen that names the app and the data it asks for.",
-    endpoint: "/login → /consent",
+    detail:
+      "Email and password, then a consent screen that names the app and lists exactly what it is asking for.",
+    panel: <SignInPanel />,
   },
   {
     from: "Clavis",
     title: "Sends back a one-time code",
-    detail: "The code works once and expires after 2 minutes.",
-    endpoint: "302 → redirect_uri?code=…",
+    detail: "The browser returns to your app with a short-lived code, never with the tokens themselves.",
+    panel: <CodePanel />,
   },
   {
     from: "Your app",
     title: "Swaps the code for tokens",
-    detail: "Then checks the ID token's signature against Clavis's public keys.",
-    endpoint: "POST /oauth/token",
+    detail:
+      "Your server posts the code with its client secret and PKCE verifier, then checks the ID token against the public keys.",
+    panel: <TokenPanel />,
   },
 ];
 
 export function HowItWorks() {
-  const ref = useReveal<HTMLOListElement>();
+  const [active, setActive] = useState(0);
+  const refs = useRef<(HTMLLIElement | null)[]>([]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActive(Number((entry.target as HTMLElement).dataset.step));
+        }
+      },
+      { rootMargin: "-40% 0px -50% 0px" },
+    );
+    refs.current.forEach((element) => element && observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section id="how-it-works" className="scroll-mt-16 border-t border-zinc-800/80 py-24">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="max-w-xl">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Sign in once. Every app trusts it.
-          </h2>
-          <p className="mt-4 text-zinc-400">
-            Clavis follows the standard OpenID Connect authorization code flow, so any OIDC
-            library can talk to it.
-          </p>
-        </div>
-
-        <ol ref={ref} className="reveal-group relative mt-14 grid gap-10 md:grid-cols-4 md:gap-6">
-          <span
-            aria-hidden="true"
-            className="reveal-line absolute left-0 top-[7px] hidden h-px w-full bg-gradient-to-r from-brass/60 via-zinc-700 to-zinc-800 md:block"
-          />
-          {STEPS.map((step, index) => (
-            <li
-              key={step.title}
-              className="reveal relative md:pt-8"
-              style={{ transitionDelay: `${index * 120}ms` }}
-            >
-              <span className="absolute left-0 top-0 hidden size-[15px] rounded-full border border-brass bg-[#050506] md:block" />
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">
-                {String(index + 1).padStart(2, "0")} · {step.from}
-              </p>
-              <h3 className="mt-3 text-lg font-semibold text-zinc-50">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-400">{step.detail}</p>
-              <code className="mt-4 inline-block rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 font-mono text-[11px] text-zinc-300">
-                {step.endpoint}
-              </code>
-            </li>
-          ))}
+    <Section
+      id="how-it-works"
+      kicker="How it works"
+      title="Sign in once. Every app trusts it."
+      lead="Clavis follows the standard OpenID Connect authorization code flow, so any OIDC library can talk to it."
+      band
+    >
+      <div className="grid gap-14 lg:grid-cols-2 lg:gap-16">
+        <ol className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
+          {STEPS.map((step, index) => {
+            const on = index === active;
+            return (
+              <li
+                key={step.title}
+                ref={(element) => {
+                  refs.current[index] = element;
+                }}
+                data-step={index}
+                className={`min-w-0 border-l-2 py-5 pl-6 transition-colors duration-200 lg:min-h-[220px] ${
+                  on ? "border-brass" : "border-zinc-800 max-lg:border-brass/60"
+                }`}
+              >
+                <button
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setActive(index)}
+                  className="flex min-w-0 cursor-pointer items-baseline gap-4 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brass"
+                >
+                  <span className={`font-mono text-sm ${on ? "text-brass" : "text-zinc-400"}`}>
+                    0{index + 1}
+                  </span>
+                  <span
+                    className={`text-xl font-semibold leading-snug transition-colors duration-200 ${
+                      on ? "text-zinc-50" : "text-zinc-400 max-lg:text-zinc-50"
+                    }`}
+                  >
+                    {step.title}
+                  </span>
+                </button>
+                <p className="mt-2 pl-0 text-base leading-relaxed text-zinc-400 sm:pl-9">
+                  <span className="mb-1 block font-mono text-[13px] uppercase tracking-[0.14em] text-zinc-400">
+                    {step.from}
+                  </span>
+                  {step.detail}
+                </p>
+                <div className="mt-5 min-w-0 pl-0 sm:pl-9 lg:hidden">{step.panel}</div>
+              </li>
+            );
+          })}
         </ol>
+
+        <div className="relative hidden lg:block">
+          <div
+            role="region"
+            aria-label={`Step ${active + 1} of ${STEPS.length}: ${STEPS[active].title}`}
+            className="sticky top-28"
+          >
+            <p className="mb-3 font-mono text-[13px] text-zinc-400">
+              Step {active + 1} of {STEPS.length}
+            </p>
+            <div key={active} className="panel-enter">
+              {STEPS[active].panel}
+            </div>
+          </div>
+        </div>
       </div>
-    </section>
+    </Section>
   );
 }

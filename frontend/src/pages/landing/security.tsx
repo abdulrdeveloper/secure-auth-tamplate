@@ -2,21 +2,45 @@ import { Rolling } from "./rolling-number";
 import { Section } from "./section";
 import { useReveal } from "./use-reveal";
 
-// Every value is read from the backend config (oidc.config.ts, auth.config.ts,
-// the route rate limits). Change them together.
-const FACTS = [
-  ["ID and access tokens", "RS256, valid for 1 hour"],
-  ["Authorization code", "Single use, expires in 120 s"],
-  ["PKCE", "S256 only, plain is refused"],
-  ["Redirect URI", "Exact match with a registered URI"],
-  ["Client secrets", "bcrypt hash, shown once"],
-  ["Passwords", "bcrypt hash, email verified before sign-in"],
-  ["Unknown email at sign-in", "Same error and timing as a wrong password"],
-  ["Rate limits, per IP", "Sign-in 10 per 15 min, token endpoint 30 per min"],
+// Four groups, every value read from the backend config (oidc.config.ts,
+// auth.config.ts, the route rate limits). Change them together.
+const GROUPS = [
+  {
+    name: "Tokens",
+    facts: [
+      ["Signing", "RS256"],
+      ["Token validity", "1 hour"],
+      ["App needs to verify", "Public key only"],
+    ],
+  },
+  {
+    name: "Authorization",
+    facts: [
+      ["Auth code", "Single use, 120 s"],
+      ["PKCE", "S256 only"],
+      ["Client secret", "bcrypt, shown once"],
+    ],
+  },
+  {
+    name: "Accounts",
+    facts: [
+      ["Passwords", "bcrypt hash"],
+      ["Email", "Verified before sign-in"],
+      ["Unknown email", "Same timing as wrong password"],
+    ],
+  },
+  {
+    name: "Rate limits, per IP",
+    facts: [
+      ["Sign-in", "10 per 15 min"],
+      ["Token endpoint", "30 per min"],
+      ["Request body", "10 kB max"],
+    ],
+  },
 ];
 
 export function Security() {
-  const ref = useReveal<HTMLDListElement>();
+  const ref = useReveal<HTMLDivElement>();
 
   return (
     <Section
@@ -25,22 +49,27 @@ export function Security() {
       title="The defaults, with the real numbers."
       lead="Read straight from the code, not a promise."
     >
-      <dl
-        ref={ref}
-        className="reveal grid gap-x-12 border-t border-zinc-800/80 sm:grid-cols-2"
-      >
-        {FACTS.map(([label, value]) => (
-          <div
-            key={label}
-            className="grid gap-0.5 border-b border-zinc-800/80 py-3 sm:grid-cols-[0.9fr_1.1fr] sm:gap-4"
-          >
-            <dt className="text-sm text-zinc-400">{label}</dt>
-            <dd className="font-mono text-[13px] text-zinc-100">
-              <Rolling text={value} />
-            </dd>
-          </div>
-        ))}
-      </dl>
+      <div ref={ref} className="reveal overflow-hidden rounded-2xl border border-zinc-800">
+        <div className="grid gap-px bg-zinc-800/80 sm:grid-cols-2">
+          {GROUPS.map((group) => (
+            <div key={group.name} className="bg-[#0a0a0c] p-6 sm:p-7">
+              <h3 className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-brass">
+                {group.name}
+              </h3>
+              <dl className="mt-4 space-y-3">
+                {group.facts.map(([label, value]) => (
+                  <div key={label} className="flex items-baseline justify-between gap-4">
+                    <dt className="shrink-0 text-sm text-zinc-400">{label}</dt>
+                    <dd className="text-right font-mono text-[13px] text-zinc-100">
+                      <Rolling text={value} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+      </div>
     </Section>
   );
 }

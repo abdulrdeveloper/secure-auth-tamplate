@@ -37,17 +37,19 @@ export function HowItWorks() {
       lead="Any OpenID Connect library can run it."
       band
     >
-      <ol ref={ref} className="reveal-group grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+      <ol ref={ref} className="reveal-group grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((step, index) => (
           <li
             key={step.title}
-            className="reveal border-t border-zinc-800 pt-4"
+            className="reveal group flex flex-col rounded-xl border border-zinc-800 bg-[#0b0b0d] p-5 transition-colors hover:border-zinc-700"
             style={{ transitionDelay: `${index * 80}ms` }}
           >
             <span className="font-mono text-xs text-brass">0{index + 1}</span>
-            <h3 className="mt-2 text-sm font-semibold text-zinc-50">{step.title}</h3>
-            <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{step.detail}</p>
-            <code className="mt-3 inline-block font-mono text-xs text-zinc-300">{step.endpoint}</code>
+            <h3 className="mt-3 text-sm font-semibold text-zinc-50">{step.title}</h3>
+            <p className="mt-1.5 flex-1 text-sm leading-relaxed text-zinc-400">{step.detail}</p>
+            <code className="mt-4 block font-mono text-xs text-zinc-300 [overflow-wrap:anywhere]">
+              {step.endpoint}
+            </code>
           </li>
         ))}
       </ol>

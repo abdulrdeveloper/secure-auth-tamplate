@@ -1,9 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Michroma&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Michroma&display=swap");
 @import "tailwindcss";
 
 @theme {
   --font-sans: "DM Sans", sans-serif;
   --font-brand: "Michroma", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "Menlo", monospace;
   --color-brass: #c9a15a;
 }
 

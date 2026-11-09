@@ -1,10 +1,12 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { KeyVisual } from "./key-visual";
+import { useMagnetic } from "./use-magnetic";
 import { useReveal } from "./use-reveal";
 
 export function FinalCta() {
   const ref = useReveal<HTMLDivElement>();
+  const cta = useMagnetic<HTMLAnchorElement>();
 
   return (
     <section className="relative overflow-hidden border-t border-zinc-800/80">
@@ -25,7 +27,8 @@ export function FinalCta() {
           </p>
           <Link
             to="/register"
-            className="group mt-6 inline-flex h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+            ref={cta}
+            className="group mt-6 inline-flex h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-zinc-950 transition-[background-color,transform] duration-300 ease-out hover:bg-zinc-200"
           >
             Get started
             <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />

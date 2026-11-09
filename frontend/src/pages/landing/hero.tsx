@@ -2,10 +2,12 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SITE } from "../../config/site";
 import { ProductDemo } from "./product-demo";
+import { useMagnetic } from "./use-magnetic";
 
 const HEADLINE = ["One", "sign-in", "for", "every", "app", "you", "build."];
 
 export function Hero() {
+  const cta = useMagnetic<HTMLAnchorElement>();
   return (
     <section className="relative overflow-hidden pt-14">
       <div
@@ -39,7 +41,8 @@ export function Hero() {
           >
             <Link
               to="/register"
-              className="group inline-flex h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+              ref={cta}
+              className="group inline-flex h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-zinc-950 transition-[background-color,transform] duration-300 ease-out hover:bg-zinc-200"
             >
               Get started
               <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />

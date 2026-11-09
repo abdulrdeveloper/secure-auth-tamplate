@@ -173,20 +173,24 @@
   }
 }
 
-/* Hero product demo: each screen fades in, the active tab fills over its duration. */
+/* Hero product demo: each screen springs in with a slight overshoot. */
 @keyframes demo-enter {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(8px) scale(0.985);
+    transform: translateY(10px) scale(0.975);
   }
-  to {
+  55% {
     opacity: 1;
-    transform: none;
+    transform: translateY(-3px) scale(1.008);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
 .demo-enter {
-  animation: demo-enter 450ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: demo-enter 540ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes demo-progress {

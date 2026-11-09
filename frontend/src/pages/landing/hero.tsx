@@ -32,8 +32,8 @@ export function Hero() {
             className="fade-rise mt-5 max-w-md text-base leading-relaxed text-zinc-400"
             style={{ animationDelay: "360ms" }}
           >
-            {SITE.name} is an OpenID Connect provider you run yourself. Users sign in once, and each
-            app gets a signed ID token it can verify on its own.
+            Add sign-in to every app you build. Your users get one account, and their data stays
+            on your servers.
           </p>
           <div
             className="fade-rise mt-7 flex flex-wrap items-center gap-2.5"

@@ -1,36 +1,43 @@
+import { ArrowUpRight } from "lucide-react";
+import { SITE } from "../../config/site";
 import { useReveal } from "./use-reveal";
 
-// Each item describes something the backend really does.
-const FEATURES = [
+// Every value below is read from the backend config (oidc.config.ts,
+// auth.config.ts, the route rate limits). Change them together.
+const GROUPS = [
   {
-    title: "Signed with RS256",
-    text: "ID tokens are signed with a private key. Your apps check them with the public key from the JWKS endpoint, so they never need a shared secret.",
-    wide: true,
+    name: "Tokens",
+    rows: [
+      ["ID and access tokens", "RS256, valid for 1 hour"],
+      ["Public keys", "/.well-known/jwks.json"],
+      ["Secret needed to verify a token", "None, the public key is enough"],
+    ],
   },
   {
-    title: "PKCE",
-    text: "The S256 method is supported for public clients.",
+    name: "Authorization",
+    rows: [
+      ["Authorization code", "Single use, expires in 120 s"],
+      ["PKCE", "S256 only, plain is refused"],
+      ["Redirect URI", "Exact match with a registered URI"],
+      ["Client secrets", "bcrypt hash, shown once"],
+    ],
   },
   {
-    title: "Single-use codes",
-    text: "An authorization code is deleted the moment it is used, and it expires after 2 minutes.",
+    name: "Accounts",
+    rows: [
+      ["Passwords", "bcrypt hash"],
+      ["Email verification", "Required before first sign-in"],
+      ["Verification code", "Expires in 5 min, 5 tries, 60 s between resends"],
+      ["Unknown email at sign-in", "Same error and same timing as a wrong password"],
+    ],
   },
   {
-    title: "Exact redirect matching",
-    text: "A request is refused unless its redirect URI matches one registered for the app.",
-  },
-  {
-    title: "Hashed client secrets",
-    text: "Client secrets are stored as bcrypt hashes and shown only once.",
-  },
-  {
-    title: "Email verification",
-    text: "People cannot sign in until they confirm a one-time code sent to their email.",
-    wide: true,
-  },
-  {
-    title: "Rate limits",
-    text: "Sign-in, one-time codes, the token endpoint and client registration are all limited per IP address.",
+    name: "Rate limits, per IP",
+    rows: [
+      ["Sign-in", "10 per 15 min"],
+      ["Token endpoint", "30 per min"],
+      ["Request body", "10 kB max"],
+    ],
   },
 ];
 
@@ -38,29 +45,41 @@ export function Security() {
   const ref = useReveal<HTMLDivElement>();
 
   return (
-    <section className="border-t border-zinc-800/80 py-24">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="max-w-xl">
+    <section id="security" className="scroll-mt-16 border-t border-zinc-800/80 py-24">
+      <div className="mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="lg:sticky lg:top-28 lg:self-start">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             Careful with the parts that are easy to get wrong.
           </h2>
           <p className="mt-4 text-zinc-400">
-            Token signing, code handling and redirects are already done and tested.
+            These are the defaults in the code today, with the real numbers.
           </p>
+          <a
+            href={`${SITE.githubUrl}/blob/main/SECURITY.md`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-zinc-200 transition-colors hover:text-brass"
+          >
+            Read the security policy
+            <ArrowUpRight size={15} />
+          </a>
         </div>
 
-        <div ref={ref} className="mt-14 grid gap-4 md:grid-cols-3">
-          {FEATURES.map((feature, index) => (
-            <article
-              key={feature.title}
-              className={`reveal rounded-2xl border border-zinc-800 bg-[#0b0b0d] p-6 transition-colors hover:border-zinc-700 ${
-                feature.wide ? "md:col-span-2" : ""
-              }`}
-              style={{ transitionDelay: `${index * 70}ms` }}
-            >
-              <h3 className="text-base font-semibold text-zinc-50">{feature.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-400">{feature.text}</p>
-            </article>
+        <div ref={ref} className="reveal-group space-y-8">
+          {GROUPS.map((group, index) => (
+            <div key={group.name} className="reveal" style={{ transitionDelay: `${index * 90}ms` }}>
+              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-brass">
+                {group.name}
+              </h3>
+              <dl className="mt-3 divide-y divide-zinc-800/80 border-y border-zinc-800/80">
+                {group.rows.map(([label, value]) => (
+                  <div key={label} className="grid gap-1 py-3 sm:grid-cols-[1fr_1.2fr] sm:gap-6">
+                    <dt className="text-sm text-zinc-400">{label}</dt>
+                    <dd className="font-mono text-[13px] text-zinc-100">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           ))}
         </div>
       </div>

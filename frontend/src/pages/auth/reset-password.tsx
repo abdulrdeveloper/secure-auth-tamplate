@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { AuthHeader } from "../../components/auth-layout";
 import {
-  ErrorMessage,
   OtpField,
   PasswordField,
   ResendCode,

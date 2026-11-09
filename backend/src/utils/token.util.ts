@@ -12,7 +12,7 @@ import {
 } from "../config/cookie.config.js";
 import redis from "../services/redis.service.js";
 
-export interface RefreshPayload {
+interface RefreshPayload {
   userId: string;
   tokenId: string;
 }

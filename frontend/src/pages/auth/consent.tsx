@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { AuthHeader } from "../../components/auth-layout";
-import { ErrorMessage } from "../../components/auth-fields";
 import { FormError } from "../../components/toast";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 

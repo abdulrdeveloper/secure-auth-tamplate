@@ -1,6 +1,5 @@
 import * as React from "react";
 import { OTPInput, OTPInputContext, REGEXP_ONLY_DIGITS } from "input-otp";
-import { Minus } from "lucide-react";
 
 const InputOTP = React.forwardRef<
   React.ElementRef<typeof OTPInput>,
@@ -56,20 +55,4 @@ const InputOTPSlot = React.forwardRef<
 });
 InputOTPSlot.displayName = "InputOTPSlot";
 
-const InputOTPSeparator = React.forwardRef<
-  React.ElementRef<"div">,
-  React.ComponentPropsWithoutRef<"div">
->(({ ...props }, ref) => (
-  <div ref={ref} role="separator" {...props}>
-    <Minus className="size-4 text-zinc-600" />
-  </div>
-));
-InputOTPSeparator.displayName = "InputOTPSeparator";
-
-export {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-  InputOTPSeparator,
-  REGEXP_ONLY_DIGITS,
-};
+export { InputOTP, InputOTPGroup, InputOTPSlot, REGEXP_ONLY_DIGITS };

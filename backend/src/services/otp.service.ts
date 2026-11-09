@@ -6,9 +6,9 @@ import {
 } from "../config/auth.config.js";
 import redis from "./redis.service.js";
 
-export type OtpType = "verify" | "reset";
+type OtpType = "verify" | "reset";
 
-export type VerificationResult =
+type VerificationResult =
   | { success: true }
   | { success: false; reason: "expired" | "invalid" | "too_many_attempts" };
 

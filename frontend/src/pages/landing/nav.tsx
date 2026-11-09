@@ -3,6 +3,14 @@ import { Link } from "react-router-dom";
 import { Logo } from "../../components/auth-layout";
 import { SITE } from "../../config/site";
 import { useAuth } from "../../context/auth-context";
+import { BrandMark } from "./brand-mark";
+
+const LINKS = [
+  { label: "How it works", href: "#how-it-works", external: false },
+  { label: "Security", href: "#security", external: false },
+  { label: "Integrate", href: "#integrate", external: false },
+  { label: "Docs", href: `${SITE.githubUrl}#readme`, external: true },
+];
 
 export function LandingNav() {
   const { user, loading } = useAuth();
@@ -24,15 +32,31 @@ export function LandingNav() {
       }`}
     >
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Logo />
+        <div className="flex items-center gap-8">
+          <Logo />
+          <ul className="hidden items-center gap-6 text-sm text-zinc-400 md:flex">
+            {LINKS.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  {...(link.external && { target: "_blank", rel: "noreferrer" })}
+                  className="transition-colors hover:text-zinc-50"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
         <div className="flex items-center gap-1 sm:gap-2">
           <a
             href={SITE.githubUrl}
             target="_blank"
             rel="noreferrer"
-            className="hidden rounded-md px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:text-zinc-50 sm:block"
+            aria-label="Clavis on GitHub"
+            className="hidden rounded-md p-2 text-zinc-400 transition-colors hover:text-zinc-50 sm:block"
           >
-            GitHub
+            <BrandMark name="github" className="size-[18px]" />
           </a>
           {!loading && user ? (
             <Link

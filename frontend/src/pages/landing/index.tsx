@@ -5,6 +5,7 @@ import { HowItWorks } from "./how-it-works";
 import { Integrate } from "./integrate";
 import { LandingNav } from "./nav";
 import { Security } from "./security";
+import { WorksWith } from "./works-with";
 
 export function LandingPage() {
   return (
@@ -12,6 +13,7 @@ export function LandingPage() {
       <LandingNav />
       <main>
         <Hero />
+        <WorksWith />
         <HowItWorks />
         <Security />
         <Integrate />

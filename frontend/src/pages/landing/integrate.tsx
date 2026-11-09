@@ -135,9 +135,10 @@ export function Integrate() {
       title="Add it to your app in a few lines."
       lead="Register an app in Clavis for a client ID and secret, then point any OIDC library at your issuer URL. It finds every endpoint from the discovery document."
       band
+      center
     >
-      <div className="max-w-3xl">
-        <div role="tablist" aria-label="Integration examples" className="mb-3 flex flex-wrap gap-2">
+      <div className="mx-auto max-w-3xl">
+        <div role="tablist" aria-label="Integration examples" className="mb-3 flex flex-wrap justify-center gap-2">
           {TABS.map((item) => (
             <button
               key={item.id}

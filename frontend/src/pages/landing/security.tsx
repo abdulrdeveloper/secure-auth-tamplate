@@ -1,4 +1,3 @@
-import { Rolling } from "./rolling-number";
 import { Section } from "./section";
 import { useReveal } from "./use-reveal";
 
@@ -53,16 +52,14 @@ export function Security() {
         <div className="grid gap-px bg-zinc-800/80 sm:grid-cols-2">
           {GROUPS.map((group) => (
             <div key={group.name} className="bg-[#0a0a0c] p-6 sm:p-7">
-              <h3 className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-brass">
+              <h3 className="text-sm font-medium text-zinc-200">
                 {group.name}
               </h3>
               <dl className="mt-4 space-y-3">
                 {group.facts.map(([label, value]) => (
                   <div key={label} className="flex items-baseline justify-between gap-4">
                     <dt className="shrink-0 text-sm text-zinc-400">{label}</dt>
-                    <dd className="text-right font-mono text-[13px] text-zinc-100">
-                      <Rolling text={value} />
-                    </dd>
+                    <dd className="text-right text-sm text-zinc-100">{value}</dd>
                   </div>
                 ))}
               </dl>

@@ -9,6 +9,11 @@ const LINKS = [
   { label: "Integrate", href: "#integrate" },
 ];
 
+// Progressive blur: two stacked backdrop layers, each masked to fade out as it
+// goes down, so content dissolves under the bar instead of hitting a hard edge.
+const SOFT = "linear-gradient(to bottom, #000 0%, #000 30%, transparent 70%)";
+const STRONG = "linear-gradient(to bottom, #000 0%, transparent 45%)";
+
 export function LandingNav() {
   const { user, loading } = useAuth();
   const [scrolled, setScrolled] = useState(false);
@@ -21,14 +26,25 @@ export function LandingNav() {
   }, []);
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-40 border-b transition-colors duration-300 ${
-        scrolled
-          ? "border-zinc-800/80 bg-[#050506]/85 backdrop-blur-md"
-          : "border-transparent bg-transparent"
-      }`}
-    >
-      <nav className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
+    <header className="fixed inset-x-0 top-0 z-40">
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-x-0 top-0 h-24 transition-opacity duration-300 ${
+          scrolled ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div
+          className="absolute inset-0 backdrop-blur-[2px]"
+          style={{ maskImage: SOFT, WebkitMaskImage: SOFT }}
+        />
+        <div
+          className="absolute inset-0 backdrop-blur-md"
+          style={{ maskImage: STRONG, WebkitMaskImage: STRONG }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050506] via-[#050506]/80 to-transparent" />
+      </div>
+
+      <nav className="relative mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
         <Logo />
         <ul className="hidden items-center gap-6 text-sm text-zinc-400 sm:flex">
           {LINKS.map((link) => (

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { KeyPoster } from "./key-poster";
 
-// Shows the static poster first, then loads the 3D scene in its own chunk and
-// crossfades to it. Small screens, reduced motion and browsers without WebGL
-// keep the poster.
+// Shows the static poster first. When the visitor scrolls near it, loads the
+// 3D scene in its own chunk and crossfades to it. Small screens, reduced
+// motion and browsers without WebGL keep the poster.
 
 function canUse3D(): boolean {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
@@ -15,7 +15,7 @@ function canUse3D(): boolean {
   }
 }
 
-export function HeroVisual() {
+export function KeyVisual({ className = "" }: { className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
@@ -28,21 +28,30 @@ export function HeroVisual() {
     let cancelled = false;
     let dispose: (() => void) | undefined;
 
-    import("./scene/key-scene")
-      .then(({ createKeyScene }) => {
-        if (cancelled) return;
-        dispose = createKeyScene(canvas, container, () => setReady(true)).dispose;
-      })
-      .catch(() => undefined);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        import("./scene/key-scene")
+          .then(({ createKeyScene }) => {
+            if (cancelled) return;
+            dispose = createKeyScene(canvas, container, () => setReady(true)).dispose;
+          })
+          .catch(() => undefined);
+      },
+      { rootMargin: "400px 0px" },
+    );
+    observer.observe(container);
 
     return () => {
       cancelled = true;
+      observer.disconnect();
       dispose?.();
     };
   }, []);
 
   return (
-    <div ref={containerRef} className="relative mx-auto aspect-square w-full max-w-[520px]">
+    <div ref={containerRef} className={`relative aspect-square w-full ${className}`}>
       <KeyPoster
         className={`absolute inset-0 size-full transition-all duration-700 ${
           ready ? "scale-95 opacity-0" : "scale-100 opacity-100"

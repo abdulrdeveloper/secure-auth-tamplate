@@ -5,7 +5,7 @@ const NO_REFRESH_PATHS = ["/auth/login", "/auth/register", "/auth/refresh", "/au
 export const SESSION_EXPIRED_EVENT = "auth:session-expired";
 
 type ApiRequestOptions = {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "DELETE";
   data?: unknown;
 };
 

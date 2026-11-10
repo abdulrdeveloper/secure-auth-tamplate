@@ -2,6 +2,7 @@ import { useState } from "react";
 import { LogOut } from "lucide-react";
 import { Logo } from "../../components/auth-layout";
 import { useAuth } from "../../context/auth-context";
+import { Devices } from "./devices";
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
@@ -65,6 +66,8 @@ export function DashboardPage() {
             </div>
           </dl>
         </div>
+
+        <Devices />
       </section>
     </main>
   );

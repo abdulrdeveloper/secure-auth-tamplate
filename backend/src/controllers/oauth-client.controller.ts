@@ -33,7 +33,7 @@ const registerClientSchema = z.object({
   redirectUris: z
     .array(
       z.string().refine((uri) => isAllowedUrl(uri), {
-        message: "redirectUris must be https URLs without a fragment (http://localhost is allowed in development)",
+        message: "Redirect URLs must start with https:// (http://localhost works while developing) and can't contain #.",
       }),
     )
     .min(1, "At least one redirect URI is required")

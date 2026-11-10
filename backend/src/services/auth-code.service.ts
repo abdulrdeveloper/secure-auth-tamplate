@@ -5,6 +5,7 @@ import { OIDC_CONFIG } from "../config/oidc.config.js";
 interface AuthCodeData {
   userId: string;
   clientId: string;
+  grantId: string;
   redirectUri: string;
   scope: string[];
   nonce?: string | undefined;

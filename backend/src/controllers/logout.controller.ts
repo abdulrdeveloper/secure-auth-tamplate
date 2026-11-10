@@ -1,17 +1,12 @@
 import type { Request, Response } from "express";
-import {
-  clearAuthCookies,
-  isRefreshTokenActive,
-  revokeRefreshToken,
-  verifyRefreshToken,
-} from "../utils/token.util.js";
+import { deleteSession } from "../services/session.service.js";
+import { clearAuthCookies, findActiveSession } from "../utils/token.util.js";
 
 async function logoutUser(req: Request, res: Response) {
-  const token = req.cookies?.refreshToken;
-  const payload = token ? verifyRefreshToken(token) : null;
+  const session = await findActiveSession(req.cookies?.refreshToken);
 
-  if (payload && (await isRefreshTokenActive(payload))) {
-    await revokeRefreshToken(payload.userId);
+  if (session) {
+    await deleteSession(session.userId, session.id);
   }
 
   clearAuthCookies(res);

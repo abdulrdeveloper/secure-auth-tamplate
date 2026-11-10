@@ -1,32 +1,37 @@
 import type { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { getSession } from "../services/session.service.js";
+import { verifyAccessToken } from "../utils/token.util.js";
 
-function readUserId(req: Request): string | undefined {
+// A valid access token is not enough: its session must still exist, so a
+// device that was signed out loses access right away instead of at expiry.
+async function readSession(req: Request): Promise<{ userId: string; sessionId: string } | undefined> {
   const header = req.headers.authorization;
   const token =
     req.cookies?.accessToken ||
     (header?.startsWith("Bearer ") ? header.slice(7).trim() : undefined);
-  if (!token) return undefined;
+  const payload = token ? verifyAccessToken(token) : null;
+  if (!payload) return undefined;
 
-  try {
-    const payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as { userId: string };
-    return payload.userId;
-  } catch {
-    return undefined;
-  }
+  const session = await getSession(payload.sid);
+  if (!session || session.userId !== payload.userId) return undefined;
+  return { userId: payload.userId, sessionId: payload.sid };
 }
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
-  const userId = readUserId(req);
-  if (!userId) {
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+  const session = await readSession(req);
+  if (!session) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  req.userId = userId;
+  req.userId = session.userId;
+  req.sessionId = session.sessionId;
   next();
 };
 
-export const resolveSession = (req: Request, _res: Response, next: NextFunction) => {
-  const userId = readUserId(req);
-  if (userId) req.userId = userId;
+export const resolveSession = async (req: Request, _res: Response, next: NextFunction) => {
+  const session = await readSession(req);
+  if (session) {
+    req.userId = session.userId;
+    req.sessionId = session.sessionId;
+  }
   next();
 };

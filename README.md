@@ -48,11 +48,13 @@ It is focused on a few things done well: email and password accounts, a hosted-s
 - The refresh token rotates on every use, and an old one is rejected.
 - The frontend refreshes the session silently. Five requests failing at once
   still trigger only one refresh.
-- Logout revokes the session in Redis immediately.
+- Each device gets its own session. Signing in on a phone does not sign out
+  the laptop.
+- Logout ends only this device's session, and the device loses access at once.
 
 ### Recover an account
 - Forgot password sends a separate reset code.
-- Resetting the password signs out the existing session.
+- Resetting the password signs out every device.
 
 ### Protected by default
 - Wrong OTP guesses are limited to 5 per code, even when sent in parallel.
@@ -68,6 +70,8 @@ It is focused on a few things done well: email and password accounts, a hosted-s
 - `ProtectedRoute` and `PublicRoute` wrappers, plus a `useAuth()` hook with the
   current user.
 - After login, users return to the page they were trying to open.
+- The dashboard lists every signed-in device (browser, system, IP, last
+  active). One click and a confirmation sign a device out immediately.
 - Every timing and limit lives in one config file.
 - Responsive layout with labelled, keyboard-friendly forms.
 
@@ -194,10 +198,12 @@ All routes are under `/api/auth`.
 | `POST` | `/login` | Sign in with email and password |
 | `POST` | `/refresh` | Rotate the refresh token and issue a new access token |
 | `GET` | `/me` | Return the signed-in user |
-| `POST` | `/logout` | Revoke the session and clear cookies |
+| `POST` | `/logout` | End this device's session and clear cookies |
+| `GET` | `/sessions` | List the signed-in devices, this one first |
+| `DELETE` | `/sessions/:id` | Sign a device out immediately |
 | `POST` | `/forgot-password` | Send a password reset code |
 | `POST` | `/verify-reset-otp` | Check a reset code |
-| `POST` | `/reset-password` | Set a new password and sign out the old session |
+| `POST` | `/reset-password` | Set a new password and sign out every device |
 
 `GET /health` returns `{ "status": "ok" }` for uptime checks.
 
@@ -246,9 +252,8 @@ frontend/
 The full flow, from registration to logout, is tested end to end against real
 MongoDB and Upstash, in the API and in a headless browser.
 
-Two limitations are intentional, to keep the template simple:
+One limitation is intentional, to keep the template simple:
 
-- **One session per user.** Signing in on a new device signs out the previous one.
 - **Unverified email squatting.** If someone registers another person's email
   and never verifies it, the real owner can still register, or recover the
   account with forgot password.

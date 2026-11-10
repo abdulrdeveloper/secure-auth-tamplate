@@ -6,7 +6,7 @@ import {
   clearOtp,
   validateOtpWithRateLimit,
 } from "../services/otp.service.js";
-import { revokeRefreshToken } from "../utils/token.util.js";
+import { deleteAllSessions } from "../services/session.service.js";
 import { BCRYPT_ROUNDS } from "../config/auth.config.js";
 
 const INVALID_RESET_CODE = {
@@ -29,7 +29,8 @@ async function passwordReset(req: Request, res: Response) {
   user.password = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
   await user.save();
   await clearOtp(email, "reset");
-  await revokeRefreshToken(user._id);
+  // A new password signs out every device.
+  await deleteAllSessions(String(user._id));
 
   return res.status(200).json({
     message: "Password reset successful. Please login with your new password.",

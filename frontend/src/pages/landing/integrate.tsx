@@ -1,5 +1,6 @@
-import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { CopyButton } from "../../components/copy-button";
 import type { BrandName } from "./brand-icons";
 import { BrandMark } from "./brand-mark";
 import { Section } from "./section";
@@ -84,32 +85,6 @@ const TABS: { id: string; label: string; brand: BrandName; files: { title: strin
   },
 ];
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={copy}
-      aria-label={copied ? "Copied" : "Copy code"}
-      className="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-50"
-    >
-      {copied ? <Check size={14} /> : <Copy size={14} />}
-      {copied ? "Copied" : "Copy"}
-    </button>
-  );
-}
-
 function CodeBlock({ title, code }: { title: string; code: string }) {
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-800 bg-[#0b0b0d]">
@@ -133,7 +108,15 @@ export function Integrate() {
       id="integrate"
       kicker="Integrate"
       title="Add it to your app in a few lines."
-      lead="Register an app in Clavis for a client ID and secret, then point any OIDC library at your issuer URL. It finds every endpoint from the discovery document."
+      lead={
+        <>
+          <Link to="/developers" className="font-medium text-zinc-200 underline-offset-4 hover:underline">
+            Register an app
+          </Link>{" "}
+          for a client ID and secret, then point any OIDC library at your issuer URL. It finds every endpoint
+          from the discovery document.
+        </>
+      }
       band
       center
     >

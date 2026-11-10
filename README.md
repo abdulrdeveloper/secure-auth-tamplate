@@ -72,6 +72,11 @@ It is focused on a few things done well: email and password accounts, a hosted-s
 - After login, users return to the page they were trying to open.
 - The dashboard lists every signed-in device (browser, system, IP, last
   active). One click and a confirmation sign a device out immediately.
+- Connected apps: users see every app they signed in to with Clavis and can
+  remove one. Its access token stops working at once and it must ask again.
+  Consent is asked once per app, not on every sign-in.
+- A Developers page (`/developers`) to register apps, copy the client ID, see
+  the secret once, and delete apps.
 - Every timing and limit lives in one config file.
 - Responsive layout with labelled, keyboard-friendly forms.
 
@@ -290,14 +295,22 @@ standard OIDC library (for example `openid-client`, Auth.js / NextAuth, or Passp
   pnpm run new-client "My Site" https://mysite.com/auth/callback
   ```
   Add `--untrusted` to show the consent screen instead.
-- Other people's sites: a signed-in user calls `POST /api/oauth/clients` with `name` and `redirectUris`.
-  These clients always show a consent screen.
+- Other people's sites: a signed-in user opens **Developers** (`/developers`) and clicks
+  **New app**, or calls `POST /api/oauth/clients` with `name` and `redirectUris`.
+  Users see a consent screen the first time they sign in to these apps.
 
 The client secret is shown only once, when the client is created.
 
+**Connected apps** (signed-in user, under `/api/oauth`)
+
+| Method | Route | What it does |
+| --- | --- | --- |
+| `GET` | `/grants` | Apps this user has allowed, with scopes and last use |
+| `DELETE` | `/grants/:clientId` | Remove an app. Its access token stops working at once |
+
 **Flow**
 
-1. Send the user to `/oauth/authorize?response_type=code&client_id=...&redirect_uri=...&scope=openid profile email&state=...&nonce=...&code_challenge=...&code_challenge_method=S256`.
+1. Send the user to `/oauth/authorize?response_type=code&client_id=...&redirect_uri=...&scope=openid%20profile%20email&state=...&nonce=...&code_challenge=...&code_challenge_method=S256`.
 2. The user comes back to `redirect_uri?code=...&state=...`.
 3. Your server posts `grant_type=authorization_code`, `code`, `redirect_uri` and `code_verifier`
    to `/oauth/token` as a form, with the client id and secret in a Basic auth header.

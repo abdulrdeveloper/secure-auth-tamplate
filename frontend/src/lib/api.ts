@@ -1,4 +1,6 @@
-const API_BASE_URL = `${(import.meta.env.VITE_API_URL ?? "http://localhost:3000").replace(/\/+$/, "")}/api`;
+export const API_ORIGIN = (import.meta.env.VITE_API_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+
+const API_BASE_URL = `${API_ORIGIN}/api`;
 
 const NO_REFRESH_PATHS = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];
 

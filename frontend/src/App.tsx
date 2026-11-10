@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/auth-context";
 import { ToastProvider } from "./components/toast";
 import { ProtectedRoute, PublicRoute } from "./components/protected-route";
 import { DashboardPage } from "./pages/dashboard";
+import { DevelopersPage } from "./pages/developers";
 import { AuthLayout } from "./components/auth-layout";
 import { ForgotPasswordPage } from "./pages/auth/forgot-password";
 import { LoginPage } from "./pages/auth/login";
@@ -31,6 +32,7 @@ export default function App() {
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/developers" element={<DevelopersPage />} />
             <Route element={<AuthLayout />}>
               <Route path="/consent" element={<ConsentPage />} />
             </Route>

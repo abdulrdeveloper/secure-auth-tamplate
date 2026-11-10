@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
-import { ConfirmDialog } from "../../components/confirm-dialog";
+import { ListState, Panel, formatDate, rowButton, timeAgo } from "../../components/account-layout";
+import { ConfirmDialog } from "../../components/modal";
 import { useToast } from "../../components/toast";
 import { apiRequest, getErrorMessage } from "../../lib/api";
 
@@ -16,20 +17,6 @@ type Session = {
 const ICONS = { desktop: Monitor, mobile: Smartphone, tablet: Tablet };
 
 const label = (s: Session) => `${s.device.browser} on ${s.device.os}`;
-
-function timeAgo(iso: string): string {
-  const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
-  const days = Math.floor(hours / 24);
-  return days === 1 ? "yesterday" : `${days} days ago`;
-}
-
-const signedInOn = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
 export function Devices() {
   const { showError, showSuccess } = useToast();
@@ -69,41 +56,17 @@ export function Devices() {
   }
 
   return (
-    <section aria-labelledby="devices-title" className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900">
-      <div className="border-b border-zinc-800 px-6 py-5">
-        <h2 id="devices-title" className="text-base font-semibold text-zinc-50">
-          Your devices
-        </h2>
-        <p className="mt-1 text-sm text-zinc-400">
-          Where you're signed in. Don't recognise a device? Sign it out.
-        </p>
-      </div>
+    <Panel id="devices-title" title="Your devices" description="Where you're signed in. Don't recognise a device? Sign it out.">
+      <ListState
+        loading={sessions === null}
+        failed={loadError}
+        empty={false}
+        emptyText=""
+        onRetry={() => void load()}
+        what="devices"
+      />
 
-      {sessions === null && !loadError && (
-        <ul aria-busy="true" className="divide-y divide-zinc-800">
-          {[0, 1].map((i) => (
-            <li key={i} className="flex items-center gap-4 px-6 py-4">
-              <span className="size-10 animate-pulse rounded-full bg-zinc-800" />
-              <span className="h-4 w-40 animate-pulse rounded bg-zinc-800" />
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {loadError && (
-        <div className="flex items-center justify-between gap-4 px-6 py-5 text-sm text-zinc-400">
-          We couldn't load your devices.
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 font-medium text-zinc-200 transition-colors hover:bg-zinc-800"
-          >
-            Try again
-          </button>
-        </div>
-      )}
-
-      {sessions && (
+      {sessions && !loadError && (
         <ul className="divide-y divide-zinc-800">
           {sessions.map((session) => {
             const Icon = ICONS[session.device.type];
@@ -123,7 +86,7 @@ export function Devices() {
                   </p>
                   <p className="mt-0.5 truncate text-xs text-zinc-500">
                     {session.current ? "Active now" : `Last active ${timeAgo(session.lastUsedAt)}`} ·{" "}
-                    {session.ip} · Signed in {signedInOn(session.createdAt)}
+                    {session.ip} · Signed in {formatDate(session.createdAt)}
                   </p>
                 </div>
                 {!session.current && (
@@ -131,7 +94,7 @@ export function Devices() {
                     type="button"
                     onClick={() => setPending(session)}
                     aria-label={`Sign out ${label(session)}`}
-                    className="shrink-0 cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm font-medium text-zinc-200 transition-colors hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-300"
+                    className={rowButton}
                   >
                     Sign out
                   </button>
@@ -158,6 +121,6 @@ export function Devices() {
           </>
         )}
       </ConfirmDialog>
-    </section>
+    </Panel>
   );
 }

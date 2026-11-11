@@ -1,10 +1,6 @@
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { LogoMark } from "../../components/auth-layout";
-
-// The hero shows what a person actually sees when an app uses Clavis:
-// sign in, allow the app, and land back in the app signed in.
-// All three screens share one card size, so the window never changes shape.
 
 const STEP_MS = 4200;
 
@@ -136,14 +132,12 @@ const SCREENS = [SignInScreen, ConsentScreen, DoneScreen];
 
 export function ProductDemo() {
   const [active, setActive] = useState(0);
-  // Bumped on every tab click so the timer and progress bar restart.
   const [cycle, setCycle] = useState(0);
   const [reducedMotion] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const autoplay = !reducedMotion;
 
-  // Loops Sign in → Allow access → Signed in → Sign in, forever.
   useEffect(() => {
     if (!autoplay) return;
     const timer = window.setTimeout(
@@ -163,15 +157,19 @@ export function ProductDemo() {
   return (
     <div className="hero-enter w-full min-w-0" style={{ animationDelay: "120ms" }}>
       <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b0b0d] shadow-2xl shadow-black/60">
-        <div className="flex items-center gap-3 border-b border-zinc-800/80 px-4 py-2.5">
-          <div className="flex gap-1.5" aria-hidden="true">
-            <span className="size-2.5 rounded-full bg-zinc-800" />
-            <span className="size-2.5 rounded-full bg-zinc-800" />
-            <span className="size-2.5 rounded-full bg-zinc-800" />
+        {/* macOS Window Title Bar with Real Colored Dots and Crisp Light URL Bar */}
+        <div className="flex items-center gap-3 border-b border-zinc-800/80 px-4 py-3">
+          <div className="flex gap-2" aria-hidden="true">
+            <span className="size-3 rounded-full bg-[#ff5f56] shadow-sm" />
+            <span className="size-3 rounded-full bg-[#ffbd2e] shadow-sm" />
+            <span className="size-3 rounded-full bg-[#27c93f] shadow-sm" />
           </div>
-          <div className="flex h-7 min-w-0 flex-1 items-center justify-center rounded-md bg-zinc-900/80 px-3 text-xs text-zinc-500">
-            <span className="truncate">{STEPS[active].url}</span>
+
+          <div className="flex h-7.5 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md border border-zinc-800/90 bg-[#131317] px-3 font-mono text-[11px] text-zinc-300 shadow-inner">
+            <Lock size={11} className="shrink-0 text-zinc-400" />
+            <span className="truncate text-zinc-200">{STEPS[active].url}</span>
           </div>
+
           <div className="w-[42px]" aria-hidden="true" />
         </div>
 

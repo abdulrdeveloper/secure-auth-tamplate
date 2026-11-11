@@ -1,8 +1,4 @@
 import { useEffect, useRef } from "react";
-
-// Pulls an element a little toward the pointer while it hovers, then springs
-// back on leave. Smoothing comes from a CSS transform transition on the element.
-// Skipped for touch devices and when reduced motion is requested.
 export function useMagnetic<T extends HTMLElement>(strength = 0.3) {
   const ref = useRef<T>(null);
 

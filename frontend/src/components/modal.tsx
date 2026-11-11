@@ -1,13 +1,9 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
-// A popup built on the native <dialog> element, which traps focus, closes on
-// Escape and returns focus to the button that opened it.
-
 type ModalProps = {
   open: boolean;
   title: string;
   children: ReactNode;
-  // Called on Escape and backdrop click. Leave it out to make the user pick a button.
   onDismiss?: () => void;
   width?: string;
 };
@@ -31,7 +27,6 @@ export function Modal({ open, title, children, onDismiss, width = "26rem" }: Mod
         onDismiss?.();
       }}
       onClick={(event) => {
-        // A click on the backdrop lands on the <dialog> itself.
         if (event.target === event.currentTarget) onDismiss?.();
       }}
       style={{ width: `min(${width}, calc(100vw - 2rem))` }}

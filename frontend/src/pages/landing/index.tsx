@@ -1,4 +1,4 @@
-import { FinalCta } from "./final-cta";
+import { GetStartedCta } from "./get-started-cta";
 import { LandingFooter } from "./footer";
 import { Hero } from "./hero";
 import { HowItWorks } from "./how-it-works";
@@ -17,7 +17,7 @@ export function LandingPage() {
         <HowItWorks />
         <Security />
         <Integrate />
-        <FinalCta />
+        <GetStartedCta />
       </main>
       <LandingFooter />
     </div>

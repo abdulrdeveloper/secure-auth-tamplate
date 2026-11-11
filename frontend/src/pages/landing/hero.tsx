@@ -1,10 +1,18 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Github } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SITE } from "../../config/site";
 import { ProductDemo } from "./product-demo";
 import { useMagnetic } from "./use-magnetic";
 
-const HEADLINE = ["One", "sign-in", "for", "every", "app", "you", "build."];
+const HEADLINE = [
+  { text: "One", highlight: false },
+  { text: "sign-in", highlight: true },
+  { text: "for", highlight: false },
+  { text: "every", highlight: false },
+  { text: "app", highlight: false },
+  { text: "you", highlight: false },
+  { text: "build.", highlight: false },
+];
 
 export function Hero() {
   const cta = useMagnetic<HTMLAnchorElement>();
@@ -17,13 +25,13 @@ export function Hero() {
       <div className="relative mx-auto grid max-w-5xl grid-cols-1 items-center gap-12 px-5 pb-16 pt-14 lg:grid-cols-[1fr_1.05fr] lg:py-20">
         <div>
           <h1 className="max-w-md text-balance text-4xl font-semibold leading-[1.08] tracking-tight text-zinc-50 sm:text-5xl">
-            {HEADLINE.map((word, index) => (
+            {HEADLINE.map((item, index) => (
               <span
-                key={`${word}-${index}`}
-                className="word-rise inline-block"
+                key={`${item.text}-${index}`}
+                className={`word-rise inline-block ${item.highlight ? "text-[#c9a15a]" : ""}`}
                 style={{ animationDelay: `${index * 55}ms` }}
               >
-                {word}
+                {item.text}
                 {index < HEADLINE.length - 1 ? "\u00A0" : ""}
               </span>
             ))}
@@ -51,8 +59,9 @@ export function Hero() {
               href={SITE.githubUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-10 items-center rounded-lg border border-zinc-800 px-4 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:text-zinc-50"
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-800 px-4 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:text-zinc-50"
             >
+              <Github size={16} aria-hidden="true" />
               View source
             </a>
           </div>

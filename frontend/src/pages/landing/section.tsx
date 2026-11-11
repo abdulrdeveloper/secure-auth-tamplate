@@ -1,8 +1,5 @@
 import type { ReactNode } from "react";
 
-// One section shape for the whole page: kicker, heading, optional lead, content.
-// Compact on purpose (same scale as Klar): spacing and sizes live here only.
-
 type SectionProps = {
   id?: string;
   kicker: string;

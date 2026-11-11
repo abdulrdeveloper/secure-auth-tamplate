@@ -9,8 +9,6 @@ const LINKS = [
   { label: "Integrate", href: "#integrate" },
 ];
 
-// Progressive blur: two stacked backdrop layers, each masked to fade out as it
-// goes down, so content dissolves under the bar instead of hitting a hard edge.
 const SOFT = "linear-gradient(to bottom, #000 0%, #000 30%, transparent 70%)";
 const STRONG = "linear-gradient(to bottom, #000 0%, transparent 45%)";
 

@@ -2,8 +2,6 @@ import type { CSSProperties } from "react";
 import type { BrandName } from "./brand-icons";
 import { BrandMark } from "./brand-mark";
 
-// Clavis speaks standard OpenID Connect, so these frameworks' OIDC clients work
-// with it unchanged. A compatibility line, not a customer list.
 const STACKS: { brand: BrandName; name: string; color: string }[] = [
   { brand: "nextjs", name: "Next.js", color: "#ffffff" },
   { brand: "node", name: "Node.js", color: "#5FA04E" },
@@ -17,24 +15,29 @@ const STACKS: { brand: BrandName; name: string; color: string }[] = [
 
 export function WorksWith() {
   return (
-    <section aria-label="Compatible frameworks" className="border-t border-zinc-800/80 py-8">
-      <div className="mx-auto flex max-w-5xl flex-col items-center gap-5 px-5 sm:flex-row sm:justify-between">
-        <p className="shrink-0 text-sm text-zinc-400">Works with any OIDC client</p>
-        <ul className="flex flex-wrap justify-center gap-x-6 gap-y-3">
-          {STACKS.map((stack) => (
-            <li
-              key={stack.brand}
-              style={{ "--brand": stack.color } as CSSProperties}
-              className="group flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-zinc-100"
-            >
-              <BrandMark
-                name={stack.brand}
-                className="size-4 transition-colors group-hover:text-[var(--brand)]"
-              />
-              {stack.name}
-            </li>
-          ))}
-        </ul>
+    <section aria-label="Compatible frameworks" className="border-t border-zinc-800/80 py-10">
+      <div className="mx-auto max-w-5xl px-5 text-center">
+        <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+          Works with any OIDC client
+        </p>
+
+        <div className="relative mt-6 w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+          <ul className="animate-marquee flex items-center gap-10">
+            {[...STACKS, ...STACKS].map((stack, index) => (
+              <li
+                key={`${stack.brand}-${index}`}
+                style={{ "--brand": stack.color } as CSSProperties}
+                className="group flex shrink-0 items-center gap-2.5 text-sm text-zinc-400 transition-colors hover:text-zinc-100"
+              >
+                <BrandMark
+                  name={stack.brand}
+                  className="size-4.5 transition-colors group-hover:text-[var(--brand)]"
+                />
+                <span className="font-medium">{stack.name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );

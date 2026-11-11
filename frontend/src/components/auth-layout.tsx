@@ -3,8 +3,6 @@ import { Link, Outlet } from "react-router-dom";
 import { SITE } from "../config/site";
 import logoMarkUrl from "../assets/logo-mark.png";
 
-// Imported, not referenced from /public: Vite bundles it with a hashed URL,
-// so it loads on every route and deploy, and a missing file fails the build.
 export function LogoMark({ alt = "", className = "" }: { alt?: string; className?: string }) {
   return (
     <img

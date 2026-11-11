@@ -1,51 +1,87 @@
+import {
+  ArrowUpRight,
+  ShieldCheck,
+  KeyRound,
+  Layers,
+} from "lucide-react";
 import { Section } from "./section";
 import { useReveal } from "./use-reveal";
 
-// The hero already shows the screens, so this section names the four steps
-// behind them in plain words. Details match the backend routes.
 const STEPS = [
   {
+    step: "01",
+    tag: "Authorization Request",
     title: "Your app sends the user to Clavis",
-    detail: "A redirect with the client ID, redirect URI and a PKCE challenge.",
+    detail: "A secure redirect with your Client ID, redirect URI, requested scopes, and a cryptographic PKCE challenge.",
+    icon: ArrowUpRight,
   },
   {
-    title: "Clavis signs them in",
-    detail: "Email and password, then a consent screen naming the app. Trusted apps skip it.",
+    step: "02",
+    tag: "Identity & Consent",
+    title: "Clavis authenticates & requests consent",
+    detail: "User signs in with verified credentials. First-party and trusted applications bypass consent automatically.",
+    icon: ShieldCheck,
   },
   {
+    step: "03",
+    tag: "Authorization Code",
     title: "Clavis returns a one-time code",
-    detail: "The browser goes back to your app with a code that expires in 2 minutes.",
+    detail: "The browser returns to your callback URL with a temporary authorization code that expires in 120 seconds.",
+    icon: KeyRound,
   },
   {
-    title: "Your app swaps it for tokens",
-    detail: "Your server posts the code and checks the ID token against the public keys.",
+    step: "04",
+    tag: "Token Minting",
+    title: "Your backend swaps code for tokens",
+    detail: "Your server exchanges the code for signed RS256 ID tokens and Access tokens, verified against live JWKS keys.",
+    icon: Layers,
   },
 ];
 
 export function HowItWorks() {
-  const ref = useReveal<HTMLOListElement>();
+  const ref = useReveal<HTMLDivElement>();
 
   return (
     <Section
       id="how-it-works"
       kicker="How it works"
       title="The standard authorization code flow."
-      lead="Any OpenID Connect library can run it."
+      lead="Battle-tested OpenID Connect architecture, explained in 4 simple steps."
       band
     >
-      <ol ref={ref} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STEPS.map((step, index) => (
-          <li
-            key={step.title}
-            className="reveal rounded-xl border border-zinc-800 bg-[#0b0b0d] p-5 transition-colors hover:border-zinc-700"
-            style={{ transitionDelay: `${index * 80}ms` }}
-          >
-            <span className="text-sm font-medium text-zinc-500">{index + 1}</span>
-            <h3 className="mt-3 text-sm font-semibold text-zinc-50">{step.title}</h3>
-            <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{step.detail}</p>
-          </li>
-        ))}
-      </ol>
+      <div ref={ref} className="grid gap-5 sm:grid-cols-2">
+        {STEPS.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={item.step}
+              className="reveal flex flex-col justify-between rounded-xl border border-zinc-800/80 bg-[#0b0b0e] p-6 transition-colors duration-200 hover:border-zinc-700"
+              style={{ transitionDelay: `${index * 60}ms` }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/60 text-zinc-300">
+                  <Icon size={18} />
+                </div>
+                <span className="font-mono text-xs font-medium text-zinc-500">
+                  {item.step}
+                </span>
+              </div>
+
+              <div className="mt-6">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+                  {item.tag}
+                </p>
+                <h3 className="mt-1 text-sm font-semibold text-zinc-100">
+                  {item.title}
+                </h3>
+                <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">
+                  {item.detail}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </Section>
   );
 }

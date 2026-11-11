@@ -1,6 +1,3 @@
-// Brand marks from Simple Icons (https://simpleicons.org), CC0 1.0.
-// Generated once; paths are drawn on a 24x24 view box.
-
 type BrandIcon = { title: string; hex: string; path: string };
 
 export const BRAND_ICONS = {

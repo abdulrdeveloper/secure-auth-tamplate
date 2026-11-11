@@ -9,7 +9,6 @@ const LINKS = [
   { to: "/developers", label: "Developers" },
 ];
 
-// Shared shell for the signed-in pages: header, section links, sign out.
 export function AccountLayout({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   const { logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -59,7 +58,6 @@ export function AccountLayout({ title, description, children }: { title: string;
   );
 }
 
-// A bordered card with a title row, used by every section on these pages.
 export function Panel({
   id,
   title,
@@ -89,7 +87,6 @@ export function Panel({
   );
 }
 
-// Loading rows, load error with retry, and an empty state, shared by the lists.
 export function ListState({
   loading,
   failed,

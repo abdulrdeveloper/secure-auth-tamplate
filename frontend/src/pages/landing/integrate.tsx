@@ -171,7 +171,6 @@ function highlightSyntax(code: string, filename: string): React.ReactNode {
 function CodeBlock({ title, code }: { title: string; code: string }) {
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-800/90 bg-[#0a0a0d] shadow-2xl transition-colors duration-200 hover:border-zinc-700">
-      {/* MacBook macOS Window Bar with 3 Colored Dots */}
       <div className="flex h-10 items-center justify-between border-b border-zinc-800/80 bg-[#111115] px-4">
         <div className="flex items-center gap-2">
           <span className="size-3 rounded-full bg-[#ff5f56] shadow-sm" />
@@ -182,7 +181,6 @@ function CodeBlock({ title, code }: { title: string; code: string }) {
         <CopyButton text={code} />
       </div>
 
-      {/* VS Code Dark+ Syntax Highlighted Code Area (without line numbers) */}
       <pre className="max-h-[440px] overflow-auto p-5 font-mono text-[13px] leading-[1.75] text-zinc-300">
         <code>{highlightSyntax(code, title)}</code>
       </pre>

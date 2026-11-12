@@ -97,8 +97,6 @@ export const authorize = async (req: Request, res: Response) => {
     return res.redirect(withParams(`${FRONTEND_URL}/login`, { return_to: req.originalUrl }));
   }
 
-  // Trusted apps never ask. Other apps ask once, until the user removes them
-  // from Connected apps or they request a scope the user has not allowed.
   const grant = check.client.isTrusted
     ? await recordGrant(req.userId, p.client_id, check.scopes)
     : await findCoveringGrant(req.userId, p.client_id, check.scopes);

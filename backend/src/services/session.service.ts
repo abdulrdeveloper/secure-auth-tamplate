@@ -2,15 +2,6 @@ import crypto from "node:crypto";
 import { REFRESH_TOKEN_TTL_SECONDS } from "../config/auth.config.js";
 import redis from "./redis.service.js";
 
-// One record per signed-in device. The refresh token carries the session id
-// and a token id that rotates on every refresh, so a copied old refresh token
-// stops working. Deleting the record signs that device out at once, because
-// the auth middleware checks the session on every request.
-//
-// Keys:
-//   session:<id>             JSON Session, expires with the refresh token
-//   user_sessions:<userId>   set of that user's session ids
-
 export interface Session {
   id: string;
   userId: string;
@@ -65,7 +56,6 @@ export async function getSession(id: string): Promise<Session | null> {
   return redis.get<Session>(sessionKey(id));
 }
 
-// Issues a new token id for a session and records where it was used from.
 export async function rotateSession(session: Session, meta: ClientMeta): Promise<Session> {
   const next: Session = {
     ...session,
@@ -88,7 +78,6 @@ export async function deleteAllSessions(userId: string): Promise<void> {
   await tx.exec();
 }
 
-// Most recently used first. Ids whose record has expired are pruned from the set.
 export async function listSessions(userId: string): Promise<Session[]> {
   const ids = await redis.smembers(userSessionsKey(userId));
   if (ids.length === 0) return [];

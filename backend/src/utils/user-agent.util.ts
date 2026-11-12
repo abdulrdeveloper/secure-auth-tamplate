@@ -1,6 +1,3 @@
-// Turns a User-Agent header into the words a person recognises, such as
-// "Chrome" on "Windows". Order matters: Edge and Opera also say "Chrome",
-// and Chrome also says "Safari".
 
 type DeviceType = "desktop" | "mobile" | "tablet";
 

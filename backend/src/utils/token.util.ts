@@ -72,7 +72,6 @@ function verifyRefreshToken(token: string): RefreshPayload | null {
   }
 }
 
-// The session this refresh token belongs to, if the token is still current.
 export async function findActiveSession(refreshToken: string | undefined): Promise<Session | null> {
   const payload = refreshToken ? verifyRefreshToken(refreshToken) : null;
   if (!payload) return null;
@@ -82,7 +81,6 @@ export async function findActiveSession(refreshToken: string | undefined): Promi
     : null;
 }
 
-// Signs the user in on this device: a new session and fresh cookies.
 export async function startSession(req: Request, res: Response, userId: unknown): Promise<void> {
   setCookies(res, await createSession(String(userId), clientMeta(req)));
 }

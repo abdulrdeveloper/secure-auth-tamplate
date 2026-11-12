@@ -1,7 +1,6 @@
 import { isValidObjectId } from "mongoose";
 import { OAuthGrant, type IOAuthGrant } from "../models/oauth-grant.model.js";
 
-// Saves (or widens) the user's grant for an app and returns it.
 export async function recordGrant(userId: string, clientId: string, scopes: string[]): Promise<IOAuthGrant> {
   const grant = await OAuthGrant.findOneAndUpdate(
     { user: userId, clientId },
@@ -11,7 +10,6 @@ export async function recordGrant(userId: string, clientId: string, scopes: stri
   return grant as IOAuthGrant;
 }
 
-// The grant, if it already allows every requested scope.
 export async function findCoveringGrant(
   userId: string,
   clientId: string,
@@ -21,7 +19,6 @@ export async function findCoveringGrant(
   return grant && scopes.every((scope) => grant.scopes.includes(scope)) ? grant : null;
 }
 
-// True if this exact grant still exists for this user and app.
 export async function isGrantActive(grantId: unknown, userId: unknown, clientId: unknown): Promise<boolean> {
   if (typeof grantId !== "string" || !isValidObjectId(grantId)) return false;
   const found = await OAuthGrant.exists({ _id: grantId, user: String(userId), clientId: String(clientId) });

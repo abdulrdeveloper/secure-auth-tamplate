@@ -29,7 +29,6 @@ export function Security() {
           ref={ref}
           className="reveal grid items-center gap-12 lg:grid-cols-[1fr_auto_1.25fr] lg:gap-12 xl:gap-16"
         >
-          {/* Left Column: Headline and Compliance */}
           <div className="max-w-md">
             <span className="inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
               Built-in protection
@@ -47,7 +46,6 @@ export function Security() {
             </div>
           </div>
 
-          {/* Center Column: Smooth Curvy SVG Line with Equal Spacing on Left & Right */}
           <div
             aria-hidden="true"
             className="hidden h-full items-center justify-center lg:flex"
@@ -74,7 +72,6 @@ export function Security() {
             </svg>
           </div>
 
-          {/* Right Column: Security Features List */}
           <div className="space-y-7">
             {SECURITY_POINTS.map((item) => (
               <div key={item.title} className="group relative">

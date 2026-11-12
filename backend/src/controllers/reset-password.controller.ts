@@ -29,7 +29,6 @@ async function passwordReset(req: Request, res: Response) {
   user.password = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
   await user.save();
   await clearOtp(email, "reset");
-  // A new password signs out every device.
   await deleteAllSessions(String(user._id));
 
   return res.status(200).json({

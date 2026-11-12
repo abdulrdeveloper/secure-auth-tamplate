@@ -81,7 +81,6 @@ export const registerClient = async (req: Request, res: Response) => {
   return res.status(201).json({ ...toClientDto(client), client_secret: clientSecret });
 };
 
-// Public: only the display name and description, so consent can show which app is asking.
 export const getClientInfo = async (req: Request, res: Response) => {
   const clientId = typeof req.query.client_id === "string" ? req.query.client_id : "";
   const client = clientId ? await getClientById(clientId) : null;

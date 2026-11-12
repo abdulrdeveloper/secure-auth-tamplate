@@ -63,7 +63,6 @@ type ConfirmDialogProps = {
   onCancel: () => void;
 };
 
-// Asks before a destructive action. Focus starts on Cancel, the safe choice.
 export function ConfirmDialog({
   open,
   title,

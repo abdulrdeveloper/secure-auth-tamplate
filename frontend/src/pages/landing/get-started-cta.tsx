@@ -7,7 +7,6 @@ export function GetStartedCta() {
 
   return (
     <section aria-label="Get Started" className="relative border-t border-zinc-800/80 bg-[#050506] py-20 sm:py-24">
-      {/* Barely-there subtle ambient glow */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[340px] rounded-full bg-[#c9a15a]/4 blur-[130px]"

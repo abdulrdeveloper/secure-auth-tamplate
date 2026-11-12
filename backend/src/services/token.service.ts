@@ -29,7 +29,6 @@ export function generateIdToken(
   return sign(claims, String(user._id), clientId, OIDC_CONFIG.idTokenTTL);
 }
 
-// gid ties the token to the user's grant, so removing the app ends it early.
 export function generateAccessToken(userId: string, clientId: string, scope: string[], grantId: string) {
   const claims = { token_use: "access_token", scope: scope.join(" "), gid: grantId };
   return sign(claims, userId, clientId, OIDC_CONFIG.accessTokenTTL);

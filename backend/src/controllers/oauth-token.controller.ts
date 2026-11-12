@@ -69,7 +69,6 @@ export const exchangeToken = async (req: Request, res: Response) => {
     }
   }
 
-  // The user may have disconnected the app after the code was issued.
   if (!(await isGrantActive(data.grantId, data.userId, client.clientId))) {
     return oauthError(res, 400, "invalid_grant", "The user removed this app's access");
   }

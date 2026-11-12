@@ -157,7 +157,6 @@ export function ProductDemo() {
   return (
     <div className="hero-enter w-full min-w-0" style={{ animationDelay: "120ms" }}>
       <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b0b0d] shadow-2xl shadow-black/60">
-        {/* macOS Window Title Bar with Real Colored Dots and Crisp Light URL Bar */}
         <div className="flex items-center gap-3 border-b border-zinc-800/80 px-4 py-3">
           <div className="flex gap-2" aria-hidden="true">
             <span className="size-3 rounded-full bg-[#ff5f56] shadow-sm" />

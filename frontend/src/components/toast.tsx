@@ -52,7 +52,6 @@ export function useToast() {
   return context;
 }
 
-// Drop-in replacement for an inline error box: shows the message as a toast.
 export function FormError({ message }: { message: string }) {
   const { showError } = useToast();
   useEffect(() => {
@@ -124,7 +123,6 @@ function Toast({ message, tone, onDismiss }: { message: string; tone: Tone; onDi
     if (dragStartX.current === null) return;
     const raw = event.clientX - dragStartX.current;
     if (Math.abs(raw) > 4) dragMoved.current = true;
-    // The toast moves at most MAX_DRAG px in either direction.
     setOffset(Math.max(-MAX_DRAG, Math.min(MAX_DRAG, raw)));
   }
 

@@ -1,8 +1,5 @@
 import { Schema, model, Types } from "mongoose";
 
-// One row per user and app: the scopes the user allowed that app to use.
-// Removing the row disconnects the app. Its next token exchange and
-// userinfo call fail, and the user sees the consent screen again.
 export interface IOAuthGrant {
   _id: Types.ObjectId;
   user: Types.ObjectId;

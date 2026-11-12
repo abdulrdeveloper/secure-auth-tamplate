@@ -2,8 +2,6 @@ import type { Request, Response, NextFunction } from "express";
 import { getSession } from "../services/session.service.js";
 import { verifyAccessToken } from "../utils/token.util.js";
 
-// A valid access token is not enough: its session must still exist, so a
-// device that was signed out loses access right away instead of at expiry.
 async function readSession(req: Request): Promise<{ userId: string; sessionId: string } | undefined> {
   const header = req.headers.authorization;
   const token =

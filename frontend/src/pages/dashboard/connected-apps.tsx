@@ -13,7 +13,6 @@ type ConnectedApp = {
   last_used_at: string | null;
 };
 
-// What each scope lets the app see, in plain words.
 function access(scopes: string[]): string {
   const parts = [
     scopes.includes("profile") && "your name",

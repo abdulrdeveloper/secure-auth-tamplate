@@ -28,7 +28,6 @@ export function LandingFooter() {
     <footer className="border-t border-zinc-800/80 bg-[#09090b]">
       <div className="mx-auto max-w-5xl px-5 py-12 sm:py-16">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] lg:gap-8">
-          {/* Brand info */}
           <div className="flex flex-col justify-between space-y-4">
             <div>
               <Logo />
@@ -41,7 +40,6 @@ export function LandingFooter() {
             </p>
           </div>
 
-          {/* Column: Pages */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
               Pages
@@ -69,7 +67,6 @@ export function LandingFooter() {
             </ul>
           </div>
 
-          {/* Column: Resources */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
               Resources
@@ -90,7 +87,6 @@ export function LandingFooter() {
             </ul>
           </div>
 
-          {/* Column: Developers */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
               Developers

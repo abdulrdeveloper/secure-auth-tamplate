@@ -129,7 +129,6 @@ export function DevelopersPage() {
 
   useEffect(() => {
     void load();
-    // Show the issuer the server really uses, not a guess.
     fetch(`${API_ORIGIN}/.well-known/openid-configuration`)
       .then((r) => r.json())
       .then((doc: { issuer?: string }) => doc.issuer && setIssuer(doc.issuer))
@@ -230,7 +229,6 @@ export function DevelopersPage() {
         <NewAppForm onCreated={onCreated} onCancel={() => setCreating(false)} />
       </Modal>
 
-      {/* No Escape or backdrop close: the secret is shown only once. */}
       <Modal open={created !== null} title="Save your client secret" width="32rem">
         {created && (
           <>

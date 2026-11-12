@@ -96,7 +96,7 @@ It is focused on a few things done well: email and password accounts, a hosted-s
 
 - **Node.js 24** and **pnpm 11** (`corepack enable` sets up pnpm)
 - A **MongoDB** database ([Atlas free tier](https://www.mongodb.com/cloud/atlas/register)
-  or a local `mongodb://127.0.0.1:27017/secure-auth`)
+  or a local `mongodb://127.0.0.1:27017/clavis`)
 - An **Upstash Redis** database ([free tier](https://upstash.com/)), using the
   REST URL and token
 - A **Resend** API key ([free tier](https://resend.com/)) and a sender address
@@ -105,8 +105,8 @@ It is focused on a few things done well: email and password accounts, a hosted-s
 ### Quick start
 
 ```bash
-git clone https://github.com/abdulrdeveloper/secure-auth-tamplate.git
-cd secure-auth-tamplate
+git clone https://github.com/abdulrdeveloper/clavis.git
+cd clavis
 
 cd backend
 pnpm install
@@ -210,7 +210,7 @@ All routes are under `/api/auth`.
 | `POST` | `/verify-reset-otp` | Check a reset code |
 | `POST` | `/reset-password` | Set a new password and sign out every device |
 
-`GET /health` returns `{ "status": "ok" }` for uptime checks.
+`GET /health` returns `{ "status": "Welcome to Clavis!" }` for uptime checks.
 
 ## Tech stack
 

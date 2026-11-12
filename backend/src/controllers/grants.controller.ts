@@ -2,7 +2,6 @@ import type { Request, Response } from "express";
 import { OAuthClient } from "../models/oauth-client.model.js";
 import { listGrants, revokeGrant } from "../services/grant.service.js";
 
-// GET /api/oauth/grants: the apps this user has allowed to sign them in.
 export async function getGrants(req: Request, res: Response) {
   const grants = await listGrants(req.userId as string);
   const clients = await OAuthClient.find({ clientId: { $in: grants.map((g) => g.clientId) } })
@@ -30,7 +29,6 @@ export async function getGrants(req: Request, res: Response) {
   });
 }
 
-// DELETE /api/oauth/grants/:clientId: removes the app's access at once.
 export async function removeGrant(req: Request, res: Response) {
   const removed = await revokeGrant(req.userId as string, String(req.params.clientId ?? ""));
   return removed

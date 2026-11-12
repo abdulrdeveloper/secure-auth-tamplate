@@ -3,7 +3,6 @@
   "short_name": "Clavis",
   "description": "Self-hosted OpenID Connect provider.",
   "icons": [
-    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
     { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
     { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" }
   ],

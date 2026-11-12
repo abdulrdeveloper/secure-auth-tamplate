@@ -32,7 +32,7 @@ export function Security() {
           {/* Left Column: Headline and Compliance */}
           <div className="max-w-md">
             <span className="inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-              Security Defaults
+              Built-in protection
             </span>
             <h2 className="mt-5 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
               Hardened defaults with{" "}

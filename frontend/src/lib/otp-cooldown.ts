@@ -1,4 +1,4 @@
-export type OtpType = "verify" | "reset";
+type OtpType = "verify" | "reset";
 
 export function getOtpCooldownKey(email: string, type: OtpType): string {
   return `${type}-cooldown:${email.trim().toLowerCase()}`;

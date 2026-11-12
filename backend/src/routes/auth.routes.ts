@@ -9,6 +9,7 @@ import { passwordReset } from "../controllers/reset-password.controller.js";
 import { getMe } from "../controllers/me.controller.js";
 import { logoutUser } from "../controllers/logout.controller.js";
 import { refreshToken } from "../controllers/refresh.controller.js";
+import { getSessions, removeSession } from "../controllers/sessions.controller.js";
 import {
   registerSchema,
   loginSchema,
@@ -40,5 +41,7 @@ authRoutes.post("/reset-password", otpLimit, validate(resetPasswordSchema), pass
 authRoutes.post("/refresh", refreshToken);
 authRoutes.get("/me", authenticate, getMe);
 authRoutes.post("/logout", logoutUser);
+authRoutes.get("/sessions", authenticate, getSessions);
+authRoutes.delete("/sessions/:id", authenticate, rateLimit("session_remove", 30, 60), removeSession);
 
 export default authRoutes;

@@ -6,6 +6,7 @@ import { authenticateClient } from "../services/oauth-client.service.js";
 import { consumeAuthCode } from "../services/auth-code.service.js";
 import { generateAccessToken, generateIdToken, verifyAccessToken } from "../services/token.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
+import { isGrantActive, touchGrant } from "../services/grant.service.js";
 
 const tokenSchema = z.object({
   grant_type: z.literal("authorization_code"),
@@ -68,15 +69,20 @@ export const exchangeToken = async (req: Request, res: Response) => {
     }
   }
 
+  if (!(await isGrantActive(data.grantId, data.userId, client.clientId))) {
+    return oauthError(res, 400, "invalid_grant", "The user removed this app's access");
+  }
+
   const user = await userModel.findById(data.userId);
   if (!user) {
     return oauthError(res, 400, "invalid_grant", "User not found");
   }
+  await touchGrant(data.grantId);
 
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Pragma", "no-cache");
   return res.status(200).json({
-    access_token: generateAccessToken(String(user._id), client.clientId, data.scope),
+    access_token: generateAccessToken(String(user._id), client.clientId, data.scope, data.grantId),
     token_type: "Bearer",
     expires_in: OIDC_CONFIG.accessTokenTTL,
     id_token: generateIdToken(user, client.clientId, data.scope, data.nonce),
@@ -87,7 +93,8 @@ export const exchangeToken = async (req: Request, res: Response) => {
 export const getUserInfo = async (req: Request, res: Response) => {
   const header = req.headers.authorization;
   const payload = header?.startsWith("Bearer ") ? verifyAccessToken(header.slice(7).trim()) : null;
-  const user = payload?.sub ? await userModel.findById(payload.sub) : null;
+  const active = payload ? await isGrantActive(payload.gid, payload.sub, payload.aud) : false;
+  const user = active && payload?.sub ? await userModel.findById(payload.sub) : null;
 
   if (!payload || !user) {
     res.setHeader("WWW-Authenticate", 'Bearer error="invalid_token"');

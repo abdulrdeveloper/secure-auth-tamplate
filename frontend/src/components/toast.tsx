@@ -8,31 +8,38 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, X } from "lucide-react";
 
 const AUTO_DISMISS_MS = 10_000;
 const MAX_DRAG = 20;
 const EXIT_MS = 250;
 
-type ToastContextValue = { showError: (message: string) => void };
+type Tone = "error" | "success";
+
+type ToastContextValue = {
+  showError: (message: string) => void;
+  showSuccess: (message: string) => void;
+};
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [message, setMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; tone: Tone } | null>(null);
   const [key, setKey] = useState(0);
 
-  const showError = useCallback((text: string) => {
+  const show = useCallback((message: string, tone: Tone) => {
     setKey((current) => current + 1);
-    setMessage(text);
+    setToast({ message, tone });
   }, []);
+  const showError = useCallback((message: string) => show(message, "error"), [show]);
+  const showSuccess = useCallback((message: string) => show(message, "success"), [show]);
 
-  const dismiss = useCallback(() => setMessage(null), []);
+  const dismiss = useCallback(() => setToast(null), []);
 
   return (
-    <ToastContext.Provider value={{ showError }}>
+    <ToastContext.Provider value={{ showError, showSuccess }}>
       {children}
-      {message && <ErrorToast key={key} message={message} onDismiss={dismiss} />}
+      {toast && <Toast key={key} message={toast.message} tone={toast.tone} onDismiss={dismiss} />}
     </ToastContext.Provider>
   );
 }
@@ -45,7 +52,6 @@ export function useToast() {
   return context;
 }
 
-// Drop-in replacement for an inline error box: shows the message as a toast.
 export function FormError({ message }: { message: string }) {
   const { showError } = useToast();
   useEffect(() => {
@@ -54,7 +60,7 @@ export function FormError({ message }: { message: string }) {
   return null;
 }
 
-function ErrorToast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+function Toast({ message, tone, onDismiss }: { message: string; tone: Tone; onDismiss: () => void }) {
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -117,7 +123,6 @@ function ErrorToast({ message, onDismiss }: { message: string; onDismiss: () => 
     if (dragStartX.current === null) return;
     const raw = event.clientX - dragStartX.current;
     if (Math.abs(raw) > 4) dragMoved.current = true;
-    // The toast moves at most MAX_DRAG px in either direction.
     setOffset(Math.max(-MAX_DRAG, Math.min(MAX_DRAG, raw)));
   }
 
@@ -151,7 +156,7 @@ function ErrorToast({ message, onDismiss }: { message: string; onDismiss: () => 
     <div className="pointer-events-none fixed right-4 top-4 z-50 w-[min(22rem,calc(100vw-2rem))]">
       <div className={`pointer-events-auto ${leaving ? "toast-out" : "toast-in"}`}>
         <div
-          role="alert"
+          role={tone === "error" ? "alert" : "status"}
           className="flex touch-pan-y select-none items-start gap-3 rounded-xl border border-zinc-800 bg-[#111113] p-4 text-sm text-zinc-100 shadow-2xl shadow-black/60 cursor-grab active:cursor-grabbing"
           style={{
             transform: `translate3d(${offset}px, 0, 0)`,
@@ -164,7 +169,11 @@ function ErrorToast({ message, onDismiss }: { message: string; onDismiss: () => 
           onPointerEnter={handleEnter}
           onPointerLeave={handleLeave}
         >
-          <AlertCircle className="mt-0.5 shrink-0 text-zinc-300" size={18} />
+          {tone === "error" ? (
+            <AlertCircle className="mt-0.5 shrink-0 text-zinc-300" size={18} />
+          ) : (
+            <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-400" size={18} />
+          )}
           <p className="flex-1 leading-relaxed">{message}</p>
           <button
             type="button"

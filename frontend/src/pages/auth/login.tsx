@@ -4,7 +4,6 @@ import { useAuth, type AuthUser } from "../../context/auth-context";
 import { AuthHeader } from "../../components/auth-layout";
 import {
   Field,
-  ErrorMessage,
   PasswordField,
   SubmitButton,
 } from "../../components/auth-fields";

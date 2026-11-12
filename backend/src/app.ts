@@ -26,7 +26,7 @@ app.use(express.json({ limit: BODY_LIMIT }));
 app.use(cookieParser());
 
 app.get("/health", (_req, res) => {
-  res.status(200).json({ status: "ok" });
+  res.status(200).json({ status: "Welcome to Clavis!" });
 });
 
 app.use(oidcRoutes);

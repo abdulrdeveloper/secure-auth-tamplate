@@ -4,6 +4,7 @@ import { getClientById } from "../services/oauth-client.service.js";
 import { createAuthorizationCode } from "../services/auth-code.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
 import type { IOAuthClient } from "../models/oauth-client.model.js";
+import { findCoveringGrant, recordGrant } from "../services/grant.service.js";
 
 const FRONTEND_URL =
   (process.env.FRONTEND_URL ?? "").split(",")[0]?.trim() || "http://localhost:5173";
@@ -60,10 +61,11 @@ function withParams(base: string, params: Record<string, string | undefined>): s
   return url.toString();
 }
 
-function issueCode(userId: string, p: AuthRequest, scopes: string[]) {
+function issueCode(userId: string, grantId: string, p: AuthRequest, scopes: string[]) {
   return createAuthorizationCode({
     userId,
     clientId: p.client_id,
+    grantId,
     redirectUri: p.redirect_uri,
     scope: scopes,
     nonce: p.nonce,
@@ -95,8 +97,11 @@ export const authorize = async (req: Request, res: Response) => {
     return res.redirect(withParams(`${FRONTEND_URL}/login`, { return_to: req.originalUrl }));
   }
 
-  if (check.client.isTrusted) {
-    const code = await issueCode(req.userId, p, check.scopes);
+  const grant = check.client.isTrusted
+    ? await recordGrant(req.userId, p.client_id, check.scopes)
+    : await findCoveringGrant(req.userId, p.client_id, check.scopes);
+  if (grant) {
+    const code = await issueCode(req.userId, String(grant._id), p, check.scopes);
     return res.redirect(withParams(p.redirect_uri, { code, state: p.state }));
   }
 
@@ -138,6 +143,8 @@ export const approveConsent = async (req: Request, res: Response) => {
     });
   }
 
-  const code = await issueCode(req.userId as string, p, check.scopes);
+  const userId = req.userId as string;
+  const grant = await recordGrant(userId, p.client_id, check.scopes);
+  const code = await issueCode(userId, String(grant._id), p, check.scopes);
   return res.json({ redirect_url: withParams(p.redirect_uri, { code, state: p.state }) });
 };

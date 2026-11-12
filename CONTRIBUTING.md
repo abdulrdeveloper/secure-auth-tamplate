@@ -23,8 +23,8 @@ need a MongoDB database, an Upstash Redis database and a Resend API key. The
 [README](README.md) explains where to get each one.
 
 ```bash
-git clone https://github.com/abdulrdeveloper/secure-auth-tamplate.git
-cd secure-auth-tamplate
+git clone https://github.com/abdulrdeveloper/clavis.git
+cd clavis
 
 cd backend
 pnpm install

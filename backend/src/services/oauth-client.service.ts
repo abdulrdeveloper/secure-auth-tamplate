@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import { OAuthClient } from "../models/oauth-client.model.js";
 import { BCRYPT_ROUNDS } from "../config/auth.config.js";
+import { deleteGrantsForClient } from "./grant.service.js";
 
 type NewClient = {
   name: string;
@@ -47,5 +48,7 @@ export const getOwnedClient = (clientId: string, owner: string) =>
 
 export async function deleteClient(clientId: string, owner: string) {
   const result = await OAuthClient.deleteOne({ clientId, owner });
-  return result.deletedCount > 0;
+  if (result.deletedCount === 0) return false;
+  await deleteGrantsForClient(clientId);
+  return true;
 }

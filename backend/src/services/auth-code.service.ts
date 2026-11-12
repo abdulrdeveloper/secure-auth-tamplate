@@ -2,9 +2,10 @@ import crypto from "node:crypto";
 import redis from "./redis.service.js";
 import { OIDC_CONFIG } from "../config/oidc.config.js";
 
-export interface AuthCodeData {
+interface AuthCodeData {
   userId: string;
   clientId: string;
+  grantId: string;
   redirectUri: string;
   scope: string[];
   nonce?: string | undefined;

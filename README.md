@@ -48,11 +48,13 @@ It is focused on a few things done well: email and password accounts, a hosted-s
 - The refresh token rotates on every use, and an old one is rejected.
 - The frontend refreshes the session silently. Five requests failing at once
   still trigger only one refresh.
-- Logout revokes the session in Redis immediately.
+- Each device gets its own session. Signing in on a phone does not sign out
+  the laptop.
+- Logout ends only this device's session, and the device loses access at once.
 
 ### Recover an account
 - Forgot password sends a separate reset code.
-- Resetting the password signs out the existing session.
+- Resetting the password signs out every device.
 
 ### Protected by default
 - Wrong OTP guesses are limited to 5 per code, even when sent in parallel.
@@ -68,6 +70,13 @@ It is focused on a few things done well: email and password accounts, a hosted-s
 - `ProtectedRoute` and `PublicRoute` wrappers, plus a `useAuth()` hook with the
   current user.
 - After login, users return to the page they were trying to open.
+- The dashboard lists every signed-in device (browser, system, IP, last
+  active). One click and a confirmation sign a device out immediately.
+- Connected apps: users see every app they signed in to with Clavis and can
+  remove one. Its access token stops working at once and it must ask again.
+  Consent is asked once per app, not on every sign-in.
+- A Developers page (`/developers`) to register apps, copy the client ID, see
+  the secret once, and delete apps.
 - Every timing and limit lives in one config file.
 - Responsive layout with labelled, keyboard-friendly forms.
 
@@ -87,7 +96,7 @@ It is focused on a few things done well: email and password accounts, a hosted-s
 
 - **Node.js 24** and **pnpm 11** (`corepack enable` sets up pnpm)
 - A **MongoDB** database ([Atlas free tier](https://www.mongodb.com/cloud/atlas/register)
-  or a local `mongodb://127.0.0.1:27017/secure-auth`)
+  or a local `mongodb://127.0.0.1:27017/clavis`)
 - An **Upstash Redis** database ([free tier](https://upstash.com/)), using the
   REST URL and token
 - A **Resend** API key ([free tier](https://resend.com/)) and a sender address
@@ -96,8 +105,8 @@ It is focused on a few things done well: email and password accounts, a hosted-s
 ### Quick start
 
 ```bash
-git clone https://github.com/abdulrdeveloper/secure-auth-tamplate.git
-cd secure-auth-tamplate
+git clone https://github.com/abdulrdeveloper/clavis.git
+cd clavis
 
 cd backend
 pnpm install
@@ -194,12 +203,14 @@ All routes are under `/api/auth`.
 | `POST` | `/login` | Sign in with email and password |
 | `POST` | `/refresh` | Rotate the refresh token and issue a new access token |
 | `GET` | `/me` | Return the signed-in user |
-| `POST` | `/logout` | Revoke the session and clear cookies |
+| `POST` | `/logout` | End this device's session and clear cookies |
+| `GET` | `/sessions` | List the signed-in devices, this one first |
+| `DELETE` | `/sessions/:id` | Sign a device out immediately |
 | `POST` | `/forgot-password` | Send a password reset code |
 | `POST` | `/verify-reset-otp` | Check a reset code |
-| `POST` | `/reset-password` | Set a new password and sign out the old session |
+| `POST` | `/reset-password` | Set a new password and sign out every device |
 
-`GET /health` returns `{ "status": "ok" }` for uptime checks.
+`GET /health` returns `{ "status": "Welcome to Clavis!" }` for uptime checks.
 
 ## Tech stack
 
@@ -246,9 +257,8 @@ frontend/
 The full flow, from registration to logout, is tested end to end against real
 MongoDB and Upstash, in the API and in a headless browser.
 
-Two limitations are intentional, to keep the template simple:
+One limitation is intentional, to keep the template simple:
 
-- **One session per user.** Signing in on a new device signs out the previous one.
 - **Unverified email squatting.** If someone registers another person's email
   and never verifies it, the real owner can still register, or recover the
   account with forgot password.
@@ -285,14 +295,22 @@ standard OIDC library (for example `openid-client`, Auth.js / NextAuth, or Passp
   pnpm run new-client "My Site" https://mysite.com/auth/callback
   ```
   Add `--untrusted` to show the consent screen instead.
-- Other people's sites: a signed-in user calls `POST /api/oauth/clients` with `name` and `redirectUris`.
-  These clients always show a consent screen.
+- Other people's sites: a signed-in user opens **Developers** (`/developers`) and clicks
+  **New app**, or calls `POST /api/oauth/clients` with `name` and `redirectUris`.
+  Users see a consent screen the first time they sign in to these apps.
 
 The client secret is shown only once, when the client is created.
 
+**Connected apps** (signed-in user, under `/api/oauth`)
+
+| Method | Route | What it does |
+| --- | --- | --- |
+| `GET` | `/grants` | Apps this user has allowed, with scopes and last use |
+| `DELETE` | `/grants/:clientId` | Remove an app. Its access token stops working at once |
+
 **Flow**
 
-1. Send the user to `/oauth/authorize?response_type=code&client_id=...&redirect_uri=...&scope=openid profile email&state=...&nonce=...&code_challenge=...&code_challenge_method=S256`.
+1. Send the user to `/oauth/authorize?response_type=code&client_id=...&redirect_uri=...&scope=openid%20profile%20email&state=...&nonce=...&code_challenge=...&code_challenge_method=S256`.
 2. The user comes back to `redirect_uri?code=...&state=...`.
 3. Your server posts `grant_type=authorization_code`, `code`, `redirect_uri` and `code_verifier`
    to `/oauth/token` as a form, with the client id and secret in a Basic auth header.

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { Logo } from "./auth-layout";
+import { ConfirmDialog } from "./modal";
 import { useAuth } from "../context/auth-context";
 
 const LINKS = [
@@ -11,6 +12,7 @@ const LINKS = [
 
 export function AccountLayout({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   const { logout } = useAuth();
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
@@ -40,14 +42,25 @@ export function AccountLayout({ title, description, children }: { title: string;
           </nav>
         </div>
         <button
-          onClick={handleLogout}
-          disabled={loggingOut}
-          className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => setConfirmingLogout(true)}
+          className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-50"
         >
           <LogOut size={16} />
-          <span className="hidden sm:inline">{loggingOut ? "Signing out..." : "Sign out"}</span>
+          <span className="hidden sm:inline">Sign out</span>
         </button>
       </header>
+
+      <ConfirmDialog
+        open={confirmingLogout}
+        title="Sign out?"
+        confirmLabel="Sign out"
+        busyLabel="Signing out..."
+        busy={loggingOut}
+        onConfirm={() => void handleLogout()}
+        onCancel={() => setConfirmingLogout(false)}
+      >
+        Are you sure you want to sign out of your account?
+      </ConfirmDialog>
 
       <section className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="text-2xl font-semibold text-zinc-50">{title}</h1>
